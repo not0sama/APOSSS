@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APOSSS - AI-Powered Open-Science Semantic Search System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .json-viewer {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            background-color: #1f2937;
+            color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow: auto;
+            max-height: 500px;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold">APOSSS</h1>
+            <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
+            <p class="text-blue-200 text-sm mt-1">Phase 1: LLM Query Understanding & Testing</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- System Status -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <span class="mr-2">🔧</span>System Status
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="checkHealth()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Check System Health
+                </button>
+                <button onclick="testDatabase()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Test Database Connections
+                </button>
+            </div>
+            <div id="systemStatus" class="mt-4"></div>
+        </div>
+
+        <!-- Query Testing Interface -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <span class="mr-2">🔍</span>LLM Query Processing Test
+            </h2>
+            
+            <!-- Sample Queries -->
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Sample Queries:</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setQuery('reducing carbon emissions in cars')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        Carbon emissions in cars
+                    </button>
+                    <button onclick="setQuery('machine learning for medical diagnosis')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        ML medical diagnosis
+                    </button>
+                    <button onclick="setQuery('renewable energy storage solutions')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        Renewable energy storage
+                    </button>
+                    <button onclick="setQuery('IoT sensors for agriculture')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        IoT agriculture sensors
+                    </button>
+                </div>
+            </div>
+
+            <!-- Query Input -->
+            <div class="mb-4">
+                <label for="queryInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    Enter your research query:
+                </label>
+                <textarea 
+                    id="queryInput" 
+                    rows="3" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    placeholder="Enter your research question or topic here..."
+                ></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 mb-6">
+                <button 
+                    id="processBtn"
+                    onclick="processQuery()" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
+                >
+                    <span id="processText">Process Query</span>
+                    <span id="processSpinner" class="loading ml-2 hidden"></span>
+                </button>
+                <button onclick="clearResults()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    Clear Results
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div id="resultsContainer" class="hidden bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <span class="mr-2">📊</span>Processing Results
+            </h2>
+            
+            <!-- Processing Summary -->
+            <div id="processingMeta" class="mb-6 p-4 bg-blue-50 rounded-lg"></div>
+            
+            <!-- Structured Results -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <div id="intentSection" class="p-4 bg-green-50 rounded-lg"></div>
+                    <div id="keywordsSection" class="p-4 bg-yellow-50 rounded-lg"></div>
+                    <div id="entitiesSection" class="p-4 bg-purple-50 rounded-lg"></div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="space-y-4">
+                    <div id="fieldsSection" class="p-4 bg-red-50 rounded-lg"></div>
+                    <div id="synonymsSection" class="p-4 bg-indigo-50 rounded-lg"></div>
+                    <div id="contextSection" class="p-4 bg-pink-50 rounded-lg"></div>
+                </div>
+            </div>
+            
+            <!-- Raw JSON Display -->
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-2">Raw JSON Response:</h3>
+                <div id="rawJson" class="json-viewer"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2024 APOSSS - Phase 1 Development</p>
+        </div>
+    </footer>
+
+    <script>
+        let currentResults = null;
+
+        function setQuery(query) {
+            document.getElementById('queryInput').value = query;
+        }
+
+        function clearResults() {
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('queryInput').value = '';
+            currentResults = null;
+        }
+
+        function showLoading(show) {
+            const btn = document.getElementById('processBtn');
+            const text = document.getElementById('processText');
+            const spinner = document.getElementById('processSpinner');
+            
+            if (show) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Processing...';
+                spinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Process Query';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        async function processQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            
+            if (!query) {
+                alert('Please enter a query to process.');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/test-llm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentResults = data.processed_query;
+                    displayResults(data.processed_query);
+                } else {
+                    alert('Error processing query: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to server: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            container.classList.remove('hidden');
+
+            // Display processing metadata
+            const metadata = results._metadata || {};
+            document.getElementById('processingMeta').innerHTML = `
+                <h3 class="font-semibold text-blue-800 mb-2">Processing Information</h3>
+                <div class="text-sm text-blue-700">
+                    <p><strong>Original Query:</strong> ${metadata.original_query || 'N/A'}</p>
+                    <p><strong>Corrected Query:</strong> ${results.corrected_query || 'N/A'}</p>
+                    <p><strong>Model Used:</strong> ${metadata.model_used || 'N/A'}</p>
+                    <p><strong>Processing Time:</strong> ${metadata.processing_timestamp || 'N/A'}</p>
+                    <p><strong>Success:</strong> ${metadata.success ? 'Yes' : 'No'}</p>
+                </div>
+            `;
+
+            // Display intent
+            const intent = results.intent || {};
+            document.getElementById('intentSection').innerHTML = `
+                <h3 class="font-semibold text-green-800 mb-2">Intent Analysis</h3>
+                <div class="text-sm text-green-700">
+                    <p><strong>Primary Intent:</strong> ${intent.primary_intent || 'N/A'}</p>
+                    <p><strong>Confidence:</strong> ${(intent.confidence * 100).toFixed(1)}%</p>
+                    <p><strong>Secondary Intents:</strong> ${intent.secondary_intents?.join(', ') || 'None'}</p>
+                </div>
+            `;
+
+            // Display keywords
+            const keywords = results.keywords || {};
+            document.getElementById('keywordsSection').innerHTML = `
+                <h3 class="font-semibold text-yellow-800 mb-2">Keywords</h3>
+                <div class="text-sm text-yellow-700 space-y-1">
+                    <p><strong>Primary:</strong> ${keywords.primary?.join(', ') || 'None'}</p>
+                    <p><strong>Secondary:</strong> ${keywords.secondary?.join(', ') || 'None'}</p>
+                    <p><strong>Technical:</strong> ${keywords.technical_terms?.join(', ') || 'None'}</p>
+                </div>
+            `;
+
+            // Display entities
+            const entities = results.entities || {};
+            document.getElementById('entitiesSection').innerHTML = `
+                <h3 class="font-semibold text-purple-800 mb-2">Entities</h3>
+                <div class="text-sm text-purple-700 space-y-1">
+                    <p><strong>Technologies:</strong> ${entities.technologies?.join(', ') || 'None'}</p>
+                    <p><strong>Concepts:</strong> ${entities.concepts?.join(', ') || 'None'}</p>
+                    <p><strong>People:</strong> ${entities.people?.join(', ') || 'None'}</p>
+                    <p><strong>Organizations:</strong> ${entities.organizations?.join(', ') || 'None'}</p>
+                </div>
+            `;
+
+            // Display academic fields
+            const fields = results.academic_fields || {};
+            document.getElementById('fieldsSection').innerHTML = `
+                <h3 class="font-semibold text-red-800 mb-2">Academic Fields</h3>
+                <div class="text-sm text-red-700 space-y-1">
+                    <p><strong>Primary Field:</strong> ${fields.primary_field || 'N/A'}</p>
+                    <p><strong>Related Fields:</strong> ${fields.related_fields?.join(', ') || 'None'}</p>
+                    <p><strong>Specializations:</strong> ${fields.specializations?.join(', ') || 'None'}</p>
+                </div>
+            `;
+
+            // Display synonyms and related terms
+            const synonyms = results.synonyms_and_related || {};
+            document.getElementById('synonymsSection').innerHTML = `
+                <h3 class="font-semibold text-indigo-800 mb-2">Synonyms & Related</h3>
+                <div class="text-sm text-indigo-700 space-y-1">
+                    <p><strong>Synonyms:</strong> ${synonyms.synonyms?.join(', ') || 'None'}</p>
+                    <p><strong>Related Terms:</strong> ${synonyms.related_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Broader Terms:</strong> ${synonyms.broader_terms?.join(', ') || 'None'}</p>
+                </div>
+            `;
+
+            // Display search context
+            const context = results.search_context || {};
+            document.getElementById('contextSection').innerHTML = `
+                <h3 class="font-semibold text-pink-800 mb-2">Search Context</h3>
+                <div class="text-sm text-pink-700 space-y-1">
+                    <p><strong>Resource Preferences:</strong> ${context.resource_preferences?.join(', ') || 'None'}</p>
+                    <p><strong>Urgency:</strong> ${context.urgency || 'N/A'}</p>
+                    <p><strong>Scope:</strong> ${context.scope || 'N/A'}</p>
+                </div>
+            `;
+
+            // Display raw JSON
+            document.getElementById('rawJson').textContent = JSON.stringify(results, null, 2);
+        }
+
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                const statusClass = data.status === 'healthy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                
+                statusDiv.innerHTML = `
+                    <div class="p-4 rounded-lg ${statusClass}">
+                        <h3 class="font-semibold">System Status: ${data.status.toUpperCase()}</h3>
+                        <div class="mt-2 text-sm">
+                            <p>Database Manager: ${data.components.database_manager ? '✅' : '❌'}</p>
+                            <p>LLM Processor: ${data.components.llm_processor ? '✅' : '❌'}</p>
+                            <p>Query Processor: ${data.components.query_processor ? '✅' : '❌'}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error checking system health: ' + error.message);
+            }
+        }
+
+        async function testDatabase() {
+            try {
+                const response = await fetch('/api/test-db');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    let dbStatusHTML = '<div class="p-4 bg-blue-100 text-blue-800 rounded-lg"><h3 class="font-semibold">Database Status</h3><div class="mt-2 text-sm">';
+                    
+                    for (const [dbName, status] of Object.entries(data.database_status)) {
+                        const statusIcon = status.connected ? '✅' : '❌';
+                        dbStatusHTML += `<p><strong>${dbName}:</strong> ${statusIcon} ${status.connected ? 'Connected' : 'Disconnected'}</p>`;
+                        
+                        if (status.connected && status.collections) {
+                            for (const [collName, count] of Object.entries(status.collections)) {
+                                dbStatusHTML += `<p class="ml-4">${collName}: ${count} documents</p>`;
+                            }
+                        } else if (status.error) {
+                            dbStatusHTML += `<p class="ml-4 text-red-600">Error: ${status.error}</p>`;
+                        }
+                    }
+                    
+                    dbStatusHTML += '</div></div>';
+                    statusDiv.innerHTML = dbStatusHTML;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Database Test Failed</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error testing database connections: ' + error.message);
+            }
+        }
+
+        // Auto-check health on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkHealth();
+        });
+    </script>
+</body>
+</html> 

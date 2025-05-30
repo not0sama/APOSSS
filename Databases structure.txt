@@ -1,0 +1,221 @@
+Academic_Library database :
+    books collection :
+        {
+            "_id": "ef67f6cf-de2",
+            "title": "Arid Environments and Sustainability",
+            "author": "Arman, Hasan",
+            "category": "R Earth Sciences, Geography, Environment, Planning",
+            "description": "Arid environments are basically associated with water scarcity. Therefore, soils will have an extremely low moisture level to support plant and animal life as well as human social life. Sustainability is the long durability of systems and processes within various adapted environmental conditions. Recently, systematic scientific studies on arid environments and sustainability have become more attractive, critical, and sound than the previous years. Sharing such experiences related to different environmental circumstances will absolutely help scientists and decision-makers to have better interpretation of their own environment. By learning lessons, appropriate, fast, and effective approaches require to implement for overwhelming such problems. Such actions will certainly lead to more secure and sustainable environments for plant, animal, and human life.",
+            "abstract": "Arid environments are basically associated with water scarcity. Therefore, soils will have an extremely low moisture level to support plant and animal life as well as human social life. Sustainability...",
+            "keywords": [
+                "climate change",
+                "irrigation",
+                "evapotranspiration",
+                "land degradation",
+                "soil salinity",
+                "biomass production"
+            ],
+            "publication_date": "2018-01-01",
+            "language": "English",
+            "file_url": "https://mts.intechopen.com/storage/books/6170/authors_book/authors_book.pdf",
+            "cover_image_url": "uploads/covers/arid_environments_and_sustainability_ef67f6cf-de2.jpg",
+            "uploaded_by": "system_import",
+            "created_at": "2025-05-29T15:45:52.327783+00:00"
+        }
+
+    journals collection :
+        {
+            "_id": "j3692a958",
+            "title": "Espergesia",
+            "editor": "Editorial Team - Universidad César Vallejo",
+            "issue_number": 34,
+            "issn": "2312-6027",
+            "category": "Literature (General)",
+            "description": "Journal covering: literature, narrative, education, social sciences. Published by Universidad César Vallejo",
+            "abstract": "This journal focuses on topics including literature, narrative, education, social sciences. Accepts manuscripts in: English, Spanish",
+            "keywords": [
+                "literature",
+                "narrative",
+                "education",
+                "social sciences"
+            ],
+            "publication_date": "2019-03-26T20:05:18Z",
+            "language": "English",
+            "file_url": "uploads/journals/espergesia_j3692a958.pdf",
+            "cover_image_url": "uploads/covers/espergesia_j3692a958.jpg",
+            "uploaded_by": "system_import",
+            "created_at": "2025-05-29T19:43:22.015157Z",
+            "metadata": {
+                "journal_url": "http://revistas.ucv.edu.pe/index.php/ESPERGESIA/index",
+                "doaj_url": "https://doaj.org/toc/be448c87b7b64013ad118b7c05d9c30f",
+                "publisher": "Universidad César Vallejo",
+                "country": "Peru",
+                "license": "CC BY",
+                "open_access_start": "2015.0",
+                "review_process": "Double anonymous peer review",
+                "apc_required": false,
+                "apc_amount": "nan",
+                "subjects_full": "Language and Literature: Literature (General) | Language and Literature: French literature - Italian literature - Spanish literature - Portuguese literature"
+            }
+        }
+
+    projects collection :
+        {
+            "_id": "p001",
+            "title": "Smart Irrigation System", 
+            "student_name": "Hassan Mahmoud", 
+            "supervisor": "Dr. Sami Jaber", 
+            "university": "Tripoli University", 
+            "department": "Agricultural Engineering", 
+            "category": "IoT",
+            "description": "Graduation project on intelligent water usage in agriculture.",
+            "abstract": "Details about using sensors and microcontrollers in irrigation.",
+            "keywords": ["IoT", "irrigation", "agriculture"], 
+            "publication_date": "2022-07-01",
+            "language": "Arabic",
+            "file_url": "uploads/projects/smart_irrigation.pdf", 
+            "cover_image_url": "uploads/covers/smart_irrigation.jpg",
+            "uploaded_by": "u123",
+            "created_at": "2025-05-02T12:00:00Z"
+        }
+
+
+Experts_System database :
+    experts collection :
+        {
+            "_id": {
+                "$oid": "38e5123061f04e399f68a622"
+            },
+            "name": "Susan",
+            "email": "michaelmitchell@moreno-stokes.info",
+            "password_hash": "$2b$12$V/KRTPH5BT.s7cNY1jWByu73o2.pkyGm2vsU/wRfGAeHl9vGKkiHe",
+            "phone": "9648281071",
+            "created_at": {
+                "$date": "2025-06-03T22:58:15.000Z"
+            },
+            "email_approved": true,
+            "awards": [],
+            "general_information": {
+                "address": "9861 Johnson Expressway Apt. 415\nMistytown, DE 53031",
+                "slogan": "Fully-configurable value-added knowledge user",
+                "locations": "France",
+                "languages": [
+                "English"
+                ]
+            },
+            "image": null,
+            "job_complete": {
+                "role": "Public affairs consultant",
+                "count": 26
+            },
+            "social_sharing": {
+                "facebook": null,
+                "twitter": null,
+                "linkedIn": null
+            }
+        }
+
+    certificates collection :
+        {
+            "_id": {
+                "$oid": "1466324fb41644cfbac46b6e"
+            },
+            "expert_id": "8004286434014f82a57450d5",
+            "title": "Civil Service fast streamer",
+            "degree": "High School Diploma",
+            "institution": "Mathews-Schmidt",
+            "description": "Base water agent. Rise beautiful late board skin manage.\nSure week every its.",
+            "years": "2 years",
+            "pdf_url": "/uploads/certificates/8004286434014f82a57450d5/certificates_20241223053436.pdf",
+            "status": "pending",
+            "submitted_at": {
+                "$date": "2024-12-23T05:34:36.000Z"
+            },
+            "approved_at": {
+                "$date": "2024-12-23T05:54:36.000Z"
+            }
+    }
+
+
+Research_Papers database :
+    articles collection :
+        {
+            "_id": {
+                "$oid": "683486d59db36e4611d29343"
+            },
+            "title": "LEO Mega-Constellations for 6G Global Coverage: Challenges and Opportunities",
+            "link": "/document/9638629/",
+            "year": 2021,
+            "authors": "['Haoran Xie', 'Yafeng Zhan', 'Guanming Zeng', 'Xiaohan Pan']",
+            "citations": 0,
+            "abstract": "Mega-constellations have the potential for providing 6G Internet owing to the unique advantage of global coverage. However, current satellite technologies are not omnipotent. There are still many challenging problems that need to be solved for mega-constellations to support 6G, e.g., efficient resource allocation, gratifying mobility management, and large-scale full-time TT&C (tracking, telemetry, and command). This paper starts with a novel definition of LEO mega-constellations and a brief review regarding the current typical mega-constellations, discussing the development direction of the mega-constellation air interface. Then, the key technologies development status of satellite networks is illustrated and analyzed from five aspects: network protocol, multiple access, satellite handover, TT&C, and interference mitigation, especially their adaptability in mega-constellations for 6G global coverage. Finally, considering the features and requirements of 6G, future challenges for mega-constellations and some potential solutions are proposed."
+        }
+
+    conferences collection :
+        {
+            "_id": {
+                "$oid": "68348b3d9db36e4611d297f7"
+            },
+            "authors": " J. Hoffmann, B. Nebel ",
+            "primary_category": "cs.AI",
+            "published": "2011-06-03 14:55:02+00:00",
+            "summary": "We describe and evaluate the algorithmic techniques that are used in the FF\nplanning system. Like the HSP system, FF relies on forward state space search,\nusing a heuristic that estimates goal distances by ignoring delete lists.\nUnlike HSP's heuristic, our method does not assume facts to be independent. We\nintroduce a novel search strategy that combines hill-climbing with systematic\nsearch, and we show how other powerful heuristic information can be extracted\nand used to prune the search space. FF was the most successful automatic\nplanner at the recent AIPS-2000 planning competition. We review the results of\nthe competition, give data for other benchmark domains, and investigate the\nreasons for the runtime performance of FF compared to HSP.",
+            "title": "The FF Planning System: Fast Plan Generation Through Heuristic Search"
+        }
+
+    theses collection :
+        {
+        "_id": ObjectId,
+        "user_id": ObjectId, // Reference to users._id
+        "user_name": "string",
+        "title": "string",
+        "student_name": "string",
+        "supervisor": "string",
+        "abstract": "string",
+        "keywords": ["string"],
+        "university": "string",
+        "faculty": "string",
+        "department": "string",
+        "degree_type": "string", // master's, PhD
+        "defense_date": "date",
+        "language": "string",
+        "file_path": "string", // Path to PDF
+        "status": "string", // pending, approved, rejected
+        "created_at": "date",
+        "type": "string" // e.g., "thesis", "dissertation"
+        }
+
+
+Laboratories database :
+    equipments :
+        {
+            "equipment_id": "String", 
+            "equipment_name": "String", 
+            "description": "String", 
+            "model": "String", 
+            "serial_number": "String",
+            "status": "String"	//like "available", "under_maintenance", "out_of_service" "availability": "Boolean",
+            "last_maintenance": "Date", 
+            "specifications": "String", 
+            "images": ["String"], 
+            "created_at": "Date",
+            "updated_at": "Date"
+        }
+
+    materials :
+        {
+            "material_id": "String", 
+            "material_name": "String", 
+            "description": "String", 
+            "quantity": "Number",
+            "unit": "String", 
+            "status": "String",
+            "expiration_date": "Date",
+            "storage_location": "String", 
+            "safety_notes": "String", 
+            "supplier": {
+                "name": "String", "contact_info": "String"
+            },
+            "created_at": "Date", 
+            "updated_at": "Date"
+        }
