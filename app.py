@@ -8,6 +8,7 @@ import logging
 from modules.database_manager import DatabaseManager
 from modules.llm_processor import LLMProcessor
 from modules.query_processor import QueryProcessor
+from modules.search_engine import SearchEngine
 
 # Load environment variables
 load_dotenv()
@@ -25,17 +26,52 @@ try:
     db_manager = DatabaseManager()
     llm_processor = LLMProcessor()
     query_processor = QueryProcessor(llm_processor)
+    search_engine = SearchEngine(db_manager)
     logger.info("All components initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize components: {str(e)}")
     db_manager = None
     llm_processor = None
     query_processor = None
+    search_engine = None
 
 @app.route('/')
 def index():
     """Serve the main interface"""
     return render_template('index.html')
+
+@app.route('/api/search', methods=['POST'])
+def search():
+    """Full search endpoint - Phase 2 functionality"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        user_query = data['query']
+        
+        if not query_processor or not search_engine:
+            return jsonify({'error': 'Search components not initialized'}), 500
+        
+        # Step 1: Process query with LLM
+        logger.info(f"Processing search query: {user_query[:50]}...")
+        processed_query = query_processor.process_query(user_query)
+        
+        if not processed_query:
+            return jsonify({'error': 'Failed to process query'}), 500
+        
+        # Step 2: Search all databases
+        search_results = search_engine.search_all_databases(processed_query)
+        
+        return jsonify({
+            'success': True,
+            'query_analysis': processed_query,
+            'search_results': search_results
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in search endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/test-llm', methods=['POST'])
 def test_llm():
@@ -88,7 +124,8 @@ def health_check():
     status = {
         'database_manager': db_manager is not None,
         'llm_processor': llm_processor is not None,
-        'query_processor': query_processor is not None
+        'query_processor': query_processor is not None,
+        'search_engine': search_engine is not None
     }
     
     return jsonify({
