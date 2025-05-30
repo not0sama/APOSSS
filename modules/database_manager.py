@@ -75,7 +75,7 @@ class DatabaseManager:
         status = {}
         
         for db_name in self.db_configs.keys():
-            if self.connections[db_name] and self.databases[db_name]:
+            if self.connections[db_name] is not None and self.databases[db_name] is not None:
                 try:
                     # Test connection with ping
                     self.connections[db_name].admin.command('ping')
@@ -114,14 +114,14 @@ class DatabaseManager:
     def get_collection(self, db_name: str, collection_name: str) -> Optional[Any]:
         """Get a specific collection from a database"""
         database = self.get_database(db_name)
-        if database:
+        if database is not None:
             return database[collection_name]
         return None
     
     def close_connections(self):
         """Close all database connections"""
         for db_name, client in self.connections.items():
-            if client:
+            if client is not None:
                 try:
                     client.close()
                     logger.info(f"Closed connection to {db_name}")
