@@ -42,6 +42,24 @@
             text-transform: uppercase;
             font-weight: 600;
         }
+        .score-bar {
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.3s ease-in-out;
+        }
+        .feedback-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .feedback-btn:hover {
+            transform: scale(1.1);
+        }
+        .feedback-submitted {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .relevance-high { border-left: 4px solid #10b981; }
+        .relevance-medium { border-left: 4px solid #f59e0b; }
+        .relevance-low { border-left: 4px solid #ef4444; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -50,7 +68,7 @@
         <div class="container mx-auto px-4 py-6">
             <h1 class="text-3xl font-bold">APOSSS</h1>
             <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
-            <p class="text-blue-200 text-sm mt-1">Phase 2: Multi-Database Search Implementation</p>
+            <p class="text-blue-200 text-sm mt-1">Phase 3: AI Ranking & User Feedback</p>
         </div>
     </header>
 
@@ -61,12 +79,15 @@
             <h2 class="text-xl font-semibold mb-4 flex items-center">
                 <span class="mr-2">🔧</span>System Status
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button onclick="checkHealth()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Check System Health
                 </button>
                 <button onclick="testDatabase()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Test Database Connections
+                </button>
+                <button onclick="getFeedbackStats()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    View Feedback Stats
                 </button>
             </div>
             <div id="systemStatus" class="mt-4"></div>
@@ -75,7 +96,7 @@
         <!-- Main Search Interface -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-xl font-semibold mb-4 flex items-center">
-                <span class="mr-2">🔍</span>Research Search
+                <span class="mr-2">🔍</span>Intelligent Research Search
             </h2>
             
             <!-- Sample Queries -->
@@ -117,7 +138,7 @@
                     onclick="performSearch()" 
                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
                 >
-                    <span id="searchText">🔍 Search All Databases</span>
+                    <span id="searchText">🔍 Search & Rank Results</span>
                     <span id="searchSpinner" class="loading ml-2 hidden"></span>
                 </button>
                 <button onclick="clearAllResults()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
@@ -133,15 +154,37 @@
                 <h2 class="text-xl font-semibold mb-4 flex items-center">
                     <span class="mr-2">📊</span>Search Results Summary
                 </h2>
-                <div id="resultsSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                <div id="resultsSummary" class="grid grid-cols-1 md:grid-cols-4 gap-4"></div>
             </div>
 
-            <!-- Search Results List -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                    <span class="mr-2">📚</span>Found Resources
-                </h2>
-                <div id="searchResultsList" class="space-y-4"></div>
+            <!-- Relevance Categories -->
+            <div id="relevanceCategories" class="space-y-6">
+                <!-- High Relevance Results -->
+                <div id="highRelevanceSection" class="hidden bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="w-4 h-4 bg-green-500 rounded-full mr-2"></span>
+                        High Relevance Results
+                    </h3>
+                    <div id="highRelevanceResults" class="space-y-4"></div>
+                </div>
+
+                <!-- Medium Relevance Results -->
+                <div id="mediumRelevanceSection" class="hidden bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></span>
+                        Medium Relevance Results
+                    </h3>
+                    <div id="mediumRelevanceResults" class="space-y-4"></div>
+                </div>
+
+                <!-- Low Relevance Results -->
+                <div id="lowRelevanceSection" class="hidden bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <span class="w-4 h-4 bg-red-500 rounded-full mr-2"></span>
+                        Low Relevance Results
+                    </h3>
+                    <div id="lowRelevanceResults" class="space-y-4"></div>
+                </div>
             </div>
         </div>
 
@@ -223,13 +266,15 @@
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-6 mt-12">
         <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2024 APOSSS - Phase 2 Development</p>
+            <p>&copy; 2024 APOSSS - Phase 3 Development</p>
         </div>
     </footer>
 
     <script>
         let currentSearchResults = null;
         let currentLLMResults = null;
+        let currentQueryId = null;
+        let feedbackSubmitted = new Set(); // Track submitted feedback
 
         function setSearchQuery(query) {
             document.getElementById('searchInput').value = query;
@@ -243,6 +288,8 @@
             document.getElementById('searchResultsContainer').classList.add('hidden');
             document.getElementById('searchInput').value = '';
             currentSearchResults = null;
+            currentQueryId = null;
+            feedbackSubmitted.clear();
         }
 
         function clearLLMResults() {
@@ -272,12 +319,12 @@
             if (show) {
                 btn.disabled = true;
                 btn.classList.add('opacity-75', 'cursor-not-allowed');
-                text.textContent = '🔍 Searching...';
+                text.textContent = '🔍 Searching & Ranking...';
                 spinner.classList.remove('hidden');
             } else {
                 btn.disabled = false;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                text.textContent = '🔍 Search All Databases';
+                text.textContent = '🔍 Search & Rank Results';
                 spinner.classList.add('hidden');
             }
         }
@@ -309,6 +356,7 @@
             }
 
             showSearchLoading(true);
+            feedbackSubmitted.clear();
 
             try {
                 const response = await fetch('/api/search', {
@@ -323,7 +371,8 @@
 
                 if (data.success) {
                     currentSearchResults = data.search_results;
-                    displaySearchResults(data.search_results, data.query_analysis);
+                    currentQueryId = data.query_id;
+                    displaySearchResults(data.search_results, data.query_analysis, data.categorized_results);
                 } else {
                     alert('Error performing search: ' + (data.error || 'Unknown error'));
                 }
@@ -335,20 +384,21 @@
             }
         }
 
-        function displaySearchResults(searchResults, queryAnalysis) {
+        function displaySearchResults(searchResults, queryAnalysis, categorizedResults) {
             const container = document.getElementById('searchResultsContainer');
             container.classList.remove('hidden');
 
             // Display results summary
             displayResultsSummary(searchResults);
 
-            // Display search results list
-            displayResultsList(searchResults.results);
+            // Display categorized results
+            displayCategorizedResults(categorizedResults);
         }
 
         function displayResultsSummary(searchResults) {
             const summary = document.getElementById('resultsSummary');
             const resultCounts = searchResults.result_counts;
+            const rankingMetadata = searchResults.ranking_metadata || {};
             
             summary.innerHTML = `
                 <div class="bg-green-100 p-4 rounded-lg text-center">
@@ -371,38 +421,155 @@
                         ).join('')}
                     </div>
                 </div>
+                <div class="bg-orange-100 p-4 rounded-lg">
+                    <div class="text-sm font-medium text-orange-800 mb-2">Ranking Info:</div>
+                    <div class="text-xs text-orange-600 space-y-1">
+                        <div>Algorithm: ${rankingMetadata.ranking_algorithm || 'N/A'}</div>
+                        <div>Ranked: ${rankingMetadata.total_ranked || 0}</div>
+                        <div>Components: ${rankingMetadata.score_components?.join(', ') || 'N/A'}</div>
+                    </div>
+                </div>
             `;
         }
 
-        function displayResultsList(results) {
-            const container = document.getElementById('searchResultsList');
+        function displayCategorizedResults(categorizedResults) {
+            // Display high relevance results
+            displayRelevanceCategory('high', categorizedResults.high_relevance || []);
+            displayRelevanceCategory('medium', categorizedResults.medium_relevance || []);
+            displayRelevanceCategory('low', categorizedResults.low_relevance || []);
+        }
+
+        function displayRelevanceCategory(level, results) {
+            const sectionId = `${level}RelevanceSection`;
+            const containerId = `${level}RelevanceResults`;
+            
+            const section = document.getElementById(sectionId);
+            const container = document.getElementById(containerId);
             
             if (results.length === 0) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-8">No results found</div>';
+                section.classList.add('hidden');
                 return;
             }
-
+            
+            section.classList.remove('hidden');
+            
             container.innerHTML = results.map(result => `
-                <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
                     <div class="flex items-start justify-between mb-2">
-                        <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
-                        <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
-                            ${result.type}
-                        </span>
+                        <div class="flex items-center space-x-2 flex-1">
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
+                            <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
+                            <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
+                                ${result.type}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Ranking Score Display -->
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between text-sm mb-1">
+                            <span class="text-gray-600">Relevance Score</span>
+                            <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                 style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
+                            <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
+                            <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
+                        </div>
                     </div>
                     
                     ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
                     
                     <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
                     
-                    <div class="flex items-center justify-between text-xs text-gray-500">
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
                         <span>Source: ${result.database} → ${result.collection}</span>
                         <span>ID: ${result.id.substring(0, 8)}...</span>
                     </div>
                     
                     ${displayMetadata(result.metadata)}
+                    
+                    <!-- Feedback Buttons -->
+                    <div class="mt-4 pt-3 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Was this result helpful?</span>
+                            <div class="flex space-x-2">
+                                <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                        class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                    👍 Helpful
+                                </button>
+                                <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                        class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                    👎 Not Helpful
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        async function submitFeedback(resultId, rating, feedbackType) {
+            if (!currentQueryId) {
+                alert('No active query for feedback');
+                return;
+            }
+            
+            if (feedbackSubmitted.has(resultId)) {
+                alert('Feedback already submitted for this result');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query_id: currentQueryId,
+                        result_id: resultId,
+                        rating: rating,
+                        feedback_type: feedbackType,
+                        user_session: 'web_session_' + Date.now()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    feedbackSubmitted.add(resultId);
+                    // Mark buttons as submitted
+                    const buttons = document.querySelectorAll(`[onclick*="${resultId}"]`);
+                    buttons.forEach(btn => {
+                        btn.classList.add('feedback-submitted');
+                        btn.textContent = btn.textContent.includes('👍') ? '✅ Submitted' : '❌ Submitted';
+                    });
+                    
+                    // Show success message
+                    showTemporaryMessage('Feedback submitted successfully!', 'success');
+                } else {
+                    alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting feedback: ' + error.message);
+            }
+        }
+
+        function showTemporaryMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 3000);
         }
 
         function getTypeBadgeClass(type) {
@@ -433,6 +600,35 @@
                 });
             
             return items.length > 0 ? `<div class="mt-3">${items.join('')}</div>` : '';
+        }
+
+        async function getFeedbackStats() {
+            try {
+                const response = await fetch('/api/feedback/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    const statusDiv = document.getElementById('systemStatus');
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-purple-100 text-purple-800 rounded-lg">
+                            <h3 class="font-semibold">Feedback Statistics</h3>
+                            <div class="mt-2 text-sm space-y-1">
+                                <p><strong>Total Feedback:</strong> ${stats.total_feedback}</p>
+                                <p><strong>Average Rating:</strong> ${stats.average_rating}/5.0</p>
+                                <p><strong>Positive Feedback:</strong> ${stats.positive_feedback}</p>
+                                <p><strong>Negative Feedback:</strong> ${stats.negative_feedback}</p>
+                                <p><strong>Storage Type:</strong> ${stats.storage_type}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    alert('Error getting feedback stats: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting feedback stats: ' + error.message);
+            }
         }
 
         async function processQuery() {
@@ -574,6 +770,8 @@
                             <p>LLM Processor: ${data.components.llm_processor ? '✅' : '❌'}</p>
                             <p>Query Processor: ${data.components.query_processor ? '✅' : '❌'}</p>
                             <p>Search Engine: ${data.components.search_engine ? '✅' : '❌'}</p>
+                            <p>Ranking Engine: ${data.components.ranking_engine ? '✅' : '❌'}</p>
+                            <p>Feedback System: ${data.components.feedback_system ? '✅' : '❌'}</p>
                         </div>
                     </div>
                 `;

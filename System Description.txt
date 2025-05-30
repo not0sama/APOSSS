@@ -173,11 +173,13 @@ Handling Diverse Data Types: Your ranking model will need to consider how to com
 ##Phase 3: AI Ranking Model (Initial Version) & Basic Feedback :
     1. Develop an initial version of the AI Ranking Module. Start with:
         Heuristic-based ranking: Assign scores based on where keywords match (title vs. abstract), frequency, and alignment with LLM-detected intent/specializations.
-        Or, TF-IDF and Cosine Similarity: Calculate similarity between the (LLM-expanded) query and the text content of each retrieved item.
+        and TF-IDF and Cosine Similarity: Calculate similarity between the (LLM-expanded) query and the text content of each retrieved item.
+        Create result categorization logic
     2. Implement a simple feedback mechanism in the UI (e.g., thumbs up/down per result).
     3. Store this feedback in a new MongoDB collection or simple file structure.
     4. Integrate ranking into the UI to display sorted results.
-
+    5. Add advanced filtering and sorting options
+    
     Goal: Present results in a more relevant order than raw retrieval and start collecting data for future ranking improvements.
 
 ##Phase 4: Integration, Testing & Basic UI Refinement :

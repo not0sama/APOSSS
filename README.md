@@ -1,213 +1,207 @@
 # APOSSS - AI-Powered Open-Science Semantic Search System
 
-## Phase 2: Multi-Database Search Implementation ✅
+## Phase 3: AI Ranking & User Feedback System ✅
 
-This repository contains the implementation of **Phase 2** of the APOSSS project, featuring **complete multi-database search functionality** that builds upon the LLM query understanding from Phase 1.
+This repository contains the implementation of **Phase 3** of the APOSSS project, featuring **intelligent result ranking** and **user feedback collection** that builds upon the multi-database search from Phase 2.
 
-## 🚀 New Phase 2 Features
+## 🚀 New Phase 3 Features
 
-- **🔍 Multi-Database Search**: Search across all four MongoDB databases simultaneously
-- **📊 Intelligent Query Processing**: Uses Gemini-2.0-flash LLM to understand and enhance queries
-- **🎯 Smart Result Aggregation**: Combines and standardizes results from different database schemas
-- **📈 Results Analytics**: Displays search statistics and breakdowns by database/type
-- **🎨 Enhanced UI**: Modern interface with collapsible sections and result cards
-- **⚡ Real-time Search**: Fast, responsive search with loading indicators
+- **🧠 AI-Powered Ranking**: Hybrid ranking algorithm combining heuristic, TF-IDF, and intent-based scoring
+- **📊 Score Visualization**: Visual ranking score bars with component breakdowns
+- **🎯 Relevance Categories**: Results organized into High, Medium, and Low relevance tiers
+- **👍 User Feedback System**: Thumbs up/down feedback collection for each result
+- **📈 Feedback Analytics**: Real-time feedback statistics and storage
+- **🔄 Learning Foundation**: Infrastructure for future ranking model improvements
+- **🎨 Enhanced UI**: Modernized interface with ranking displays and interactive feedback
 
-## 🗄️ Database Coverage
+## 🏗️ System Architecture (Phase 3)
 
-The search engine queries across:
+### Core Components
+1. **LLM Query Processing** (Phase 1) - Gemini-2.0-flash powered query understanding
+2. **Multi-Database Search** (Phase 2) - Search across 4 MongoDB databases
+3. **🆕 AI Ranking Engine** (Phase 3) - Intelligent result ranking with multiple algorithms
+4. **🆕 Feedback System** (Phase 3) - User feedback collection and storage
 
-1. **Academic Library**: Books, Journals, Projects
-2. **Experts System**: Experts, Certificates  
-3. **Research Papers**: Articles, Conferences, Theses
-4. **Laboratories**: Equipment, Materials
+### Ranking Algorithm
+- **Heuristic Scoring (40%)**: Keyword matching in titles, descriptions, and metadata
+- **TF-IDF Similarity (40%)**: Semantic similarity using scikit-learn TF-IDF vectorization
+- **Intent Alignment (20%)**: Resource type preference based on detected query intent
 
-**Total Collections Searched**: 10 collections across 4 databases
+### Feedback Storage
+- **Primary**: MongoDB collection for structured feedback storage
+- **Fallback**: JSON Lines file for reliability
 
-## 📋 Prerequisites
+## 📋 Requirements
 
-- Python 3.8+
-- MongoDB (local installations for all four databases)
-- Gemini API key from Google AI Studio
+### Dependencies
+```
+Flask==3.0.0
+PyMongo==4.6.1
+google-generativeai==0.3.2
+python-dotenv==1.0.0
+requests==2.31.0
+flask-cors==4.0.0
+scikit-learn>=1.6.0
+numpy>=2.2.0
+```
 
-## 🛠️ Installation
+### Environment Setup
+Create a `config.env` file with:
+```env
+# Gemini API Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
 
-1. **Install Python dependencies**:
+# MongoDB Connection Strings
+ACADEMIC_LIBRARY_URI=mongodb://localhost:27017/academic_library
+EXPERTS_SYSTEM_URI=mongodb://localhost:27017/experts_system
+RESEARCH_PAPERS_URI=mongodb://localhost:27017/research_papers
+LABORATORIES_URI=mongodb://localhost:27017/laboratories
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=True
+PORT=5000
+```
+
+## 🚀 Quick Start
+
+1. **Clone and Setup**
    ```bash
+   git clone <repository-url>
+   cd APOSSS
    pip install -r requirements.txt
    ```
 
-2. **Set up environment variables**:
+2. **Configure Environment**
    ```bash
-   # Copy the example file
-   cp config.env.example .env
-   
-   # Edit .env with your Gemini API key
+   cp config.env.example config.env
+   # Edit config.env with your API keys and database URIs
    ```
 
-3. **Ensure MongoDB is running**:
-   - Start your MongoDB service
-   - The databases can be empty for testing - the system will handle empty collections gracefully
-
-## 🚀 Running the Application
-
-1. **Start the Flask application**:
+3. **Run Application**
    ```bash
    python app.py
    ```
 
-2. **Open your web browser** and navigate to:
-   ```
-   http://localhost:5000
-   ```
+4. **Access Interface**
+   - Open http://localhost:5000 in your browser
+   - Test with sample queries or enter your own research questions
 
-## 🧪 Testing Phase 2
+## 🎯 API Endpoints
 
-### Main Search Interface
+### Core Search
+- `POST /api/search` - Full search with ranking and categorization
+- `POST /api/test-llm` - LLM query analysis testing
+- `GET /api/test-db` - Database connectivity testing
+- `GET /api/health` - System health check
 
-1. **Enter a research query** in the main search box
-2. **Click "🔍 Search All Databases"**
-3. **View comprehensive results** with:
-   - Results summary (total count, breakdown by database/type)
-   - Individual result cards with metadata
-   - Source information and snippets
+### Feedback System
+- `POST /api/feedback` - Submit user feedback for results
+- `GET /api/feedback/stats` - Get feedback statistics
+- `GET /api/feedback/recent` - Get recent feedback entries
 
-### Sample Search Queries
+## 🔍 Usage Examples
 
-Try these queries to test the system:
-
-- **"reducing carbon emissions in cars"** - Environmental engineering focus
-- **"machine learning for medical diagnosis"** - AI healthcare applications  
-- **"renewable energy storage solutions"** - Clean energy technology
-- **"IoT sensors for agriculture"** - Smart farming technology
-
-### Expected Search Results
-
-For each query, you'll see:
-
-- **📊 Results Summary**: Total count and distribution across databases
-- **📚 Result Cards**: Individual resources with:
-  - Title and author information
-  - Description/snippet preview  
-  - Resource type badges (book, expert, equipment, etc.)
-  - Metadata (publication date, institution, status, etc.)
-  - Source database and collection information
-
-## 🔍 API Endpoints
-
-### Full Search (Phase 2)
-```http
-POST /api/search
-Content-Type: application/json
-
-{
-    "query": "your research query here"
-}
-```
-**Response**: Complete search results with LLM analysis and database results
-
-### Legacy Endpoints (Phase 1)
-- **Health Check**: `GET /api/health`
-- **Database Test**: `GET /api/test-db`  
-- **LLM Test**: `POST /api/test-llm`
-
-## 📁 Updated Project Structure
-
-```
-APOSSS/
-├── app.py                      # Main Flask application with search endpoint
-├── requirements.txt            # Python dependencies
-├── config.env.example         # Environment configuration template
-├── README.md                   # This file
-├── modules/                    # Core modules
-│   ├── __init__.py
-│   ├── database_manager.py     # MongoDB connection management
-│   ├── llm_processor.py        # Gemini LLM processing
-│   ├── query_processor.py      # Query processing orchestration
-│   └── search_engine.py        # 🆕 Multi-database search engine
-└── templates/
-    └── index.html              # Enhanced web interface with search UI
+### 1. Intelligent Search
+```bash
+curl -X POST http://localhost:5000/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "machine learning for medical diagnosis"}'
 ```
 
-## 🎯 How Phase 2 Works
+### 2. Submit Feedback
+```bash
+curl -X POST http://localhost:5000/api/feedback \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query_id": "uuid-here",
+    "result_id": "result-id-here", 
+    "rating": 5,
+    "feedback_type": "thumbs_up"
+  }'
+```
 
-1. **Query Processing**: User query is analyzed by Gemini-2.0-flash LLM
-2. **Parameter Extraction**: Keywords, entities, and search context extracted
-3. **Multi-Database Search**: Parallel searching across all 4 databases
-4. **Result Standardization**: Different schemas normalized to common format
-5. **Aggregation**: Results combined with metadata and statistics
-6. **Display**: Organized presentation with filtering and categorization
+### 3. Get Feedback Stats
+```bash
+curl http://localhost:5000/api/feedback/stats
+```
 
-## 🔧 Search Algorithm Features
+## 📊 Phase 3 Key Features
 
-- **Smart Field Mapping**: Automatically searches relevant fields for each collection type
-- **Priority-Based Matching**: Primary keywords weighted higher than secondary terms
-- **Regex Escaping**: Safe handling of special characters in search terms
-- **Result Limiting**: Maximum 50 results per collection to ensure performance
-- **Error Handling**: Graceful handling of database connection issues
+### Ranking Engine
+- **Multi-Algorithm Scoring**: Combines heuristic, TF-IDF, and intent-based scoring
+- **Relevance Categorization**: Automatically groups results into relevance tiers
+- **Score Transparency**: Provides breakdown of scoring components
+- **Intent-Aware Ranking**: Prioritizes results based on detected user intent
 
-## 🎨 UI/UX Improvements
+### User Feedback System
+- **Simple Interface**: Thumbs up/down for each result
+- **Persistent Storage**: MongoDB with file fallback
+- **Real-time Stats**: Live feedback analytics
+- **Learning Ready**: Infrastructure for future ML model training
 
-- **Collapsible LLM Testing**: Advanced query analysis available but not prominent
-- **Result Type Badges**: Color-coded badges for different resource types
-- **Hover Effects**: Interactive result cards with smooth animations
-- **Loading States**: Clear feedback during search operations
-- **Mobile Responsive**: Works well on different screen sizes
+### Enhanced UI
+- **Visual Score Bars**: Color-coded relevance scoring display
+- **Relevance Sections**: Results organized by relevance level
+- **Interactive Feedback**: One-click rating system
+- **Ranking Transparency**: Score component visualization
 
-## 🐛 Troubleshooting
+## 🧪 Testing
 
-### Search Returns No Results
+### Test Search & Ranking
+1. Visit http://localhost:5000
+2. Try sample queries or enter custom research questions
+3. Observe ranking scores and relevance categories
+4. Provide feedback on results to test the feedback system
 
-1. **Check Database Connections**: Use "Test Database Connections" button
-2. **Verify Collections Exist**: Even empty collections will show 0 results
-3. **Try Simpler Queries**: Start with single keywords
-4. **Check Logs**: Look for search errors in console output
+### Monitor Feedback
+1. Click "View Feedback Stats" to see collected feedback
+2. Submit various ratings to test the feedback storage
+3. Check the `feedback_data.jsonl` file for stored feedback
 
-### Performance Issues
+## 📈 Future Development (Phase 4 & 5)
 
-1. **Database Response Time**: Check MongoDB server status
-2. **Result Limits**: Each collection limited to 50 results
-3. **Query Complexity**: Very complex queries may be slower
+### Planned Enhancements
+- **Learning Algorithm**: Train ranking models using collected feedback
+- **Advanced Filtering**: Date, type, and field-based result filtering
+- **A/B Testing**: Compare different ranking algorithms
+- **User Personalization**: Adapt rankings to user preferences
+- **Performance Optimization**: Caching and query optimization
 
-## 📝 Next Steps (Phase 3)
+### Integration Ready
+- **Feedback Loop**: Ready for ML model retraining
+- **Analytics Dashboard**: Foundation for detailed usage analytics
+- **API Extensibility**: Designed for easy feature additions
 
-Phase 2 is now **complete**! Ready for Phase 3:
+## 🏆 Technical Achievements
 
-1. **AI Ranking Model**: Implement intelligent result ranking
-2. **User Feedback System**: Add thumbs up/down for results
-3. **Learning Algorithm**: Use feedback to improve ranking
-4. **Advanced Filtering**: Date ranges, resource types, etc.
+### Phase 3 Implementations
+✅ **Hybrid Ranking Algorithm** - Multi-component scoring system  
+✅ **TF-IDF Integration** - Semantic similarity scoring  
+✅ **Intent-Based Ranking** - Query intent alignment  
+✅ **User Feedback Collection** - Complete feedback system  
+✅ **Relevance Categorization** - Automatic result grouping  
+✅ **Score Visualization** - Transparent ranking display  
+✅ **Feedback Analytics** - Real-time statistics  
+✅ **Robust Storage** - MongoDB with file backup  
 
-## ✅ Phase 2 Achievements
+## 🔧 Troubleshooting
 
-- ✅ Multi-database search engine implemented
-- ✅ All 10 collections searchable  
-- ✅ Results aggregation and standardization
-- ✅ Enhanced UI with search interface
-- ✅ Comprehensive error handling
-- ✅ Performance optimization (result limits, timeouts)
-- ✅ Full integration between LLM processing and database search
+### Common Issues
+1. **Ranking Errors**: Ensure scikit-learn and numpy are installed
+2. **Feedback Storage**: Check MongoDB connection or file permissions
+3. **Score Display**: Verify all ranking components are functioning
+4. **Memory Usage**: TF-IDF can be memory-intensive for large result sets
 
-**Phase 2 Goal Met**: ✅ *"Retrieve a comprehensive set of potentially relevant items from all databases based on the LLM-processed query"*
+### Debug Mode
+- Set `FLASK_DEBUG=True` for detailed error messages
+- Check application logs for ranking and feedback system status
+- Use `/api/health` endpoint to verify all components
 
-## 🤝 Contributing
+## 📝 License
 
-Phase 2 focus areas for improvement:
+This project is developed for academic research purposes.
 
-- Search query optimization
-- Result relevance tuning  
-- UI/UX enhancements
-- Performance optimization
-- Additional metadata extraction
+---
 
-## 📄 License
-
-[Your License Here]
-
-## 📞 Support
-
-For Phase 2 issues:
-1. Check system health via the web interface
-2. Test database connections  
-3. Try sample queries first
-4. Review console logs for detailed error information 
+**APOSSS Phase 3** - Intelligent ranking and user feedback system for open science research discovery. 

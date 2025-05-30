@@ -3,12 +3,16 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import logging
+import uuid
+from datetime import datetime
 
 # Import our modules
 from modules.database_manager import DatabaseManager
 from modules.llm_processor import LLMProcessor
 from modules.query_processor import QueryProcessor
 from modules.search_engine import SearchEngine
+from modules.ranking_engine import RankingEngine
+from modules.feedback_system import FeedbackSystem
 
 # Load environment variables
 load_dotenv()
@@ -27,6 +31,8 @@ try:
     llm_processor = LLMProcessor()
     query_processor = QueryProcessor(llm_processor)
     search_engine = SearchEngine(db_manager)
+    ranking_engine = RankingEngine()
+    feedback_system = FeedbackSystem(db_manager)
     logger.info("All components initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize components: {str(e)}")
@@ -34,6 +40,8 @@ except Exception as e:
     llm_processor = None
     query_processor = None
     search_engine = None
+    ranking_engine = None
+    feedback_system = None
 
 @app.route('/')
 def index():
@@ -42,7 +50,7 @@ def index():
 
 @app.route('/api/search', methods=['POST'])
 def search():
-    """Full search endpoint - Phase 2 functionality"""
+    """Full search endpoint with ranking - Phase 3 functionality"""
     try:
         data = request.get_json()
         if not data or 'query' not in data:
@@ -50,7 +58,7 @@ def search():
         
         user_query = data['query']
         
-        if not query_processor or not search_engine:
+        if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
         
         # Step 1: Process query with LLM
@@ -63,14 +71,81 @@ def search():
         # Step 2: Search all databases
         search_results = search_engine.search_all_databases(processed_query)
         
+        # Step 3: Rank results (Phase 3)
+        ranked_results = ranking_engine.rank_search_results(search_results, processed_query)
+        
+        # Step 4: Categorize results
+        categorized_results = ranking_engine.categorize_results(ranked_results.get('results', []))
+        
+        # Generate unique query ID for feedback tracking
+        query_id = str(uuid.uuid4())
+        
         return jsonify({
             'success': True,
+            'query_id': query_id,
             'query_analysis': processed_query,
-            'search_results': search_results
+            'search_results': ranked_results,
+            'categorized_results': categorized_results
         })
         
     except Exception as e:
         logger.error(f"Error in search endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    """Submit user feedback for search results"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Feedback data is required'}), 400
+        
+        if not feedback_system:
+            return jsonify({'error': 'Feedback system not initialized'}), 500
+        
+        # Submit feedback
+        result = feedback_system.submit_feedback(data)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback/stats', methods=['GET'])
+def get_feedback_stats():
+    """Get feedback statistics"""
+    try:
+        if not feedback_system:
+            return jsonify({'error': 'Feedback system not initialized'}), 500
+        
+        stats = feedback_system.get_feedback_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting feedback stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback/recent', methods=['GET'])
+def get_recent_feedback():
+    """Get recent feedback entries"""
+    try:
+        if not feedback_system:
+            return jsonify({'error': 'Feedback system not initialized'}), 500
+        
+        limit = request.args.get('limit', 10, type=int)
+        feedback_list = feedback_system.get_recent_feedback(limit)
+        
+        return jsonify({
+            'success': True,
+            'feedback': feedback_list
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting recent feedback: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/test-llm', methods=['POST'])
@@ -125,7 +200,9 @@ def health_check():
         'database_manager': db_manager is not None,
         'llm_processor': llm_processor is not None,
         'query_processor': query_processor is not None,
-        'search_engine': search_engine is not None
+        'search_engine': search_engine is not None,
+        'ranking_engine': ranking_engine is not None,
+        'feedback_system': feedback_system is not None
     }
     
     return jsonify({
