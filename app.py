@@ -148,6 +148,41 @@ def get_recent_feedback():
         logger.error(f"Error getting recent feedback: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/embedding/stats', methods=['GET'])
+def get_embedding_stats():
+    """Get embedding system statistics"""
+    try:
+        if not ranking_engine:
+            return jsonify({'error': 'Ranking engine not initialized'}), 500
+        
+        stats = ranking_engine.get_embedding_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting embedding stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/embedding/clear-cache', methods=['POST'])
+def clear_embedding_cache():
+    """Clear the embedding cache"""
+    try:
+        if not ranking_engine:
+            return jsonify({'error': 'Ranking engine not initialized'}), 500
+        
+        success = ranking_engine.clear_embedding_cache()
+        
+        return jsonify({
+            'success': success,
+            'message': 'Embedding cache cleared successfully' if success else 'Failed to clear cache'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing embedding cache: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/test-llm', methods=['POST'])
 def test_llm():
     """Test endpoint for LLM query processing"""

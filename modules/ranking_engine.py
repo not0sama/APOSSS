@@ -8,12 +8,20 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Import the new embedding ranker
+try:
+    from .embedding_ranker import EmbeddingRanker
+    EMBEDDING_AVAILABLE = True
+except ImportError:
+    EMBEDDING_AVAILABLE = False
+    EmbeddingRanker = None
+
 logger = logging.getLogger(__name__)
 
 class RankingEngine:
     """AI-powered ranking engine for APOSSS search results"""
     
-    def __init__(self):
+    def __init__(self, use_embeddings: bool = True):
         """Initialize the ranking engine"""
         self.tfidf_vectorizer = TfidfVectorizer(
             max_features=1000,
@@ -22,7 +30,20 @@ class RankingEngine:
             min_df=1,
             max_df=0.95
         )
-        logger.info("Ranking engine initialized successfully")
+        
+        # Initialize embedding ranker if available and requested
+        self.embedding_ranker = None
+        self.use_embeddings = use_embeddings and EMBEDDING_AVAILABLE
+        
+        if self.use_embeddings:
+            try:
+                self.embedding_ranker = EmbeddingRanker()
+                logger.info("Embedding ranker initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize embedding ranker: {str(e)}")
+                self.use_embeddings = False
+        
+        logger.info(f"Ranking engine initialized successfully (embeddings: {'enabled' if self.use_embeddings else 'disabled'})")
     
     def rank_search_results(self, search_results: Dict[str, Any], 
                           processed_query: Dict[str, Any]) -> Dict[str, Any]:
@@ -48,18 +69,38 @@ class RankingEngine:
             tfidf_scores = self._calculate_tfidf_scores(results, processed_query)
             intent_scores = self._calculate_intent_scores(results, processed_query)
             
+            # Calculate embedding scores if available
+            embedding_scores = []
+            if self.use_embeddings:
+                try:
+                    original_query = processed_query.get('corrected_query', '') or processed_query.get('_metadata', {}).get('original_query', '')
+                    embedding_scores = self.embedding_ranker.calculate_embedding_similarity(
+                        original_query, results, processed_query
+                    )
+                    logger.info("Embedding similarity scores calculated successfully")
+                except Exception as e:
+                    logger.warning(f"Failed to calculate embedding scores: {str(e)}")
+                    embedding_scores = [0.0] * len(results)
+            else:
+                embedding_scores = [0.0] * len(results)
+            
             # Combine scores and rank results
             ranked_results = self._combine_scores_and_rank(
-                results, heuristic_scores, tfidf_scores, intent_scores, processed_query
+                results, heuristic_scores, tfidf_scores, intent_scores, embedding_scores, processed_query
             )
             
             # Update search results with ranking information
+            score_components = ['heuristic', 'tfidf', 'intent_alignment']
+            if self.use_embeddings:
+                score_components.append('embedding_similarity')
+            
             search_results['results'] = ranked_results
             search_results['ranking_metadata'] = {
-                'ranking_algorithm': 'hybrid_heuristic_tfidf',
+                'ranking_algorithm': 'hybrid_heuristic_tfidf_embedding' if self.use_embeddings else 'hybrid_heuristic_tfidf',
                 'total_ranked': len(ranked_results),
                 'ranking_timestamp': datetime.now().isoformat(),
-                'score_components': ['heuristic', 'tfidf', 'intent_alignment']
+                'score_components': score_components,
+                'embedding_enabled': self.use_embeddings
             }
             
             logger.info("Search results ranked successfully")
@@ -186,6 +227,7 @@ class RankingEngine:
                                heuristic_scores: List[float],
                                tfidf_scores: List[float], 
                                intent_scores: List[float],
+                               embedding_scores: List[float],
                                processed_query: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Combine different score types and rank results"""
         
@@ -199,18 +241,29 @@ class RankingEngine:
         norm_heuristic = normalize_scores(heuristic_scores)
         norm_tfidf = normalize_scores(tfidf_scores)
         norm_intent = normalize_scores(intent_scores)
+        norm_embedding = normalize_scores(embedding_scores)
         
         # Combine scores with weights
-        heuristic_weight = 0.4
-        tfidf_weight = 0.4
-        intent_weight = 0.2
+        if self.use_embeddings:
+            # Adjusted weights when embeddings are available
+            heuristic_weight = 0.3
+            tfidf_weight = 0.3
+            intent_weight = 0.2
+            embedding_weight = 0.2
+        else:
+            # Original weights when embeddings not available
+            heuristic_weight = 0.4
+            tfidf_weight = 0.4
+            intent_weight = 0.2
+            embedding_weight = 0.0
         
         combined_scores = []
         for i in range(len(results)):
             combined_score = (
                 norm_heuristic[i] * heuristic_weight +
                 norm_tfidf[i] * tfidf_weight +
-                norm_intent[i] * intent_weight
+                norm_intent[i] * intent_weight +
+                norm_embedding[i] * embedding_weight
             )
             combined_scores.append(combined_score)
         
@@ -224,6 +277,7 @@ class RankingEngine:
                 'heuristic_score': norm_heuristic[i],
                 'tfidf_score': norm_tfidf[i],
                 'intent_score': norm_intent[i],
+                'embedding_score': norm_embedding[i],
                 'combined_score': combined_scores[i]
             }
             result_tuples.append((combined_scores[i], enhanced_result))
@@ -350,3 +404,79 @@ class RankingEngine:
                 categorized['low_relevance'].append(result)
         
         return categorized 
+    
+    def build_embedding_index(self, documents: List[Dict[str, Any]]) -> bool:
+        """
+        Build FAISS index for all documents (useful for pre-indexing)
+        
+        Args:
+            documents: List of all documents to index
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.use_embeddings:
+            logger.warning("Embeddings not available, cannot build index")
+            return False
+        
+        try:
+            self.embedding_ranker.build_document_index(documents)
+            logger.info(f"Successfully built embedding index for {len(documents)} documents")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to build embedding index: {str(e)}")
+            return False
+    
+    def get_embedding_stats(self) -> Dict[str, Any]:
+        """Get statistics about the embedding system"""
+        if not self.use_embeddings or not self.embedding_ranker:
+            return {
+                'embedding_enabled': False,
+                'reason': 'Embeddings not available or not initialized'
+            }
+        
+        try:
+            stats = self.embedding_ranker.get_cache_stats()
+            stats['embedding_enabled'] = True
+            return stats
+        except Exception as e:
+            return {
+                'embedding_enabled': False,
+                'error': str(e)
+            }
+    
+    def clear_embedding_cache(self) -> bool:
+        """Clear the embedding cache"""
+        if not self.use_embeddings or not self.embedding_ranker:
+            return False
+        
+        try:
+            self.embedding_ranker.clear_cache()
+            logger.info("Embedding cache cleared successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to clear embedding cache: {str(e)}")
+            return False
+    
+    def search_similar_documents(self, query: str, processed_query: Dict[str, Any] = None, 
+                                k: int = 50) -> List[Dict[str, Any]]:
+        """
+        Search for similar documents using only embeddings (useful for testing)
+        
+        Args:
+            query: Search query
+            processed_query: LLM-processed query
+            k: Number of results to return
+            
+        Returns:
+            List of similar documents
+        """
+        if not self.use_embeddings:
+            logger.warning("Embeddings not available for similarity search")
+            return []
+        
+        try:
+            return self.embedding_ranker.search_similar_documents(query, k, processed_query)
+        except Exception as e:
+            logger.error(f"Failed to search similar documents: {str(e)}")
+            return [] 

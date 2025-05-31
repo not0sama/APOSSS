@@ -6,7 +6,8 @@ This repository contains the implementation of **Phase 3** of the APOSSS project
 
 ## 🚀 New Phase 3 Features
 
-- **🧠 AI-Powered Ranking**: Hybrid ranking algorithm combining heuristic, TF-IDF, and intent-based scoring
+- **🧠 AI-Powered Ranking**: Hybrid ranking algorithm combining heuristic, TF-IDF, embedding, and intent-based scoring
+- **🎯 Semantic Similarity**: Deep learning embeddings for understanding meaning beyond keywords
 - **📊 Score Visualization**: Visual ranking score bars with component breakdowns
 - **🎯 Relevance Categories**: Results organized into High, Medium, and Low relevance tiers
 - **👍 User Feedback System**: Thumbs up/down feedback collection for each result
@@ -23,8 +24,9 @@ This repository contains the implementation of **Phase 3** of the APOSSS project
 4. **🆕 Feedback System** (Phase 3) - User feedback collection and storage in dedicated APOSSS database
 
 ### Ranking Algorithm
-- **Heuristic Scoring (40%)**: Keyword matching in titles, descriptions, and metadata
-- **TF-IDF Similarity (40%)**: Semantic similarity using scikit-learn TF-IDF vectorization
+- **Heuristic Scoring (30%)**: Keyword matching in titles, descriptions, and metadata
+- **TF-IDF Similarity (30%)**: Semantic similarity using scikit-learn TF-IDF vectorization
+- **🆕 Embedding Similarity (20%)**: Deep semantic understanding using sentence transformers
 - **Intent Alignment (20%)**: Resource type preference based on detected query intent
 
 ### Feedback Storage
@@ -37,12 +39,15 @@ This repository contains the implementation of **Phase 3** of the APOSSS project
 ```
 Flask==3.0.0
 PyMongo==4.6.1
-google-generativeai==0.3.2
+google-generativeai==0.8.3
 python-dotenv==1.0.0
 requests==2.31.0
 flask-cors==4.0.0
-scikit-learn>=1.6.0
-numpy>=2.2.0
+scikit-learn==1.3.2
+numpy==1.24.3
+sentence-transformers==2.7.0
+faiss-cpu==1.8.0
+torch==2.1.0
 ```
 
 ### Environment Setup
@@ -100,6 +105,10 @@ PORT=5000
 - `POST /api/feedback` - Submit user feedback for results
 - `GET /api/feedback/stats` - Get feedback statistics
 - `GET /api/feedback/recent` - Get recent feedback entries
+
+### 🆕 Embedding System
+- `GET /api/embedding/stats` - Get embedding system statistics and cache info
+- `POST /api/embedding/clear-cache` - Clear embedding cache for reprocessing
 
 ## 🔍 Usage Examples
 
@@ -205,4 +214,9 @@ This project is developed for academic research purposes.
 
 ---
 
-**APOSSS Phase 3** - Intelligent ranking and user feedback system for open science research discovery. 
+**APOSSS Phase 3** - Intelligent ranking and user feedback system for open science research discovery.
+
+### 🧠 Embedding Technology
+- **Model**: all-MiniLM-L6-v2 sentence transformer (384-dimensional embeddings)
+- **Vector Storage**: FAISS for efficient similarity search and caching
+- **Semantic Understanding**: Captures meaning beyond keyword matching for better relevance 

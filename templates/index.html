@@ -25,9 +25,6 @@
             border-top-color: #3b82f6;
             animation: spin 1s ease-in-out infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
         .result-card {
             transition: all 0.2s ease-in-out;
         }
@@ -79,7 +76,7 @@
             <h2 class="text-xl font-semibold mb-4 flex items-center">
                 <span class="mr-2">🔧</span>System Status
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <button onclick="checkHealth()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Check System Health
                 </button>
@@ -90,6 +87,17 @@
                     View Feedback Stats
                 </button>
             </div>
+            
+            <!-- Embedding Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="getEmbeddingStats()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    🧠 View Embedding Stats
+                </button>
+                <button onclick="clearEmbeddingCache()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    🗑️ Clear Embedding Cache
+                </button>
+            </div>
+            
             <div id="systemStatus" class="mt-4"></div>
         </div>
 
@@ -479,6 +487,8 @@
                             <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
                             <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
                             <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
+                            ${result.score_breakdown?.embedding_score !== undefined ? 
+                                `<span>Embedding: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
                         </div>
                     </div>
                     
@@ -817,6 +827,89 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error testing database connections: ' + error.message);
+            }
+        }
+
+        async function getEmbeddingStats() {
+            try {
+                const response = await fetch('/api/embedding/stats');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-orange-100 text-orange-800 rounded-lg">
+                            <h3 class="font-semibold">Embedding System Statistics</h3>
+                            <div class="mt-2 text-sm space-y-1">
+                                <p><strong>Status:</strong> ${stats.embedding_enabled ? '✅ Enabled' : '❌ Disabled'}</p>
+                                ${stats.embedding_enabled ? `
+                                    <p><strong>Model:</strong> ${stats.model_name || 'N/A'}</p>
+                                    <p><strong>Embedding Dimension:</strong> ${stats.embedding_dimension || 'N/A'}</p>
+                                    <p><strong>Indexed Documents:</strong> ${stats.total_vectors || 0}</p>
+                                    <p><strong>Cache Size:</strong> ${stats.cache_size || 0} documents</p>
+                                    <p><strong>Cache Directory:</strong> ${stats.cache_directory || 'N/A'}</p>
+                                ` : `
+                                    <p><strong>Reason:</strong> ${stats.reason || stats.error || 'Unknown'}</p>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Embedding Stats Error</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting embedding stats: ' + error.message);
+            }
+        }
+
+        async function clearEmbeddingCache() {
+            if (!confirm('Are you sure you want to clear the embedding cache? This will remove all cached embeddings and require reprocessing.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/embedding/clear-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+                            <h3 class="font-semibold">Cache Cleared Successfully</h3>
+                            <p class="mt-2 text-sm">${data.message}</p>
+                        </div>
+                    `;
+                    
+                    // Show success message
+                    showTemporaryMessage('Embedding cache cleared successfully!', 'success');
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Cache Clear Failed</h3>
+                            <p class="mt-2 text-sm">${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                    
+                    alert('Failed to clear embedding cache: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error clearing embedding cache: ' + error.message);
             }
         }
 

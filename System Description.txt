@@ -179,7 +179,7 @@ Handling Diverse Data Types: Your ranking model will need to consider how to com
     3. Store this feedback in a new MongoDB collection or simple file structure.
     4. Integrate ranking into the UI to display sorted results.
     5. Add advanced filtering and sorting options
-    
+
     Goal: Present results in a more relevant order than raw retrieval and start collecting data for future ranking improvements.
 
 ##Phase 4: Integration, Testing & Basic UI Refinement :
@@ -318,3 +318,14 @@ Handling Diverse Data Types: Your ranking model will need to consider how to com
         - Troubleshooting procedures
 
 
+**Advanced Embeddings & Semantic Similarity:
+    Concept: 
+        Go beyond keyword matching (TF-IDF, BM25) to understand the semantic meaning of the query and the items.
+    How it works:
+        Convert the user's query (or the LLM-expanded version) into a dense vector embedding.
+        Convert the relevant text fields of your items (titles, abstracts, descriptions) into embeddings.
+        Calculate the cosine similarity (or other distance metrics) between the query embedding and item embeddings. This similarity score becomes a powerful feature for your LTR model or can be used in a hybrid scoring function.
+    Embedding Models/Technologies:
+        Sentence Transformers (e.g., Sentence-BERT, MPNet): Pre-trained models specifically designed to create high-quality sentence/paragraph embeddings. Easy to use with the sentence-transformers Python library.
+    Application: 
+        This semantic similarity score can be a very strong signal of relevance, especially when keywords don't perfectly match but the meaning is similar.
