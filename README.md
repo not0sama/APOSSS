@@ -18,9 +18,9 @@ This repository contains the implementation of **Phase 3** of the APOSSS project
 
 ### Core Components
 1. **LLM Query Processing** (Phase 1) - Gemini-2.0-flash powered query understanding
-2. **Multi-Database Search** (Phase 2) - Search across 4 MongoDB databases
+2. **Multi-Database Search** (Phase 2) - Search across 4 MongoDB databases (Academic, Experts, Research, Labs)
 3. **🆕 AI Ranking Engine** (Phase 3) - Intelligent result ranking with multiple algorithms
-4. **🆕 Feedback System** (Phase 3) - User feedback collection and storage
+4. **🆕 Feedback System** (Phase 3) - User feedback collection and storage in dedicated APOSSS database
 
 ### Ranking Algorithm
 - **Heuristic Scoring (40%)**: Keyword matching in titles, descriptions, and metadata
@@ -28,8 +28,8 @@ This repository contains the implementation of **Phase 3** of the APOSSS project
 - **Intent Alignment (20%)**: Resource type preference based on detected query intent
 
 ### Feedback Storage
-- **Primary**: MongoDB collection for structured feedback storage
-- **Fallback**: JSON Lines file for reliability
+- **Primary**: MongoDB APOSSS database (`APOSSS/user_feedback` collection)
+- **Fallback**: JSON Lines file (`feedback_data.jsonl`) for reliability
 
 ## 📋 Requirements
 
@@ -56,6 +56,7 @@ ACADEMIC_LIBRARY_URI=mongodb://localhost:27017/academic_library
 EXPERTS_SYSTEM_URI=mongodb://localhost:27017/experts_system
 RESEARCH_PAPERS_URI=mongodb://localhost:27017/research_papers
 LABORATORIES_URI=mongodb://localhost:27017/laboratories
+APOSSS_URI=mongodb://localhost:27017/APOSSS
 
 # Flask Configuration
 FLASK_ENV=development

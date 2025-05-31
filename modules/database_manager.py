@@ -31,6 +31,10 @@ class DatabaseManager:
             'laboratories': {
                 'uri': os.getenv('MONGODB_URI_LABORATORIES', 'mongodb://localhost:27017/Laboratories'),
                 'collections': ['equipments', 'materials']
+            },
+            'aposss': {
+                'uri': os.getenv('MONGODB_URI_APOSSS', 'mongodb://localhost:27017/APOSSS'),
+                'collections': ['user_feedback']
             }
         }
         

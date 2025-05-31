@@ -24,11 +24,11 @@ class FeedbackSystem:
         """Initialize feedback storage (MongoDB collection or fallback to file)"""
         try:
             if self.db_manager:
-                # Try to use a feedback database
-                feedback_db = self.db_manager.get_database('academic_library')  # Use existing DB
+                # Try to use the dedicated APOSSS feedback database
+                feedback_db = self.db_manager.get_database('aposss')
                 if feedback_db is not None:
                     self.feedback_collection = feedback_db['user_feedback']
-                    logger.info("Using MongoDB for feedback storage")
+                    logger.info("Using MongoDB APOSSS database for feedback storage")
                     return
         except Exception as e:
             logger.warning(f"Could not initialize MongoDB feedback storage: {str(e)}")
