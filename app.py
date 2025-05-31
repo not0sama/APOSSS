@@ -57,6 +57,7 @@ def search():
             return jsonify({'error': 'Query is required'}), 400
         
         user_query = data['query']
+        hybrid_search = data.get('hybrid_search', True)  # Default to hybrid search
         
         if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
@@ -68,8 +69,8 @@ def search():
         if not processed_query:
             return jsonify({'error': 'Failed to process query'}), 500
         
-        # Step 2: Search all databases
-        search_results = search_engine.search_all_databases(processed_query)
+        # Step 2: Search all databases (now with hybrid search support)
+        search_results = search_engine.search_all_databases(processed_query, hybrid_search=hybrid_search)
         
         # Step 3: Rank results (Phase 3)
         ranked_results = ranking_engine.rank_search_results(search_results, processed_query)
@@ -244,6 +245,126 @@ def health_check():
         'status': 'healthy' if all(status.values()) else 'unhealthy',
         'components': status
     })
+
+@app.route('/api/preindex/stats', methods=['GET'])
+def get_preindex_stats():
+    """Get pre-built index statistics"""
+    try:
+        if not search_engine:
+            return jsonify({'error': 'Search engine not initialized'}), 500
+        
+        stats = search_engine.get_preindex_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting pre-index stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preindex/search', methods=['POST'])
+def semantic_search():
+    """Semantic search using pre-built index only"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        user_query = data['query']
+        k = data.get('k', 20)  # Number of results to return
+        
+        if not search_engine:
+            return jsonify({'error': 'Search engine not initialized'}), 500
+        
+        # Optional: Process query with LLM for enhanced semantic search
+        processed_query = None
+        if query_processor:
+            try:
+                processed_query = query_processor.process_query(user_query)
+            except Exception as e:
+                logger.warning(f"Failed to process query for semantic search: {e}")
+        
+        # Perform semantic search only
+        results = search_engine.semantic_search_only(user_query, k, processed_query)
+        
+        return jsonify({
+            'success': True,
+            'query': user_query,
+            'results': results,
+            'total_results': len(results),
+            'search_type': 'semantic_only'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in semantic search: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preindex/build', methods=['POST'])
+def build_preindex():
+    """Trigger pre-index building (asynchronous)"""
+    try:
+        # Import here to avoid circular imports
+        from build_index import DocumentIndexBuilder
+        import threading
+        
+        data = request.get_json() or {}
+        resume = data.get('resume', True)
+        
+        def build_index_async():
+            """Build index in background thread"""
+            try:
+                builder = DocumentIndexBuilder()
+                success = builder.build_full_index(resume=resume)
+                logger.info(f"Pre-index building completed: {'Success' if success else 'Failed'}")
+            except Exception as e:
+                logger.error(f"Error in async index building: {e}")
+        
+        # Start building in background
+        thread = threading.Thread(target=build_index_async, daemon=True)
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pre-index building started in background',
+            'resume': resume
+        })
+        
+    except Exception as e:
+        logger.error(f"Error starting pre-index build: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/preindex/progress', methods=['GET'])
+def get_preindex_progress():
+    """Get pre-indexing progress"""
+    try:
+        from build_index import DocumentIndexBuilder
+        import os
+        import json
+        
+        builder = DocumentIndexBuilder()
+        progress_file = builder.progress_file
+        
+        if os.path.exists(progress_file):
+            with open(progress_file, 'r') as f:
+                progress = json.load(f)
+            
+            return jsonify({
+                'success': True,
+                'progress': progress,
+                'in_progress': not progress.get('completed', False)
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'progress': None,
+                'in_progress': False,
+                'message': 'No indexing in progress'
+            })
+        
+    except Exception as e:
+        logger.error(f"Error getting pre-index progress: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

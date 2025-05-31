@@ -1,54 +1,256 @@
 import logging
 import re
+import os
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 from .database_manager import DatabaseManager
 from .query_processor import QueryProcessor
 
+# Import embedding ranker for pre-built index
+try:
+    from .embedding_ranker import EmbeddingRanker
+    PREINDEX_AVAILABLE = True
+except ImportError:
+    PREINDEX_AVAILABLE = False
+    EmbeddingRanker = None
+
 logger = logging.getLogger(__name__)
 
 class SearchEngine:
-    """Multi-database search engine for APOSSS"""
+    """Multi-database search engine for APOSSS with pre-indexing support"""
     
-    def __init__(self, db_manager: DatabaseManager):
-        """Initialize with database manager"""
+    def __init__(self, db_manager: DatabaseManager, use_preindex: bool = True):
+        """Initialize with database manager and optional pre-indexing"""
         self.db_manager = db_manager
-        logger.info("Search engine initialized successfully")
+        self.use_preindex = use_preindex and PREINDEX_AVAILABLE
+        self.preindex_ranker = None
+        
+        # Initialize pre-built index if available
+        if self.use_preindex:
+            try:
+                # Check if production index exists
+                production_cache_dir = 'production_index_cache'
+                if os.path.exists(os.path.join(production_cache_dir, 'faiss_index.pkl')):
+                    self.preindex_ranker = EmbeddingRanker(cache_dir=production_cache_dir)
+                    stats = self.preindex_ranker.get_cache_stats()
+                    logger.info(f"Pre-built index loaded: {stats['total_vectors']} documents indexed")
+                else:
+                    logger.info("No pre-built index found, using traditional search only")
+                    self.use_preindex = False
+            except Exception as e:
+                logger.warning(f"Failed to load pre-built index: {e}")
+                self.use_preindex = False
+        
+        logger.info(f"Search engine initialized successfully (pre-index: {'enabled' if self.use_preindex else 'disabled'})")
     
-    def search_all_databases(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+    def search_all_databases(self, processed_query: Dict[str, Any], 
+                           hybrid_search: bool = True) -> Dict[str, Any]:
         """
         Search across all databases using processed query data
         
         Args:
             processed_query: The structured query data from LLM processing
+            hybrid_search: Whether to combine traditional + pre-index search
             
         Returns:
             Aggregated search results from all databases
         """
         try:
-            # Extract search parameters
-            search_params = self._extract_search_parameters(processed_query)
-            
-            # Search each database
-            academic_results = self._search_academic_library(search_params)
-            experts_results = self._search_experts_system(search_params)
-            papers_results = self._search_research_papers(search_params)
-            labs_results = self._search_laboratories(search_params)
-            
-            # Aggregate results
-            aggregated_results = self._aggregate_results({
-                'academic_library': academic_results,
-                'experts_system': experts_results,
-                'research_papers': papers_results,
-                'laboratories': labs_results
-            }, processed_query)
-            
-            logger.info(f"Search completed. Found {aggregated_results['total_results']} total results")
-            return aggregated_results
-            
+            if self.use_preindex and hybrid_search:
+                return self._hybrid_search(processed_query)
+            else:
+                return self._traditional_search(processed_query)
+                
         except Exception as e:
             logger.error(f"Error in search_all_databases: {str(e)}")
             return self._create_empty_results(str(e))
+    
+    def _hybrid_search(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+        """Combine pre-index semantic search with traditional keyword search"""
+        try:
+            # Get original query for semantic search
+            original_query = processed_query.get('corrected_query', '')
+            
+            # Step 1: Fast semantic search using pre-built index
+            logger.info("🧠 Performing semantic search using pre-built index...")
+            semantic_results = self.preindex_ranker.search_similar_documents(
+                original_query, k=100, processed_query=processed_query
+            )
+            
+            # Step 2: Traditional keyword search for precision
+            logger.info("🔍 Performing traditional keyword search...")
+            traditional_results = self._traditional_search(processed_query)
+            
+            # Step 3: Merge and deduplicate results
+            logger.info("🔄 Merging semantic and keyword search results...")
+            merged_results = self._merge_search_results(semantic_results, traditional_results, processed_query)
+            
+            logger.info(f"Hybrid search completed: {merged_results['total_results']} total results")
+            return merged_results
+            
+        except Exception as e:
+            logger.error(f"Error in hybrid search: {e}")
+            # Fallback to traditional search
+            return self._traditional_search(processed_query)
+    
+    def _traditional_search(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+        """Traditional MongoDB keyword search"""
+        # Extract search parameters
+        search_params = self._extract_search_parameters(processed_query)
+        
+        # Search each database
+        academic_results = self._search_academic_library(search_params)
+        experts_results = self._search_experts_system(search_params)
+        papers_results = self._search_research_papers(search_params)
+        labs_results = self._search_laboratories(search_params)
+        
+        # Aggregate results
+        aggregated_results = self._aggregate_results({
+            'academic_library': academic_results,
+            'experts_system': experts_results,
+            'research_papers': papers_results,
+            'laboratories': labs_results
+        }, processed_query)
+        
+        return aggregated_results
+    
+    def _merge_search_results(self, semantic_results: List[Dict[str, Any]], 
+                            traditional_results: Dict[str, Any], 
+                            processed_query: Dict[str, Any]) -> Dict[str, Any]:
+        """Merge semantic and traditional search results"""
+        try:
+            # Get traditional results list
+            traditional_list = traditional_results.get('results', [])
+            
+            # Create a mapping of semantic results by document ID
+            semantic_map = {result['id']: result for result in semantic_results}
+            traditional_map = {result['id']: result for result in traditional_list}
+            
+            # Merge results, prioritizing those found in both searches
+            merged_results = []
+            processed_ids = set()
+            
+            # Add semantic results that also appear in traditional search (highest priority)
+            for sem_result in semantic_results:
+                doc_id = sem_result['id']
+                if doc_id in traditional_map and doc_id not in processed_ids:
+                    # Merge the results
+                    merged_result = traditional_map[doc_id].copy()
+                    merged_result['semantic_similarity'] = sem_result.get('similarity_score', 0)
+                    merged_result['search_source'] = 'hybrid'
+                    merged_results.append(merged_result)
+                    processed_ids.add(doc_id)
+            
+            # Add remaining semantic results (semantic-only)
+            for sem_result in semantic_results:
+                doc_id = sem_result['id']
+                if doc_id not in processed_ids:
+                    # Convert semantic result to full result format
+                    full_result = self._convert_semantic_to_full_result(sem_result)
+                    if full_result:
+                        full_result['semantic_similarity'] = sem_result.get('similarity_score', 0)
+                        full_result['search_source'] = 'semantic'
+                        merged_results.append(full_result)
+                        processed_ids.add(doc_id)
+            
+            # Add remaining traditional results (keyword-only)
+            for trad_result in traditional_list:
+                doc_id = trad_result['id']
+                if doc_id not in processed_ids:
+                    trad_result['semantic_similarity'] = 0
+                    trad_result['search_source'] = 'traditional'
+                    merged_results.append(trad_result)
+                    processed_ids.add(doc_id)
+            
+            # Update result counts
+            result_counts = traditional_results.get('result_counts', {})
+            result_counts['semantic_results'] = len(semantic_results)
+            result_counts['hybrid_results'] = len([r for r in merged_results if r['search_source'] == 'hybrid'])
+            
+            return {
+                'results': merged_results,
+                'total_results': len(merged_results),
+                'result_counts': result_counts,
+                'search_metadata': {
+                    'search_type': 'hybrid',
+                    'semantic_results': len(semantic_results),
+                    'traditional_results': len(traditional_list),
+                    'merged_results': len(merged_results),
+                    'hybrid_matches': len([r for r in merged_results if r['search_source'] == 'hybrid']),
+                    'timestamp': datetime.now().isoformat()
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error merging search results: {e}")
+            return traditional_results
+    
+    def _convert_semantic_to_full_result(self, semantic_result: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Convert a semantic search result to full result format by fetching from database"""
+        try:
+            doc_id = semantic_result['id']
+            db_name = semantic_result.get('database', '')
+            collection_name = semantic_result.get('collection', '')
+            
+            if not all([doc_id, db_name, collection_name]):
+                return None
+            
+            # Fetch full document from database
+            database = self.db_manager.get_database(db_name)
+            if database is None:
+                return None
+            
+            # Convert string ID back to ObjectId for MongoDB
+            from bson import ObjectId
+            try:
+                mongo_id = ObjectId(doc_id)
+            except:
+                mongo_id = doc_id
+            
+            collection = database[collection_name]
+            doc = collection.find_one({'_id': mongo_id})
+            
+            if doc:
+                # Process the document using existing logic
+                result_type = collection_name.rstrip('s')  # Remove plural 's'
+                return self._process_search_result(doc, result_type, db_name, collection_name)
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error converting semantic result: {e}")
+            return None
+    
+    def get_preindex_stats(self) -> Dict[str, Any]:
+        """Get statistics about the pre-built index"""
+        if not self.use_preindex or not self.preindex_ranker:
+            return {
+                'enabled': False,
+                'reason': 'Pre-indexing not available or not enabled'
+            }
+        
+        try:
+            stats = self.preindex_ranker.get_cache_stats()
+            stats['enabled'] = True
+            return stats
+        except Exception as e:
+            return {
+                'enabled': False,
+                'error': str(e)
+            }
+    
+    def semantic_search_only(self, query: str, k: int = 50, 
+                           processed_query: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Perform semantic search only using pre-built index"""
+        if not self.use_preindex or not self.preindex_ranker:
+            logger.warning("Semantic search not available - pre-index not loaded")
+            return []
+        
+        try:
+            return self.preindex_ranker.search_similar_documents(query, k, processed_query)
+        except Exception as e:
+            logger.error(f"Error in semantic search: {e}")
+            return []
     
     def _extract_search_parameters(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
         """Extract and prepare search parameters from processed query"""
