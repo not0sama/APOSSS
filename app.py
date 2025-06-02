@@ -13,6 +13,7 @@ from modules.query_processor import QueryProcessor
 from modules.search_engine import SearchEngine
 from modules.ranking_engine import RankingEngine
 from modules.feedback_system import FeedbackSystem
+from modules.user_manager import UserManager
 
 # Load environment variables
 load_dotenv()
@@ -33,6 +34,7 @@ try:
     search_engine = SearchEngine(db_manager)
     ranking_engine = RankingEngine()
     feedback_system = FeedbackSystem(db_manager)
+    user_manager = UserManager(db_manager)
     logger.info("All components initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize components: {str(e)}")
@@ -42,6 +44,7 @@ except Exception as e:
     search_engine = None
     ranking_engine = None
     feedback_system = None
+    user_manager = None
 
 @app.route('/')
 def index():
@@ -62,6 +65,10 @@ def search():
         if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
         
+        # Get authenticated user (optional)
+        current_user = get_authenticated_user()
+        user_id = current_user['_id'] if current_user else None
+        
         # Step 1: Process query with LLM
         logger.info(f"Processing search query: {user_query[:50]}...")
         processed_query = query_processor.process_query(user_query)
@@ -74,13 +81,31 @@ def search():
         search_results = search_engine.search_all_databases(processed_query)
         
         if not search_results or not search_results.get('results'):
+            # Track search interaction even if no results
+            if user_manager and user_id:
+                user_manager.track_user_interaction(
+                    user_id,
+                    'search',
+                    {
+                        'query': user_query,
+                        'processed_query': processed_query,
+                        'results_count': 0,
+                        'ranking_mode': ranking_mode,
+                        'session_id': data.get('session_id'),
+                        'user_agent': request.headers.get('User-Agent'),
+                        'ip_address': request.remote_addr
+                    }
+                )
+            
             return jsonify({
                 'success': True,
                 'message': 'No results found',
                 'query_analysis': processed_query,
                 'search_results': {'results': [], 'total_results': 0},
                 'categorized_results': {'high_relevance': [], 'medium_relevance': [], 'low_relevance': []},
-                'query_id': None
+                'query_id': None,
+                'user_logged_in': user_id is not None,
+                'personalized': False
             })
         
         # Step 3: Get user feedback data for LTR
@@ -100,7 +125,35 @@ def search():
             logger.warning(f"Error getting feedback data for LTR: {e}")
             user_feedback_data = {}
         
-        # Step 4: Rank results using selected mode
+        # Step 4: Apply personalization if user is logged in
+        personalized = False
+        if current_user and user_manager:
+            try:
+                # Get user's research interests and preferences
+                research_interests = current_user.get('research_interests', [])
+                preferences = current_user.get('preferences', {})
+                
+                # Boost results that match user's research interests
+                if research_interests:
+                    for result in search_results['results']:
+                        result_text = f"{result.get('title', '')} {result.get('description', '')}".lower()
+                        
+                        # Check for research interest matches
+                        interest_boost = 0
+                        for interest in research_interests:
+                            if interest.lower() in result_text:
+                                interest_boost += 0.1  # Boost by 10% per matching interest
+                        
+                        if interest_boost > 0:
+                            result['personalization_boost'] = interest_boost
+                            personalized = True
+                
+                logger.info(f"Applied personalization for user: {current_user['username']}")
+                
+            except Exception as e:
+                logger.warning(f"Error applying personalization: {e}")
+        
+        # Step 5: Rank results using selected mode
         logger.info(f"Ranking results using mode: {ranking_mode}...")
         ranked_results = ranking_engine.rank_search_results(
             search_results, processed_query, user_feedback_data, ranking_mode
@@ -109,13 +162,36 @@ def search():
         # Generate unique query ID for feedback tracking
         query_id = f"query_{hash(user_query)}_{int(datetime.now().timestamp())}"
         
+        # Step 6: Track search interaction
+        if user_manager:
+            interaction_data = {
+                'query': user_query,
+                'processed_query': processed_query,
+                'search_results': ranked_results,
+                'results_count': ranked_results.get('total_results', 0),
+                'ranking_mode': ranking_mode,
+                'query_id': query_id,
+                'personalized': personalized,
+                'session_id': data.get('session_id'),
+                'user_agent': request.headers.get('User-Agent'),
+                'ip_address': request.remote_addr
+            }
+            
+            user_manager.track_user_interaction(user_id, 'search', interaction_data)
+        
         return jsonify({
             'success': True,
             'query_analysis': processed_query,
             'search_results': ranked_results,
             'categorized_results': ranked_results.get('categorized_results', {}),
             'query_id': query_id,
-            'ranking_mode': ranking_mode
+            'ranking_mode': ranking_mode,
+            'user_logged_in': user_id is not None,
+            'personalized': personalized,
+            'user_info': {
+                'username': current_user.get('username') if current_user else None,
+                'research_interests': current_user.get('research_interests', []) if current_user else []
+            }
         })
         
     except Exception as e:
@@ -137,25 +213,56 @@ def submit_feedback():
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
-        # Submit feedback through feedback system
-        feedback_result = feedback_system.submit_feedback({
+        # Get authenticated user (optional)
+        current_user = get_authenticated_user()
+        user_id = current_user['_id'] if current_user else None
+        
+        # Prepare feedback data
+        feedback_data = {
             'query_id': data['query_id'],
             'result_id': data['result_id'],
             'rating': data['rating'],
             'feedback_type': data['feedback_type'],
             'user_session': data.get('user_session', 'anonymous'),
             'additional_data': data.get('additional_data', {}),
-            'timestamp': datetime.now().isoformat()
-        })
+            'timestamp': datetime.now().isoformat(),
+            'user_id': user_id,  # Link feedback to user if logged in
+            'user_profile': {
+                'username': current_user.get('username') if current_user else 'anonymous',
+                'role': current_user.get('role') if current_user else None,
+                'organization': current_user.get('organization') if current_user else None,
+                'research_interests': current_user.get('research_interests', []) if current_user else []
+            }
+        }
+        
+        # Submit feedback through feedback system
+        feedback_result = feedback_system.submit_feedback(feedback_data)
         
         feedback_id = feedback_result.get('feedback_id') or 'unknown'
         
-        logger.info(f"Feedback submitted successfully: {feedback_id}")
+        # Track feedback interaction for user analytics
+        if user_manager:
+            interaction_data = {
+                'query_id': data['query_id'],
+                'result_id': data['result_id'],
+                'rating': data['rating'],
+                'feedback_type': data['feedback_type'],
+                'feedback_id': feedback_id,
+                'session_id': data.get('session_id'),
+                'user_agent': request.headers.get('User-Agent'),
+                'ip_address': request.remote_addr
+            }
+            
+            user_manager.track_user_interaction(user_id, 'feedback', interaction_data)
+        
+        logger.info(f"Feedback submitted successfully: {feedback_id} (User: {current_user.get('username') if current_user else 'anonymous'})")
         
         return jsonify({
             'success': True,
             'feedback_id': feedback_id,
-            'message': 'Feedback submitted successfully'
+            'message': 'Feedback submitted successfully',
+            'user_logged_in': user_id is not None,
+            'points_earned': 1 if user_id else 0  # Gamification element
         })
         
     except Exception as e:
@@ -449,13 +556,312 @@ def health_check():
         'query_processor': query_processor is not None,
         'search_engine': search_engine is not None,
         'ranking_engine': ranking_engine is not None,
-        'feedback_system': feedback_system is not None
+        'feedback_system': feedback_system is not None,
+        'user_manager': user_manager is not None
     }
     
     return jsonify({
         'status': 'healthy' if all(status.values()) else 'unhealthy',
         'components': status
     })
+
+# Authentication and User Management Endpoints
+
+@app.route('/login')
+def login_page():
+    """Serve the login page"""
+    return render_template('login.html')
+
+@app.route('/signup')
+def signup_page():
+    """Serve the signup page"""
+    return render_template('signup.html')
+
+@app.route('/api/auth/register', methods=['POST'])
+def register_user():
+    """Register a new user"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        result = user_manager.register_user(data)
+        
+        if result['success']:
+            logger.info(f"New user registered: {data.get('username')}")
+            return jsonify(result), 201
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in user registration: {str(e)}")
+        return jsonify({'error': 'Registration failed due to server error'}), 500
+
+@app.route('/api/auth/login', methods=['POST'])
+def login_user():
+    """Authenticate user login"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        login_identifier = data.get('login_identifier')
+        password = data.get('password')
+        
+        if not login_identifier or not password:
+            return jsonify({'error': 'Login identifier and password are required'}), 400
+        
+        result = user_manager.authenticate_user(login_identifier, password)
+        
+        if result['success']:
+            logger.info(f"User logged in: {login_identifier}")
+            return jsonify(result)
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        logger.error(f"Error in user authentication: {str(e)}")
+        return jsonify({'error': 'Login failed due to server error'}), 500
+
+@app.route('/api/auth/verify', methods=['POST'])
+def verify_token():
+    """Verify JWT token"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'No valid authorization header'}), 401
+        
+        token = auth_header.split(' ')[1]
+        result = user_manager.verify_token(token)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        logger.error(f"Error verifying token: {str(e)}")
+        return jsonify({'error': 'Token verification failed'}), 500
+
+@app.route('/api/auth/check-email', methods=['POST'])
+def check_email_availability():
+    """Check if email is available for registration"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+        
+        # Check if email exists in database
+        users_collection = user_manager.aposss_db['users']
+        existing_user = users_collection.find_one({'email': email.lower()})
+        
+        return jsonify({'available': existing_user is None})
+        
+    except Exception as e:
+        logger.error(f"Error checking email availability: {str(e)}")
+        return jsonify({'error': 'Email check failed'}), 500
+
+@app.route('/api/auth/check-username', methods=['POST'])
+def check_username_availability():
+    """Check if username is available for registration"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        username = data.get('username')
+        
+        if not username:
+            return jsonify({'error': 'Username is required'}), 400
+        
+        # Check if username exists in database
+        users_collection = user_manager.aposss_db['users']
+        existing_user = users_collection.find_one({'username': username})
+        
+        return jsonify({'available': existing_user is None})
+        
+    except Exception as e:
+        logger.error(f"Error checking username availability: {str(e)}")
+        return jsonify({'error': 'Username check failed'}), 500
+
+@app.route('/api/auth/logout', methods=['POST'])
+def logout_user():
+    """Logout user (client-side token removal)"""
+    try:
+        # Since we're using JWT tokens stored client-side,
+        # logout is mainly handled on the frontend
+        # But we can track the logout event if user is authenticated
+        
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer ') and user_manager:
+            token = auth_header.split(' ')[1]
+            result = user_manager.verify_token(token)
+            
+            if result['success']:
+                user_id = result['user']['_id']
+                # Track logout interaction
+                user_manager.track_user_interaction(
+                    user_id, 
+                    'logout', 
+                    {
+                        'timestamp': datetime.now().isoformat(),
+                        'user_agent': request.headers.get('User-Agent'),
+                        'ip_address': request.remote_addr
+                    }
+                )
+        
+        return jsonify({'success': True, 'message': 'Logged out successfully'})
+        
+    except Exception as e:
+        logger.error(f"Error in logout: {str(e)}")
+        return jsonify({'success': True, 'message': 'Logged out successfully'})
+
+@app.route('/api/user/profile', methods=['GET'])
+def get_user_profile():
+    """Get user profile"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        # Get user from token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        auth_result = user_manager.verify_token(token)
+        
+        if not auth_result['success']:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        user_id = auth_result['user']['_id']
+        profile_result = user_manager.get_user_profile(user_id)
+        
+        return jsonify(profile_result)
+        
+    except Exception as e:
+        logger.error(f"Error getting user profile: {str(e)}")
+        return jsonify({'error': 'Failed to get profile'}), 500
+
+@app.route('/api/user/profile', methods=['PUT'])
+def update_user_profile():
+    """Update user profile"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        # Get user from token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        auth_result = user_manager.verify_token(token)
+        
+        if not auth_result['success']:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        user_id = auth_result['user']['_id']
+        update_data = request.get_json()
+        
+        if not update_data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        result = user_manager.update_user_profile(user_id, update_data)
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error updating user profile: {str(e)}")
+        return jsonify({'error': 'Failed to update profile'}), 500
+
+@app.route('/api/user/recommendations', methods=['GET'])
+def get_user_recommendations():
+    """Get personalized recommendations for user"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        # Get user from token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        auth_result = user_manager.verify_token(token)
+        
+        if not auth_result['success']:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        user_id = auth_result['user']['_id']
+        recommendations = user_manager.get_user_recommendations(user_id)
+        
+        return jsonify(recommendations)
+        
+    except Exception as e:
+        logger.error(f"Error getting user recommendations: {str(e)}")
+        return jsonify({'error': 'Failed to get recommendations'}), 500
+
+@app.route('/api/user/analytics', methods=['GET'])
+def get_user_analytics():
+    """Get user analytics and statistics"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        # Get user from token
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        auth_result = user_manager.verify_token(token)
+        
+        if not auth_result['success']:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        user_id = auth_result['user']['_id']
+        analytics = user_manager.get_user_analytics(user_id)
+        
+        return jsonify(analytics)
+        
+    except Exception as e:
+        logger.error(f"Error getting user analytics: {str(e)}")
+        return jsonify({'error': 'Failed to get analytics'}), 500
+
+# Helper function to get authenticated user
+def get_authenticated_user():
+    """Helper function to get authenticated user from request"""
+    if not user_manager:
+        return None
+    
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    
+    try:
+        token = auth_header.split(' ')[1]
+        auth_result = user_manager.verify_token(token)
+        
+        if auth_result['success']:
+            return auth_result['user']
+        return None
+        
+    except Exception:
+        return None
 
 @app.route('/api/preindex/stats', methods=['GET'])
 def get_preindex_stats():

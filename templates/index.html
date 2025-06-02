@@ -63,9 +63,63 @@
     <!-- Header -->
     <header class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-6">
-            <h1 class="text-3xl font-bold">APOSSS</h1>
-            <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
-            <p class="text-blue-200 text-sm mt-1">Phase 3: AI Ranking & User Feedback</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">APOSSS</h1>
+                    <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
+                    <p class="text-blue-200 text-sm mt-1">Phase 3: AI Ranking & User Feedback</p>
+                </div>
+                
+                <!-- User Authentication Section -->
+                <div id="authSection" class="flex items-center space-x-4">
+                    <!-- Not logged in state -->
+                    <div id="guestSection" class="flex items-center space-x-3">
+                        <span class="text-blue-200 text-sm">Welcome, Guest</span>
+                        <a href="/login" class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-white hover:bg-gray-100 text-blue-600 px-4 py-2 rounded-lg transition-colors text-sm">
+                            Sign Up
+                        </a>
+                    </div>
+                    
+                    <!-- Logged in state -->
+                    <div id="userSection" class="hidden flex items-center space-x-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right">
+                                <div id="userWelcome" class="text-sm font-medium"></div>
+                                <div id="userRole" class="text-xs text-blue-200"></div>
+                            </div>
+                            <div class="relative">
+                                <button 
+                                    id="userMenuButton" 
+                                    onclick="toggleUserMenu()"
+                                    class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors"
+                                >
+                                    <span id="userInitials" class="text-sm font-medium">?</span>
+                                </button>
+                                
+                                <!-- User Dropdown Menu -->
+                                <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                                    <a href="#" onclick="showProfile()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors">
+                                        👤 View Profile
+                                    </a>
+                                    <a href="#" onclick="showRecommendations()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors">
+                                        ⭐ Recommendations
+                                    </a>
+                                    <a href="#" onclick="showAnalytics()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors">
+                                        📊 My Analytics
+                                    </a>
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="#" onclick="logout()" class="block px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
+                                        🚪 Sign Out
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -426,51 +480,89 @@
         }
 
         async function performSearch() {
-            const query = document.getElementById('searchInput').value.trim();
+            const queryInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchBtn');
+            const resultsDiv = document.getElementById('searchResultsContainer');
+            const rankingMode = document.getElementById('rankingMode').value;
             
+            const query = queryInput.value.trim();
             if (!query) {
-                alert('Please enter a query to search.');
+                showTemporaryMessage('Please enter a search query', 'error');
                 return;
             }
-
-            showSearchLoading(true);
-            feedbackSubmitted.clear();
-
+            
+            // Show loading state
+            searchButton.disabled = true;
+            searchButton.innerHTML = '<div class="loading mr-2"></div> Searching...';
+            resultsDiv.innerHTML = '<div class="text-center p-8"><div class="loading mx-auto"></div><p class="mt-2 text-gray-600">Searching across all databases...</p></div>';
+            resultsDiv.classList.remove('hidden');
+            
             try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                };
+                
+                const requestData = {
+                    query: query,
+                    ranking_mode: rankingMode,
+                    ...getSessionData()
+                };
+                
                 const response = await fetch('/api/search', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ query: query })
+                    headers: headers,
+                    body: JSON.stringify(requestData)
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (data.success) {
-                    currentSearchResults = data.search_results;
-                    currentQueryId = data.query_id;
-                    displaySearchResults(data.search_results, data.query_analysis, data.categorized_results);
+                    // Store search results for feedback system
+                    currentSearchResults = data;
+                    currentQueryId = data.query_id || `query_${Date.now()}`;
+                    feedbackSubmitted.clear(); // Reset feedback tracking
+                    
+                    // Display the results
+                    displaySearchResults(data);
+                    
+                    // Show personalization message if applicable
+                    if (data.personalized && data.user_logged_in) {
+                        showTemporaryMessage(`Search personalized for ${data.user_info.username}`, 'success');
+                    }
                 } else {
-                    alert('Error performing search: ' + (data.error || 'Unknown error'));
+                    resultsDiv.innerHTML = `<div class="text-center p-8 text-red-600">Error: ${data.error}</div>`;
                 }
+                
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error connecting to server: ' + error.message);
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `<div class="text-center p-8 text-red-600">Search failed: ${error.message}</div>`;
             } finally {
-                showSearchLoading(false);
+                // Reset button state
+                searchButton.disabled = false;
+                searchButton.innerHTML = '🔍 Search';
             }
         }
 
-        function displaySearchResults(searchResults, queryAnalysis, categorizedResults) {
+        function displaySearchResults(data) {
             const container = document.getElementById('searchResultsContainer');
             container.classList.remove('hidden');
 
             // Display results summary
-            displayResultsSummary(searchResults);
+            displayResultsSummary(data);
 
             // Display categorized results
-            displayCategorizedResults(categorizedResults);
+            if (data.categorized_results) {
+                displayCategorizedResults(data.categorized_results);
+            } else {
+                // Fallback: display all results in one category
+                const allResults = data.results || [];
+                displayCategorizedResults({
+                    high_relevance: allResults.filter(r => r.ranking_score > 0.7),
+                    medium_relevance: allResults.filter(r => r.ranking_score > 0.4 && r.ranking_score <= 0.7),
+                    low_relevance: allResults.filter(r => r.ranking_score <= 0.4)
+                });
+            }
         }
 
         function displayResultsSummary(searchResults) {
@@ -595,49 +687,78 @@
 
         async function submitFeedback(resultId, rating, feedbackType) {
             if (!currentQueryId) {
-                alert('No active query for feedback');
+                showTemporaryMessage('No active search to provide feedback for', 'error');
                 return;
             }
-            
-            if (feedbackSubmitted.has(resultId)) {
-                alert('Feedback already submitted for this result');
+
+            // Check if feedback already submitted for this result
+            const feedbackKey = `${currentQueryId}_${resultId}`;
+            if (feedbackSubmitted.has(feedbackKey)) {
+                showTemporaryMessage('Feedback already submitted for this result', 'warning');
                 return;
             }
 
             try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders()
+                };
+                
+                const requestData = {
+                    query_id: currentQueryId,
+                    result_id: resultId,
+                    rating: rating,
+                    feedback_type: feedbackType,
+                    user_session: 'web_interface',
+                    additional_data: {
+                        user_agent: navigator.userAgent,
+                        timestamp: new Date().toISOString(),
+                        page_url: window.location.href
+                    },
+                    ...getSessionData()
+                };
+                
                 const response = await fetch('/api/feedback', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        query_id: currentQueryId,
-                        result_id: resultId,
-                        rating: rating,
-                        feedback_type: feedbackType,
-                        user_session: 'web_session_' + Date.now()
-                    })
+                    headers: headers,
+                    body: JSON.stringify(requestData)
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    feedbackSubmitted.add(resultId);
-                    // Mark buttons as submitted
-                    const buttons = document.querySelectorAll(`[onclick*="${resultId}"]`);
-                    buttons.forEach(btn => {
-                        btn.classList.add('feedback-submitted');
-                        btn.textContent = btn.textContent.includes('👍') ? '✅ Submitted' : '❌ Submitted';
-                    });
+                    // Mark feedback as submitted
+                    feedbackSubmitted.add(feedbackKey);
                     
-                    // Show success message
-                    showTemporaryMessage('Feedback submitted successfully!', 'success');
+                    // Update the feedback buttons to show submitted state
+                    const resultCard = document.querySelector(`[data-result-id="${resultId}"]`);
+                    if (resultCard) {
+                        const feedbackButtons = resultCard.querySelectorAll('.feedback-btn');
+                        feedbackButtons.forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50');
+                        });
+                        
+                        // Highlight the submitted rating
+                        const submittedBtn = resultCard.querySelector(`[data-rating="${rating}"]`);
+                        if (submittedBtn) {
+                            submittedBtn.classList.add('bg-green-500', 'text-white');
+                        }
+                    }
+                    
+                    let message = 'Feedback submitted successfully!';
+                    if (data.user_logged_in && data.points_earned > 0) {
+                        message += ` (+${data.points_earned} point)`;
+                    }
+                    
+                    showTemporaryMessage(message, 'success');
                 } else {
-                    alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
+                    showTemporaryMessage('Failed to submit feedback: ' + (data.error || 'Unknown error'), 'error');
                 }
+                
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error submitting feedback: ' + error.message);
+                console.error('Feedback submission error:', error);
+                showTemporaryMessage('Error submitting feedback: ' + error.message, 'error');
             }
         }
 
@@ -1547,6 +1668,398 @@
         // Auto-check health on page load
         document.addEventListener('DOMContentLoaded', function() {
             checkHealth();
+        });
+
+        // User Authentication and Profile Management
+        let currentUser = null;
+
+        function checkAuthenticationStatus() {
+            // Check if user is logged in and update UI accordingly
+            const token = localStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data');
+            
+            if (token && userData) {
+                try {
+                    currentUser = JSON.parse(userData);
+                    
+                    // Verify token is still valid
+                    fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            currentUser = data.user;
+                            localStorage.setItem('user_data', JSON.stringify(currentUser));
+                            showUserInterface();
+                        } else {
+                            // Token is invalid
+                            logout(false);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Token verification error:', error);
+                        logout(false);
+                    });
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    logout(false);
+                }
+            } else {
+                showGuestInterface();
+            }
+        }
+
+        function showUserInterface() {
+            // Show logged in user interface
+            const guestSection = document.getElementById('guestSection');
+            const userSection = document.getElementById('userSection');
+            const userWelcome = document.getElementById('userWelcome');
+            const userRole = document.getElementById('userRole');
+            const userInitials = document.getElementById('userInitials');
+            
+            if (currentUser) {
+                guestSection.classList.add('hidden');
+                userSection.classList.remove('hidden');
+                
+                userWelcome.textContent = `Welcome, ${currentUser.first_name}`;
+                userRole.textContent = currentUser.role || currentUser.organization || 'User';
+                
+                // Set user initials
+                const initials = (currentUser.first_name[0] + currentUser.last_name[0]).toUpperCase();
+                userInitials.textContent = initials;
+            }
+        }
+
+        function showGuestInterface() {
+            // Show guest user interface
+            const guestSection = document.getElementById('guestSection');
+            const userSection = document.getElementById('userSection');
+            
+            guestSection.classList.remove('hidden');
+            userSection.classList.add('hidden');
+            currentUser = null;
+        }
+
+        function toggleUserMenu() {
+            // Toggle user dropdown menu
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenuButton = document.getElementById('userMenuButton');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (!userMenuButton.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        async function logout(showMessage = true) {
+            // Logout user
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                if (token) {
+                    // Call logout endpoint to track the logout
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                }
+                
+                // Clear local storage
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                
+                // Update UI
+                showGuestInterface();
+                
+                if (showMessage) {
+                    showTemporaryMessage('Logged out successfully', 'success');
+                }
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Still clear local storage even if API call fails
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_data');
+                showGuestInterface();
+            }
+        }
+
+        async function showProfile() {
+            // Show user profile modal
+            if (!currentUser) return;
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const user = data.user;
+                    const statusDiv = document.getElementById('systemStatus');
+                    
+                    statusDiv.innerHTML = `
+                        <div class="p-6 bg-blue-50 text-blue-800 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">👤 User Profile</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
+                                    <p><strong>Username:</strong> ${user.username}</p>
+                                    <p><strong>Email:</strong> ${user.email}</p>
+                                    <p><strong>Role:</strong> ${user.role || 'Not specified'}</p>
+                                </div>
+                                <div>
+                                    <p><strong>Organization:</strong> ${user.organization || 'Not specified'}</p>
+                                    <p><strong>Department:</strong> ${user.department || 'Not specified'}</p>
+                                    <p><strong>Country:</strong> ${user.country || 'Not specified'}</p>
+                                    <p><strong>Member Since:</strong> ${new Date(user.created_at).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            
+                            ${user.research_interests && user.research_interests.length > 0 ? `
+                                <div class="mt-4">
+                                    <p class="font-semibold mb-2">Research Interests:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${user.research_interests.map(interest => 
+                                            `<span class="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs">${interest}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="mt-4 pt-4 border-t border-blue-200">
+                                <p class="font-semibold mb-2">Activity Stats:</p>
+                                <div class="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <div class="text-lg font-bold">${user.interaction_stats?.total_searches || 0}</div>
+                                        <div class="text-xs">Searches</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-bold">${user.interaction_stats?.total_feedback_given || 0}</div>
+                                        <div class="text-xs">Feedback Given</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-bold">${user.interaction_stats?.total_login_count || 0}</div>
+                                        <div class="text-xs">Logins</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Hide user menu
+                    document.getElementById('userDropdown').classList.add('hidden');
+                } else {
+                    showTemporaryMessage('Failed to load profile', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showTemporaryMessage('Error loading profile', 'error');
+            }
+        }
+
+        async function showRecommendations() {
+            // Show personalized recommendations
+            if (!currentUser) return;
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/api/user/recommendations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const recommendations = data.recommendations;
+                    const statusDiv = document.getElementById('systemStatus');
+                    
+                    statusDiv.innerHTML = `
+                        <div class="p-6 bg-green-50 text-green-800 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">⭐ Personalized Recommendations</h3>
+                            
+                            ${recommendations.suggested_topics && recommendations.suggested_topics.length > 0 ? `
+                                <div class="mb-4">
+                                    <h4 class="font-semibold mb-2">Suggested Topics:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${recommendations.suggested_topics.map(topic => 
+                                            `<button onclick="setSearchQuery('${topic}')" class="bg-green-200 hover:bg-green-300 text-green-800 px-3 py-1 rounded-full text-sm transition-colors cursor-pointer">${topic}</button>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${recommendations.preferred_resource_types && recommendations.preferred_resource_types.length > 0 ? `
+                                <div class="mb-4">
+                                    <h4 class="font-semibold mb-2">Your Preferred Resource Types:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${recommendations.preferred_resource_types.map(type => 
+                                            `<span class="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs">${type}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${recommendations.personalized_search_suggestions && recommendations.personalized_search_suggestions.length > 0 ? `
+                                <div class="mb-4">
+                                    <h4 class="font-semibold mb-2">Personalized Search Suggestions:</h4>
+                                    <div class="space-y-2">
+                                        ${recommendations.personalized_search_suggestions.map(suggestion => 
+                                            `<div class="bg-white p-3 rounded border">
+                                                <button onclick="setSearchQuery('${suggestion}')" class="text-left text-green-700 hover:text-green-900 transition-colors">
+                                                    🔍 ${suggestion}
+                                                </button>
+                                            </div>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${recommendations.research_interests && recommendations.research_interests.length > 0 ? `
+                                <div>
+                                    <h4 class="font-semibold mb-2">Your Research Interests:</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${recommendations.research_interests.map(interest => 
+                                            `<span class="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs">${interest}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    // Hide user menu
+                    document.getElementById('userDropdown').classList.add('hidden');
+                } else {
+                    showTemporaryMessage('Failed to load recommendations', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                showTemporaryMessage('Error loading recommendations', 'error');
+            }
+        }
+
+        async function showAnalytics() {
+            // Show user analytics
+            if (!currentUser) return;
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/api/user/analytics', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const analytics = data.analytics;
+                    const statusDiv = document.getElementById('systemStatus');
+                    
+                    statusDiv.innerHTML = `
+                        <div class="p-6 bg-purple-50 text-purple-800 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">📊 Your Analytics</h3>
+                            
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div class="bg-white p-4 rounded-lg text-center">
+                                    <div class="text-2xl font-bold text-purple-600">${analytics.total_interactions || 0}</div>
+                                    <div class="text-sm">Total Interactions</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg text-center">
+                                    <div class="text-2xl font-bold text-blue-600">${analytics.search_count || 0}</div>
+                                    <div class="text-sm">Searches</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg text-center">
+                                    <div class="text-2xl font-bold text-green-600">${analytics.feedback_count || 0}</div>
+                                    <div class="text-sm">Feedback Given</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg text-center">
+                                    <div class="text-2xl font-bold text-orange-600">${analytics.user_stats?.total_login_count || 0}</div>
+                                    <div class="text-sm">Logins</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4 class="font-semibold mb-2">Account Information:</h4>
+                                <div class="bg-white p-3 rounded">
+                                    <p><strong>Member Since:</strong> ${analytics.member_since ? new Date(analytics.member_since).toLocaleDateString() : 'N/A'}</p>
+                                    <p><strong>Last Active:</strong> ${analytics.last_active ? new Date(analytics.last_active).toLocaleDateString() : 'N/A'}</p>
+                                </div>
+                            </div>
+                            
+                            ${analytics.recent_activity && analytics.recent_activity.length > 0 ? `
+                                <div>
+                                    <h4 class="font-semibold mb-2">Recent Activity:</h4>
+                                    <div class="bg-white p-3 rounded max-h-40 overflow-y-auto">
+                                        ${analytics.recent_activity.slice(0, 5).map(activity => `
+                                            <div class="flex justify-between text-sm py-1 border-b border-gray-100 last:border-b-0">
+                                                <span>${activity.interaction_type}</span>
+                                                <span class="text-gray-500">${new Date(activity.timestamp).toLocaleDateString()}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    // Hide user menu
+                    document.getElementById('userDropdown').classList.add('hidden');
+                } else {
+                    showTemporaryMessage('Failed to load analytics', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showTemporaryMessage('Error loading analytics', 'error');
+            }
+        }
+
+        // Enhance existing functions to include user context
+        function getAuthHeaders() {
+            // Get authorization headers if user is logged in
+            const token = localStorage.getItem('auth_token');
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
+        function getSessionData() {
+            // Get session data for tracking
+            return {
+                session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                user_agent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // Initialize authentication status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkHealth();
+            checkAuthenticationStatus();
         });
     </script>
 </body>

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - APOSSS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-gradient-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-custom min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl">
+        <!-- Signup Form -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-8 text-white">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">Join APOSSS</h1>
+                <p class="text-blue-100">Create your account to access personalized research</p>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div id="messageContainer" class="hidden mb-6">
+                <div id="messageContent" class="p-4 rounded-lg text-center"></div>
+            </div>
+
+            <!-- Signup Form -->
+            <form id="signupForm" onsubmit="handleSignup(event)">
+                <!-- Personal Information -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-100">Personal Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="firstName" class="block text-sm font-medium mb-2">
+                                First Name *
+                            </label>
+                            <input 
+                                type="text" 
+                                id="firstName" 
+                                name="firstName" 
+                                required
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Enter your first name"
+                            >
+                        </div>
+                        <div>
+                            <label for="lastName" class="block text-sm font-medium mb-2">
+                                Last Name *
+                            </label>
+                            <input 
+                                type="text" 
+                                id="lastName" 
+                                name="lastName" 
+                                required
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Enter your last name"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-100">Account Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="email" class="block text-sm font-medium mb-2">
+                                Email Address *
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                required
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Enter your email address"
+                                onchange="checkEmailAvailability()"
+                            >
+                            <div id="emailStatus" class="mt-1 text-sm hidden"></div>
+                        </div>
+                        
+                        <div>
+                            <label for="username" class="block text-sm font-medium mb-2">
+                                Username *
+                            </label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                required
+                                pattern="[a-zA-Z0-9_]+"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Choose a username"
+                                onchange="checkUsernameAvailability()"
+                            >
+                            <div id="usernameStatus" class="mt-1 text-sm hidden"></div>
+                            <p class="mt-1 text-xs text-blue-200">Only letters, numbers, and underscores allowed</p>
+                        </div>
+                        
+                        <div>
+                            <label for="password" class="block text-sm font-medium mb-2">
+                                Password *
+                            </label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                required
+                                minlength="8"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Create a strong password"
+                                oninput="checkPasswordStrength()"
+                            >
+                            <div class="mt-2">
+                                <div class="flex justify-between text-xs text-blue-200 mb-1">
+                                    <span>Password Strength</span>
+                                    <span id="strengthText">Weak</span>
+                                </div>
+                                <div class="w-full bg-white/20 rounded-full">
+                                    <div id="strengthBar" class="password-strength bg-red-500 w-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="confirmPassword" class="block text-sm font-medium mb-2">
+                                Confirm Password *
+                            </label>
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                name="confirmPassword" 
+                                required
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Confirm your password"
+                                oninput="checkPasswordMatch()"
+                            >
+                            <div id="passwordMatch" class="mt-1 text-sm hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Information -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-100">Professional Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="organization" class="block text-sm font-medium mb-2">
+                                Organization
+                            </label>
+                            <input 
+                                type="text" 
+                                id="organization" 
+                                name="organization"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="University, Company, etc."
+                            >
+                        </div>
+                        
+                        <div>
+                            <label for="department" class="block text-sm font-medium mb-2">
+                                Department
+                            </label>
+                            <input 
+                                type="text" 
+                                id="department" 
+                                name="department"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                                placeholder="Computer Science, Biology, etc."
+                            >
+                        </div>
+                        
+                        <div>
+                            <label for="role" class="block text-sm font-medium mb-2">
+                                Role/Job Title
+                            </label>
+                            <select 
+                                id="role" 
+                                name="role"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white"
+                            >
+                                <option value="">Select your role</option>
+                                <option value="student">Student</option>
+                                <option value="graduate_student">Graduate Student</option>
+                                <option value="phd_candidate">PhD Candidate</option>
+                                <option value="postdoc">Postdoctoral Researcher</option>
+                                <option value="professor">Professor</option>
+                                <option value="assistant_professor">Assistant Professor</option>
+                                <option value="associate_professor">Associate Professor</option>
+                                <option value="researcher">Researcher</option>
+                                <option value="engineer">Engineer</option>
+                                <option value="scientist">Scientist</option>
+                                <option value="industry_professional">Industry Professional</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="academicLevel" class="block text-sm font-medium mb-2">
+                                Academic Level
+                            </label>
+                            <select 
+                                id="academicLevel" 
+                                name="academicLevel"
+                                class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white"
+                            >
+                                <option value="">Select level</option>
+                                <option value="undergraduate">Undergraduate</option>
+                                <option value="masters">Master's</option>
+                                <option value="phd">PhD</option>
+                                <option value="postdoc">Postdoctoral</option>
+                                <option value="faculty">Faculty</option>
+                                <option value="industry">Industry</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label for="country" class="block text-sm font-medium mb-2">
+                            Country
+                        </label>
+                        <input 
+                            type="text" 
+                            id="country" 
+                            name="country"
+                            class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
+                            placeholder="Enter your country"
+                        >
+                    </div>
+                </div>
+
+                <!-- Research Interests -->
+                <div class="mb-8">
+                    <label for="researchInterests" class="block text-sm font-medium mb-2">
+                        Research Interests
+                    </label>
+                    <textarea 
+                        id="researchInterests" 
+                        name="researchInterests"
+                        rows="3"
+                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100 resize-none"
+                        placeholder="Enter your research interests, separated by commas (e.g., machine learning, bioinformatics, renewable energy)"
+                    ></textarea>
+                    <p class="mt-1 text-xs text-blue-200">This helps us provide personalized recommendations</p>
+                </div>
+
+                <!-- Terms and Privacy -->
+                <div class="mb-6">
+                    <div class="flex items-start">
+                        <input 
+                            type="checkbox" 
+                            id="agreeTerms" 
+                            name="agreeTerms"
+                            required
+                            class="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500 mt-1"
+                        >
+                        <label for="agreeTerms" class="ml-3 text-sm text-blue-100">
+                            I agree to the <a href="#" class="text-white hover:underline">Terms of Service</a> 
+                            and <a href="#" class="text-white hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="signupButton"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+                >
+                    <span id="signupText">Create Account</span>
+                    <span id="signupSpinner" class="loading ml-2 hidden"></span>
+                </button>
+            </form>
+
+            <!-- Alternative Actions -->
+            <div class="mt-8 text-center space-y-4">
+                <p class="text-blue-100">
+                    Already have an account? 
+                    <a href="/login" class="text-white font-medium hover:underline">
+                        Sign in here
+                    </a>
+                </p>
+                
+                <div class="border-t border-white/20 pt-4">
+                    <p class="text-blue-100 mb-3">Or continue without an account</p>
+                    <a 
+                        href="/" 
+                        class="inline-block bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                    >
+                        Browse as Guest
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-blue-200">
+            <p class="text-sm">
+                APOSSS - AI-Powered Open-Science Semantic Search System
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let emailAvailable = false;
+        let usernameAvailable = false;
+        let passwordStrong = false;
+        let passwordsMatch = false;
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const content = document.getElementById('messageContent');
+            
+            container.classList.remove('hidden');
+            content.className = `p-4 rounded-lg text-center ${
+                type === 'error' ? 'bg-red-500/20 border border-red-400 text-red-100' :
+                type === 'success' ? 'bg-green-500/20 border border-green-400 text-green-100' :
+                'bg-blue-500/20 border border-blue-400 text-blue-100'
+            }`;
+            content.textContent = message;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 5000);
+        }
+
+        function setLoading(loading) {
+            const button = document.getElementById('signupButton');
+            const text = document.getElementById('signupText');
+            const spinner = document.getElementById('signupSpinner');
+            
+            if (loading) {
+                button.disabled = true;
+                button.classList.add('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Creating Account...';
+                spinner.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                button.classList.remove('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Create Account';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        async function checkEmailAvailability() {
+            const email = document.getElementById('email').value;
+            const status = document.getElementById('emailStatus');
+            
+            if (!email) {
+                status.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/check-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                status.classList.remove('hidden');
+                
+                if (data.available) {
+                    status.className = 'mt-1 text-sm text-green-300';
+                    status.textContent = '✓ Email is available';
+                    emailAvailable = true;
+                } else {
+                    status.className = 'mt-1 text-sm text-red-300';
+                    status.textContent = '✗ Email is already registered';
+                    emailAvailable = false;
+                }
+            } catch (error) {
+                status.classList.add('hidden');
+            }
+        }
+
+        async function checkUsernameAvailability() {
+            const username = document.getElementById('username').value;
+            const status = document.getElementById('usernameStatus');
+            
+            if (!username || username.length < 3) {
+                status.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/check-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                
+                const data = await response.json();
+                status.classList.remove('hidden');
+                
+                if (data.available) {
+                    status.className = 'mt-1 text-sm text-green-300';
+                    status.textContent = '✓ Username is available';
+                    usernameAvailable = true;
+                } else {
+                    status.className = 'mt-1 text-sm text-red-300';
+                    status.textContent = '✗ Username is already taken';
+                    usernameAvailable = false;
+                }
+            } catch (error) {
+                status.classList.add('hidden');
+            }
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            let feedback = 'Weak';
+            let color = 'bg-red-500';
+            
+            if (password.length >= 8) strength += 20;
+            if (password.length >= 12) strength += 10;
+            if (/[a-z]/.test(password)) strength += 20;
+            if (/[A-Z]/.test(password)) strength += 20;
+            if (/[0-9]/.test(password)) strength += 15;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 15;
+            
+            if (strength >= 80) {
+                feedback = 'Very Strong';
+                color = 'bg-green-500';
+                passwordStrong = true;
+            } else if (strength >= 60) {
+                feedback = 'Strong';
+                color = 'bg-green-400';
+                passwordStrong = true;
+            } else if (strength >= 40) {
+                feedback = 'Fair';
+                color = 'bg-yellow-500';
+                passwordStrong = false;
+            } else {
+                feedback = 'Weak';
+                color = 'bg-red-500';
+                passwordStrong = false;
+            }
+            
+            strengthBar.className = `password-strength ${color} w-${Math.min(100, strength)}%`;
+            strengthBar.style.width = `${Math.min(100, strength)}%`;
+            strengthText.textContent = feedback;
+            
+            checkPasswordMatch();
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchStatus = document.getElementById('passwordMatch');
+            
+            if (!confirmPassword) {
+                matchStatus.classList.add('hidden');
+                passwordsMatch = false;
+                return;
+            }
+            
+            matchStatus.classList.remove('hidden');
+            
+            if (password === confirmPassword) {
+                matchStatus.className = 'mt-1 text-sm text-green-300';
+                matchStatus.textContent = '✓ Passwords match';
+                passwordsMatch = true;
+            } else {
+                matchStatus.className = 'mt-1 text-sm text-red-300';
+                matchStatus.textContent = '✗ Passwords do not match';
+                passwordsMatch = false;
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            
+            // Validate form
+            if (!emailAvailable) {
+                showMessage('Please use an available email address', 'error');
+                return;
+            }
+            
+            if (!usernameAvailable) {
+                showMessage('Please choose an available username', 'error');
+                return;
+            }
+            
+            if (!passwordStrong) {
+                showMessage('Please choose a stronger password', 'error');
+                return;
+            }
+            
+            if (!passwordsMatch) {
+                showMessage('Passwords do not match', 'error');
+                return;
+            }
+            
+            const formData = new FormData(event.target);
+            
+            // Parse research interests
+            const researchInterests = formData.get('researchInterests');
+            const interestsArray = researchInterests ? 
+                researchInterests.split(',').map(interest => interest.trim()).filter(interest => interest) : [];
+            
+            const signupData = {
+                first_name: formData.get('firstName'),
+                last_name: formData.get('lastName'),
+                email: formData.get('email'),
+                username: formData.get('username'),
+                password: formData.get('password'),
+                organization: formData.get('organization') || '',
+                department: formData.get('department') || '',
+                role: formData.get('role') || '',
+                academic_level: formData.get('academicLevel') || '',
+                country: formData.get('country') || '',
+                research_interests: interestsArray
+            };
+
+            setLoading(true);
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(signupData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Account created successfully! Redirecting to login...', 'success');
+                    
+                    // Redirect to login after short delay
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    showMessage(data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Check if user is already logged in
+        window.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // User is already logged in, redirect to main page
+                        showMessage('You are already logged in. Redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1000);
+                    }
+                })
+                .catch(error => {
+                    // Token is invalid, remove it
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_data');
+                });
+            }
+        });
+    </script>
+</body>
+</html> 
