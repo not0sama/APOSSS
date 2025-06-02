@@ -329,3 +329,36 @@ Handling Diverse Data Types: Your ranking model will need to consider how to com
         Sentence Transformers (e.g., Sentence-BERT, MPNet): Pre-trained models specifically designed to create high-quality sentence/paragraph embeddings. Easy to use with the sentence-transformers Python library.
     Application: 
         This semantic similarity score can be a very strong signal of relevance, especially when keywords don't perfectly match but the meaning is similar.
+
+
+**Learning to Rank (LTR) Models:
+    Concept: Instead of relying solely on individual scoring methods, LTR models learn a ranking function from training data. This data consists of queries, lists of retrieved items, and relevance labels (which you can get from your user feedback system).
+    How it works: You'll engineer a set of features for each query-item pair. The LTR model then learns the optimal weights for these features to produce the best ranking.
+    Types of LTR:
+        Pointwise: Predicts the relevance score of a single item.
+        Pairwise: Predicts which item in a pair is more relevant.
+        Listwise: Optimizes the entire ranked list directly (often the most effective but can be more complex).
+    Feature Engineering is Key: This is where you can get creative and leverage your data:
+    Textual Features (beyond TF-IDF):
+        BM25: An improvement over TF-IDF, often performs better.
+        N-gram overlap between query and item fields (title, abstract, description).
+        Query term proximity within item text.
+    Metadata Features (from your MongoDB schemas):
+        Recency: publication_date (books, journals, projects), year (articles), created_at (experts, equipment). More recent items might be more relevant for some queries.
+    Authority/Impact:
+        citations for Research_Papers.articles.
+        Number of projects/publications for an Experts_System.experts (requires aggregation).
+        job_complete.count for Experts_System.experts.
+    Availability/Status: status for Laboratories.equipments and Laboratories.materials.
+        Match between LLM-identified "related specializations" and category (books, projects), expert roles, or keywords.
+    LLM-derived Features:
+        Confidence score of the LLM's intent detection.
+        If your LLM can provide a direct relevance score for a query-item pair (some can be prompted for this).
+    User Interaction Features (from your feedback system):
+        Historical click-through rate (CTR) for an item.
+        Average user rating for an item.
+    Models/Libraries:
+        LightGBM (LGBMRanker): Very popular and effective for LTR.
+        XGBoost: Another powerful gradient boosting library with LTR capabilities.
+        TensorFlow Ranking: A library for building LTR models in TensorFlow.
+        sklearn-crfsuite or other sequence labeling tools if you want to model sequential dependencies in text for feature extraction.

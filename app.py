@@ -57,7 +57,7 @@ def search():
             return jsonify({'error': 'Query is required'}), 400
         
         user_query = data['query']
-        hybrid_search = data.get('hybrid_search', True)  # Default to hybrid search
+        ranking_mode = data.get('ranking_mode', 'hybrid')  # hybrid, ltr_only, traditional
         
         if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
@@ -69,24 +69,53 @@ def search():
         if not processed_query:
             return jsonify({'error': 'Failed to process query'}), 500
         
-        # Step 2: Search all databases (now with hybrid search support)
-        search_results = search_engine.search_all_databases(processed_query, hybrid_search=hybrid_search)
+        # Step 2: Search databases
+        logger.info("Searching databases...")
+        search_results = search_engine.search_all_databases(processed_query)
         
-        # Step 3: Rank results (Phase 3)
-        ranked_results = ranking_engine.rank_search_results(search_results, processed_query)
+        if not search_results or not search_results.get('results'):
+            return jsonify({
+                'success': True,
+                'message': 'No results found',
+                'query_analysis': processed_query,
+                'search_results': {'results': [], 'total_results': 0},
+                'categorized_results': {'high_relevance': [], 'medium_relevance': [], 'low_relevance': []},
+                'query_id': None
+            })
         
-        # Step 4: Categorize results
-        categorized_results = ranking_engine.categorize_results(ranked_results.get('results', []))
+        # Step 3: Get user feedback data for LTR
+        user_feedback_data = {}
+        try:
+            if feedback_system:
+                # Get aggregated feedback data for LTR features
+                feedback_stats = feedback_system.get_all_feedback()
+                
+                # Convert to format expected by LTR ranker
+                for feedback_entry in feedback_stats:
+                    result_id = feedback_entry.get('result_id')
+                    if result_id not in user_feedback_data:
+                        user_feedback_data[result_id] = {'ratings': []}
+                    user_feedback_data[result_id]['ratings'].append(feedback_entry.get('rating', 3))
+        except Exception as e:
+            logger.warning(f"Error getting feedback data for LTR: {e}")
+            user_feedback_data = {}
+        
+        # Step 4: Rank results using selected mode
+        logger.info(f"Ranking results using mode: {ranking_mode}...")
+        ranked_results = ranking_engine.rank_search_results(
+            search_results, processed_query, user_feedback_data, ranking_mode
+        )
         
         # Generate unique query ID for feedback tracking
-        query_id = str(uuid.uuid4())
+        query_id = f"query_{hash(user_query)}_{int(datetime.now().timestamp())}"
         
         return jsonify({
             'success': True,
-            'query_id': query_id,
             'query_analysis': processed_query,
             'search_results': ranked_results,
-            'categorized_results': categorized_results
+            'categorized_results': ranked_results.get('categorized_results', {}),
+            'query_id': query_id,
+            'ranking_mode': ranking_mode
         })
         
     except Exception as e:
@@ -95,19 +124,39 @@ def search():
 
 @app.route('/api/feedback', methods=['POST'])
 def submit_feedback():
-    """Submit user feedback for search results"""
+    """Submit user feedback for result relevance"""
     try:
         data = request.get_json()
+        
         if not data:
-            return jsonify({'error': 'Feedback data is required'}), 400
+            return jsonify({'error': 'No data provided'}), 400
         
-        if not feedback_system:
-            return jsonify({'error': 'Feedback system not initialized'}), 500
+        # Validate required fields
+        required_fields = ['query_id', 'result_id', 'rating', 'feedback_type']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
         
-        # Submit feedback
-        result = feedback_system.submit_feedback(data)
+        # Submit feedback through feedback system
+        feedback_result = feedback_system.submit_feedback({
+            'query_id': data['query_id'],
+            'result_id': data['result_id'],
+            'rating': data['rating'],
+            'feedback_type': data['feedback_type'],
+            'user_session': data.get('user_session', 'anonymous'),
+            'additional_data': data.get('additional_data', {}),
+            'timestamp': datetime.now().isoformat()
+        })
         
-        return jsonify(result)
+        feedback_id = feedback_result.get('feedback_id') or 'unknown'
+        
+        logger.info(f"Feedback submitted successfully: {feedback_id}")
+        
+        return jsonify({
+            'success': True,
+            'feedback_id': feedback_id,
+            'message': 'Feedback submitted successfully'
+        })
         
     except Exception as e:
         logger.error(f"Error submitting feedback: {str(e)}")
@@ -182,6 +231,168 @@ def clear_embedding_cache():
         
     except Exception as e:
         logger.error(f"Error clearing embedding cache: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/similarity/calculate', methods=['POST'])
+def calculate_similarity():
+    """Calculate real-time similarity between query and documents"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data or 'documents' not in data:
+            return jsonify({'error': 'Query and documents are required'}), 400
+        
+        query = data['query']
+        documents = data['documents']
+        use_cache = data.get('use_cache', True)
+        
+        if not ranking_engine or not ranking_engine.use_embedding:
+            return jsonify({'error': 'Real-time embedding system not available'}), 500
+        
+        # Optional: Process query with LLM for enhanced similarity
+        processed_query = None
+        if query_processor:
+            try:
+                processed_query = query_processor.process_query(query)
+            except Exception as e:
+                logger.warning(f"Failed to process query for similarity: {e}")
+        
+        # Calculate real-time similarity scores
+        similarity_scores = ranking_engine.embedding_ranker.calculate_realtime_similarity(
+            query, documents, processed_query, use_cache
+        )
+        
+        # Combine documents with their scores
+        results = []
+        for i, (doc, score) in enumerate(zip(documents, similarity_scores)):
+            results.append({
+                'document': doc,
+                'similarity_score': score,
+                'rank': i + 1
+            })
+        
+        # Sort by similarity score
+        results.sort(key=lambda x: x['similarity_score'], reverse=True)
+        
+        # Update ranks after sorting
+        for i, result in enumerate(results):
+            result['rank'] = i + 1
+        
+        return jsonify({
+            'success': True,
+            'query': query,
+            'total_documents': len(documents),
+            'results': results,
+            'processing_info': {
+                'use_cache': use_cache,
+                'processed_query_available': processed_query is not None,
+                'similarity_calculation': 'realtime'
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error calculating similarity: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/similarity/pairwise', methods=['POST'])
+def calculate_pairwise_similarity():
+    """Calculate similarity between two text strings"""
+    try:
+        data = request.get_json()
+        if not data or 'text1' not in data or 'text2' not in data:
+            return jsonify({'error': 'Both text1 and text2 are required'}), 400
+        
+        text1 = data['text1']
+        text2 = data['text2']
+        
+        if not ranking_engine or not ranking_engine.use_embedding:
+            return jsonify({'error': 'Real-time embedding system not available'}), 500
+        
+        # Calculate pairwise similarity
+        similarity_score = ranking_engine.embedding_ranker.calculate_pairwise_similarity(text1, text2)
+        
+        # Ensure JSON serializable
+        if hasattr(similarity_score, 'item'):
+            similarity_score = similarity_score.item()
+        else:
+            similarity_score = float(similarity_score)
+        
+        return jsonify({
+            'success': True,
+            'text1': text1,
+            'text2': text2,
+            'similarity_score': similarity_score,
+            'similarity_percentage': f"{similarity_score * 100:.2f}%"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error calculating pairwise similarity: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/embedding/warmup', methods=['POST'])
+def warm_up_cache():
+    """Warm up the embedding cache with sample data"""
+    try:
+        data = request.get_json() or {}
+        sample_size = data.get('sample_size', 50)
+        
+        if not ranking_engine or not ranking_engine.use_embedding:
+            return jsonify({'error': 'Real-time embedding system not available'}), 500
+        
+        # Get sample documents from search if available
+        sample_documents = []
+        
+        if search_engine and db_manager:
+            try:
+                # Use a generic search to get sample documents
+                sample_query = {"keywords": {"primary": ["research", "science", "technology"]}}
+                search_results = search_engine.search_all_databases(sample_query, hybrid_search=False)
+                sample_documents = search_results.get('results', [])[:sample_size]
+                
+            except Exception as e:
+                logger.warning(f"Failed to get sample documents from search: {e}")
+        
+        # If no documents from search, create dummy documents for warming
+        if not sample_documents:
+            sample_documents = [
+                {
+                    'id': f'sample_{i}',
+                    'title': f'Sample Document {i}',
+                    'description': f'This is a sample document for cache warming {i}',
+                    'type': 'sample',
+                    'metadata': {}
+                }
+                for i in range(min(sample_size, 10))
+            ]
+        
+        # Warm up the cache
+        success = ranking_engine.warm_up_embedding_cache(sample_documents)
+        
+        return jsonify({
+            'success': success,
+            'message': f'Cache warmed up with {len(sample_documents)} documents' if success else 'Failed to warm up cache',
+            'documents_processed': len(sample_documents)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error warming up cache: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/embedding/realtime-stats', methods=['GET'])
+def get_realtime_embedding_stats():
+    """Get detailed real-time embedding statistics"""
+    try:
+        if not ranking_engine or not ranking_engine.use_embedding:
+            return jsonify({'error': 'Real-time embedding system not available'}), 500
+        
+        stats = ranking_engine.embedding_ranker.get_realtime_stats()
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting real-time embedding stats: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/test-llm', methods=['POST'])
@@ -364,6 +575,176 @@ def get_preindex_progress():
         
     except Exception as e:
         logger.error(f"Error getting pre-index progress: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ltr/stats', methods=['GET'])
+def get_ltr_stats():
+    """Get LTR model statistics"""
+    try:
+        if not ranking_engine:
+            return jsonify({'error': 'Ranking engine not initialized'}), 500
+        
+        stats = ranking_engine.get_ltr_stats()
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting LTR stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ltr/train', methods=['POST'])
+def train_ltr_model():
+    """Train the LTR model with collected feedback data"""
+    try:
+        data = request.get_json() or {}
+        
+        if not ranking_engine:
+            return jsonify({'error': 'Ranking engine not initialized'}), 500
+        
+        # Check if LTR is available
+        ltr_stats = ranking_engine.get_ltr_stats()
+        if not ltr_stats.get('ltr_available', False):
+            return jsonify({'error': 'LTR functionality not available'}), 400
+        
+        # Collect training data from feedback
+        min_feedback_count = data.get('min_feedback_count', 50)
+        feedback_data = feedback_system.get_training_data(min_feedback_count=min_feedback_count)
+        
+        if not feedback_data:
+            return jsonify({
+                'error': f'Insufficient training data. Need at least {min_feedback_count} feedback entries.'
+            }), 400
+        
+        # Convert feedback to LTR training format
+        training_data = []
+        
+        for feedback_entry in feedback_data:
+            try:
+                # Get the original search query and results
+                query_id = feedback_entry.get('query_id')
+                result_id = feedback_entry.get('result_id')
+                rating = feedback_entry.get('rating', 3)
+                
+                # Convert rating to relevance label (1-5 scale to 0-4)
+                relevance_label = max(0, rating - 1)
+                
+                # Get query details (you might need to store these separately)
+                # For now, we'll use placeholder data
+                query_text = feedback_entry.get('query_text', 'sample query')
+                
+                # Get result details
+                result_data = feedback_entry.get('result_data', {})
+                
+                # Create training example
+                training_example = {
+                    'query_id': hash(query_text),
+                    'result_id': result_id,
+                    'relevance_label': relevance_label,
+                    # Add more features as needed
+                    'title_length': len(result_data.get('title', '').split()),
+                    'description_length': len(result_data.get('description', '').split()),
+                    'result_type': result_data.get('type', 'unknown')
+                }
+                
+                training_data.append(training_example)
+                
+            except Exception as e:
+                logger.warning(f"Error processing feedback entry: {e}")
+                continue
+        
+        if not training_data:
+            return jsonify({'error': 'No valid training data could be prepared'}), 400
+        
+        # Train the model
+        training_stats = ranking_engine.train_ltr_model(training_data)
+        
+        logger.info(f"LTR model trained successfully with {len(training_data)} examples")
+        
+        return jsonify({
+            'success': True,
+            'message': 'LTR model trained successfully',
+            'training_stats': training_stats,
+            'training_data_size': len(training_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error training LTR model: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ltr/features', methods=['POST'])
+def extract_ltr_features():
+    """Extract LTR features for a query and results (for testing)"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'query' not in data or 'results' not in data:
+            return jsonify({'error': 'Query and results required'}), 400
+        
+        if not ranking_engine:
+            return jsonify({'error': 'Ranking engine not initialized'}), 500
+        
+        # Check if LTR is available
+        ltr_stats = ranking_engine.get_ltr_stats()
+        if not ltr_stats.get('ltr_available', False):
+            return jsonify({'error': 'LTR functionality not available'}), 400
+        
+        # Extract features
+        query = data['query']
+        results = data['results']
+        processed_query = data.get('processed_query', {})
+        
+        # Get LTR ranker and extract features
+        ltr_ranker = ranking_engine.ltr_ranker
+        features_df = ltr_ranker.extract_features(query, results, processed_query)
+        
+        # Convert to dictionary format
+        features_dict = features_df.to_dict('records') if not features_df.empty else []
+        
+        return jsonify({
+            'success': True,
+            'features': features_dict,
+            'feature_names': features_df.columns.tolist() if not features_df.empty else [],
+            'num_features': len(features_df.columns) if not features_df.empty else 0,
+            'num_results': len(features_dict)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error extracting LTR features: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ltr/feature-importance', methods=['GET'])
+def get_feature_importance():
+    """Get feature importance from trained LTR model"""
+    try:
+        if not ranking_engine:
+            return jsonify({'error': 'Ranking engine not initialized'}), 500
+        
+        # Check if LTR is available and trained
+        ltr_stats = ranking_engine.get_ltr_stats()
+        if not ltr_stats.get('ltr_available', False):
+            return jsonify({'error': 'LTR functionality not available'}), 400
+        
+        if not ltr_stats.get('model_trained', False):
+            return jsonify({'error': 'LTR model not trained yet'}), 400
+        
+        # Get feature importance
+        importance = ranking_engine.ltr_ranker.get_feature_importance()
+        
+        # Sort by importance
+        sorted_importance = sorted(importance.items(), key=lambda x: x[1], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'feature_importance': dict(sorted_importance),
+            'top_features': sorted_importance[:10],  # Top 10 features
+            'total_features': len(importance)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting feature importance: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

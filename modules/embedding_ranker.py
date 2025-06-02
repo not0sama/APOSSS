@@ -17,35 +17,24 @@ logger = logging.getLogger(__name__)
 class EmbeddingRanker:
     """Semantic similarity ranker using sentence transformers and FAISS"""
     
-    def __init__(self, model_name: str = 'all-MiniLM-L6-v2', cache_dir: str = 'embeddings_cache'):
-        """
-        Initialize the embedding ranker
-        
-        Args:
-            model_name: Sentence transformer model to use
-            cache_dir: Directory to cache embeddings and FAISS index
-        """
-        self.model_name = model_name
+    def __init__(self, cache_dir: str = 'embedding_cache'):
+        """Initialize the embedding ranker with sentence transformer model"""
         self.cache_dir = cache_dir
-        self.embedding_dim = None
+        self.model_name = 'all-MiniLM-L6-v2'
+        self.model = None
+        self.embedding_dimension = 384  # Initialize embedding dimension
         self.faiss_index = None
         self.document_cache = {}  # Store document metadata with embeddings
+        self.embedding_cache = {}  # Store cached embeddings
         
         # Create cache directory
         os.makedirs(cache_dir, exist_ok=True)
         
-        # Initialize sentence transformer
-        try:
-            logger.info(f"Loading sentence transformer model: {model_name}")
-            self.model = SentenceTransformer(model_name)
-            self.embedding_dim = self.model.get_sentence_embedding_dimension()
-            logger.info(f"Model loaded successfully. Embedding dimension: {self.embedding_dim}")
-        except Exception as e:
-            logger.error(f"Failed to load sentence transformer model: {str(e)}")
-            raise
+        # Initialize model
+        self._initialize_model()
         
-        # Load or create FAISS index
-        self._load_or_create_faiss_index()
+        # Try to load existing index
+        self._load_cache()
     
     def _load_or_create_faiss_index(self):
         """Load existing FAISS index or create a new one"""
@@ -77,7 +66,7 @@ class EmbeddingRanker:
     def _create_new_faiss_index(self):
         """Create a new FAISS index for similarity search"""
         # Use IndexFlatIP for cosine similarity (after L2 normalization)
-        self.faiss_index = faiss.IndexFlatIP(self.embedding_dim)
+        self.faiss_index = faiss.IndexFlatIP(self.embedding_dimension)
         self.document_cache = {}
         logger.info("Created new FAISS index")
     
@@ -214,7 +203,7 @@ class EmbeddingRanker:
             return embeddings
         except Exception as e:
             logger.error(f"Error encoding texts: {str(e)}")
-            return np.zeros((len(texts), self.embedding_dim))
+            return np.zeros((len(texts), self.embedding_dimension))
     
     def _extract_document_text(self, document: Dict[str, Any]) -> str:
         """Extract searchable text from a document"""
@@ -314,7 +303,7 @@ class EmbeddingRanker:
         """Get statistics about the embedding cache"""
         return {
             'model_name': self.model_name,
-            'embedding_dimension': self.embedding_dim,
+            'embedding_dimension': self.embedding_dimension,
             'total_vectors': self.faiss_index.ntotal if self.faiss_index else 0,
             'cache_size': len(self.document_cache),
             'cache_directory': self.cache_dir
@@ -336,4 +325,305 @@ class EmbeddingRanker:
             logger.info("Embedding cache cleared successfully")
             
         except Exception as e:
-            logger.error(f"Error clearing cache: {str(e)}") 
+            logger.error(f"Error clearing cache: {str(e)}")
+    
+    def calculate_realtime_similarity(self, query: str, results: List[Dict[str, Any]], 
+                                    processed_query: Dict[str, Any] = None,
+                                    use_cache: bool = True) -> List[float]:
+        """
+        Calculate embedding similarity scores in real-time for search results
+        
+        Args:
+            query: Original search query
+            results: List of search results to calculate similarity for
+            processed_query: LLM-processed query for enhanced similarity
+            use_cache: Whether to use cached embeddings for documents
+            
+        Returns:
+            List of similarity scores (0-1) for each result
+        """
+        try:
+            if not results:
+                return []
+            
+            logger.info(f"Calculating real-time embedding similarity for {len(results)} results")
+            
+            # Step 1: Get query embedding
+            query_embedding = self._get_query_embedding(query, processed_query)
+            if query_embedding is None:
+                logger.warning("Failed to generate query embedding")
+                return [0.0] * len(results)
+            
+            # Step 2: Get document embeddings (with caching)
+            doc_embeddings = self._get_document_embeddings_realtime(results, use_cache)
+            
+            # Step 3: Calculate similarities
+            similarities = self._calculate_cosine_similarities(query_embedding, doc_embeddings)
+            
+            logger.info(f"Real-time similarity calculation completed for {len(results)} results")
+            return similarities.tolist() if hasattr(similarities, 'tolist') else similarities
+            
+        except Exception as e:
+            logger.error(f"Error in real-time similarity calculation: {str(e)}")
+            return [0.0] * len(results)
+    
+    def _get_query_embedding(self, query: str, processed_query: Dict[str, Any] = None) -> Optional[np.ndarray]:
+        """Generate embedding for search query with enhancement from processed query"""
+        try:
+            # Build enhanced query text
+            enhanced_query = self._build_enhanced_query_text(query, processed_query)
+            
+            # Check cache first
+            cache_key = f"query:{hash(enhanced_query)}"
+            if cache_key in self.embedding_cache:
+                return self.embedding_cache[cache_key]
+            
+            # Generate embedding
+            embedding = self.model.encode([enhanced_query], convert_to_numpy=True)[0]
+            
+            # Cache the result
+            self.embedding_cache[cache_key] = embedding
+            
+            return embedding
+            
+        except Exception as e:
+            logger.error(f"Error generating query embedding: {str(e)}")
+            return None
+    
+    def _get_document_embeddings_realtime(self, results: List[Dict[str, Any]], 
+                                        use_cache: bool = True) -> List[np.ndarray]:
+        """Get embeddings for documents in real-time with intelligent caching"""
+        embeddings = []
+        uncached_results = []
+        uncached_indices = []
+        
+        # Step 1: Check cache for existing embeddings
+        for i, result in enumerate(results):
+            doc_id = result.get('id', '')
+            cache_key = f"doc:{doc_id}"
+            
+            if use_cache and cache_key in self.embedding_cache:
+                embeddings.append(self.embedding_cache[cache_key])
+            else:
+                # Mark for batch processing
+                embeddings.append(None)  # Placeholder
+                uncached_results.append(result)
+                uncached_indices.append(i)
+        
+        # Step 2: Batch process uncached documents
+        if uncached_results:
+            logger.info(f"Processing {len(uncached_results)} uncached document embeddings")
+            
+            # Extract text for batch processing
+            texts = []
+            for result in uncached_results:
+                doc_text = self._extract_document_text_for_embedding(result)
+                texts.append(doc_text)
+            
+            # Generate embeddings in batch for efficiency
+            try:
+                batch_embeddings = self.model.encode(texts, convert_to_numpy=True, 
+                                                   batch_size=32, show_progress_bar=False)
+                
+                # Store in cache and update embeddings list
+                for i, (result, embedding) in enumerate(zip(uncached_results, batch_embeddings)):
+                    doc_id = result.get('id', '')
+                    cache_key = f"doc:{doc_id}"
+                    
+                    # Cache the embedding
+                    self.embedding_cache[cache_key] = embedding
+                    
+                    # Update the embeddings list
+                    original_index = uncached_indices[i]
+                    embeddings[original_index] = embedding
+                    
+            except Exception as e:
+                logger.error(f"Error in batch embedding generation: {str(e)}")
+                # Fill with zero embeddings as fallback
+                zero_embedding = np.zeros(self.embedding_dimension)
+                for idx in uncached_indices:
+                    embeddings[idx] = zero_embedding
+        
+        # Step 3: Handle any remaining None values
+        zero_embedding = np.zeros(self.embedding_dimension)
+        for i in range(len(embeddings)):
+            if embeddings[i] is None:
+                embeddings[i] = zero_embedding
+        
+        return embeddings
+    
+    def _extract_document_text_for_embedding(self, result: Dict[str, Any]) -> str:
+        """Extract and prepare text from document for embedding generation"""
+        text_parts = []
+        
+        # Title (most important - repeat for emphasis)
+        title = result.get('title', '').strip()
+        if title:
+            text_parts.extend([title] * 2)  # Give title extra weight
+        
+        # Description/Abstract
+        description = result.get('description', '').strip()
+        if description:
+            text_parts.append(description)
+        
+        # Author information
+        author = result.get('author', '').strip()
+        if author:
+            text_parts.append(f"Author: {author}")
+        
+        # Keywords from metadata
+        metadata = result.get('metadata', {})
+        keywords = metadata.get('keywords', [])
+        if keywords and isinstance(keywords, list):
+            text_parts.append(f"Keywords: {' '.join(keywords)}")
+        
+        # Category information
+        category = metadata.get('category', '').strip()
+        if category:
+            text_parts.append(f"Category: {category}")
+        
+        # Department/Institution context
+        institution = metadata.get('institution', '') or metadata.get('university', '')
+        if institution:
+            text_parts.append(f"Institution: {institution}")
+        
+        department = metadata.get('department', '')
+        if department:
+            text_parts.append(f"Department: {department}")
+        
+        # Combine all parts
+        combined_text = ' '.join(filter(None, text_parts))
+        
+        # Ensure we have some text
+        if not combined_text:
+            combined_text = result.get('type', 'document')
+        
+        return combined_text
+    
+    def _build_enhanced_query_text(self, original_query: str, processed_query: Dict[str, Any] = None) -> str:
+        """Build enhanced query text using LLM processing results"""
+        text_parts = [original_query]
+        
+        if processed_query:
+            # Add corrected query if different
+            corrected = processed_query.get('corrected_query', '')
+            if corrected and corrected != original_query:
+                text_parts.append(corrected)
+            
+            # Add primary keywords
+            keywords = processed_query.get('keywords', {})
+            primary_keywords = keywords.get('primary', [])
+            if primary_keywords:
+                text_parts.extend(primary_keywords)
+            
+            # Add technical terms
+            technical_terms = keywords.get('technical_terms', [])
+            if technical_terms:
+                text_parts.extend(technical_terms)
+            
+            # Add key entities
+            entities = processed_query.get('entities', {})
+            technologies = entities.get('technologies', [])
+            concepts = entities.get('concepts', [])
+            if technologies:
+                text_parts.extend(technologies)
+            if concepts:
+                text_parts.extend(concepts)
+            
+            # Add related terms
+            synonyms = processed_query.get('synonyms_and_related', {})
+            related_terms = synonyms.get('related_terms', [])
+            if related_terms:
+                text_parts.extend(related_terms[:3])  # Limit to top 3
+        
+        return ' '.join(filter(None, text_parts))
+    
+    def _calculate_cosine_similarities(self, query_embedding: np.ndarray, 
+                                     doc_embeddings: List[np.ndarray]) -> np.ndarray:
+        """Calculate cosine similarity between query and document embeddings"""
+        try:
+            # Stack document embeddings
+            doc_matrix = np.stack(doc_embeddings)
+            
+            # Reshape query embedding for matrix operations
+            query_vector = query_embedding.reshape(1, -1)
+            
+            # Calculate cosine similarity
+            similarities = cosine_similarity(query_vector, doc_matrix)[0]
+            
+            # Ensure values are in [0, 1] range (cosine similarity can be [-1, 1])
+            similarities = np.clip((similarities + 1) / 2, 0, 1)
+            
+            return similarities
+            
+        except Exception as e:
+            logger.error(f"Error calculating cosine similarities: {str(e)}")
+            return np.zeros(len(doc_embeddings))
+    
+    def calculate_pairwise_similarity(self, text1: str, text2: str) -> float:
+        """Calculate similarity between two text strings"""
+        try:
+            embeddings = self.model.encode([text1, text2], convert_to_numpy=True)
+            similarity = cosine_similarity([embeddings[0]], [embeddings[1]])[0][0]
+            # Normalize to [0, 1] range
+            return max(0, (similarity + 1) / 2)
+        except Exception as e:
+            logger.error(f"Error calculating pairwise similarity: {str(e)}")
+            return 0.0
+    
+    def get_realtime_stats(self) -> Dict[str, Any]:
+        """Get statistics about real-time embedding calculations"""
+        try:
+            cache_stats = self.get_cache_stats()
+            
+            # Add real-time specific stats
+            query_cache_count = len([k for k in self.embedding_cache.keys() if k.startswith('query:')])
+            doc_cache_count = len([k for k in self.embedding_cache.keys() if k.startswith('doc:')])
+            
+            realtime_stats = {
+                'realtime_enabled': True,
+                'query_cache_count': query_cache_count,
+                'document_cache_count': doc_cache_count,
+                'total_cache_entries': len(self.embedding_cache),
+                'model_ready': self.model is not None,
+                'embedding_dimension': self.embedding_dimension,
+                'cache_hit_efficiency': f"{doc_cache_count}/{doc_cache_count + query_cache_count}" if (doc_cache_count + query_cache_count) > 0 else "0/0"
+            }
+            
+            # Combine with base stats
+            cache_stats.update(realtime_stats)
+            return cache_stats
+            
+        except Exception as e:
+            logger.error(f"Error getting real-time stats: {str(e)}")
+            return {'realtime_enabled': False, 'error': str(e)}
+    
+    def warm_up_cache(self, sample_results: List[Dict[str, Any]]) -> bool:
+        """Pre-warm the cache with a sample of documents for better performance"""
+        try:
+            logger.info(f"Warming up cache with {len(sample_results)} sample documents")
+            
+            # Use the real-time embedding calculation to populate cache
+            self._get_document_embeddings_realtime(sample_results, use_cache=True)
+            
+            logger.info("Cache warm-up completed successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error warming up cache: {str(e)}")
+            return False
+
+    def _initialize_model(self):
+        """Initialize the sentence transformer model"""
+        try:
+            logger.info(f"Loading sentence transformer model: {self.model_name}")
+            self.model = SentenceTransformer(self.model_name)
+            self.embedding_dimension = self.model.get_sentence_embedding_dimension()
+            logger.info(f"Model loaded successfully. Embedding dimension: {self.embedding_dimension}")
+        except Exception as e:
+            logger.error(f"Failed to load sentence transformer model: {str(e)}")
+            raise
+
+    def _load_cache(self):
+        """Load existing FAISS index and document cache"""
+        self._load_or_create_faiss_index() 

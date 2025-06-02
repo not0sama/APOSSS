@@ -98,6 +98,45 @@
                 </button>
             </div>
             
+            <!-- Real-time Similarity Controls -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                    <span class="mr-2">⚡</span>Real-time Similarity
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <button onclick="getRealTimeStats()" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        📊 Real-time Stats
+                    </button>
+                    <button onclick="warmUpCache()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        🔥 Warm Up Cache
+                    </button>
+                    <button onclick="testSimilarity()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        🔬 Test Similarity
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Learning-to-Rank Controls -->
+            <div class="border-t pt-4">
+                <h3 class="text-lg font-semibold mb-3 flex items-center">
+                    <span class="mr-2">🤖</span>Learning-to-Rank (XGBoost)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                    <button onclick="getLTRStats()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        📈 LTR Stats
+                    </button>
+                    <button onclick="trainLTRModel()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        🏋️ Train Model
+                    </button>
+                    <button onclick="getFeatureImportance()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        🔍 Feature Importance
+                    </button>
+                    <button onclick="testLTRFeatures()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        ⚙️ Test Features
+                    </button>
+                </div>
+            </div>
+            
             <!-- Pre-indexing Controls -->
             <div class="border-t pt-4">
                 <h3 class="text-lg font-semibold mb-3 flex items-center">
@@ -127,6 +166,16 @@
             <h2 class="text-xl font-semibold mb-4 flex items-center">
                 <span class="mr-2">🔍</span>Intelligent Research Search
             </h2>
+            
+            <!-- Ranking Mode Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Ranking Algorithm:</label>
+                <select id="rankingMode" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="hybrid">Hybrid (LTR + Traditional)</option>
+                    <option value="ltr_only">Learning-to-Rank Only</option>
+                    <option value="traditional">Traditional Hybrid</option>
+                </select>
+            </div>
             
             <!-- Sample Queries -->
             <div class="mb-4">
@@ -483,64 +532,64 @@
             section.classList.remove('hidden');
             
             container.innerHTML = results.map(result => `
-                <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
-                    <div class="flex items-start justify-between mb-2">
-                        <div class="flex items-center space-x-2 flex-1">
-                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
-                            <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
-                            <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
-                                ${result.type}
-                            </span>
+                    <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex items-center space-x-2 flex-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
+                                <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
+                                <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
+                                    ${result.type}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Ranking Score Display -->
-                    <div class="mb-3">
-                        <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="text-gray-600">Relevance Score</span>
-                            <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
-                                 style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
-                        </div>
+                        
+                        <!-- Ranking Score Display -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <span class="text-gray-600">Relevance Score</span>
+                                <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                     style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
+                            </div>
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
                             <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
                             <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
                             ${result.score_breakdown?.embedding_score !== undefined ? 
-                                `<span>Embedding: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
+                                `<span>Real-time: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
                         </div>
-                    </div>
-                    
-                    ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
-                    
-                    <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
-                    
-                    <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
-                        <span>Source: ${result.database} → ${result.collection}</span>
-                        <span>ID: ${result.id.substring(0, 8)}...</span>
-                    </div>
-                    
-                    ${displayMetadata(result.metadata)}
-                    
-                    <!-- Feedback Buttons -->
-                    <div class="mt-4 pt-3 border-t border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Was this result helpful?</span>
-                            <div class="flex space-x-2">
-                                <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
-                                        class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                    👍 Helpful
-                                </button>
-                                <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
-                                        class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                    👎 Not Helpful
-                                </button>
+                        </div>
+                        
+                        ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
+                        
+                        <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
+                        
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                            <span>Source: ${result.database} → ${result.collection}</span>
+                            <span>ID: ${result.id.substring(0, 8)}...</span>
+                        </div>
+                        
+                        ${displayMetadata(result.metadata)}
+                        
+                        <!-- Feedback Buttons -->
+                        <div class="mt-4 pt-3 border-t border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Was this result helpful?</span>
+                                <div class="flex space-x-2">
+                                    <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                            class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                        👍 Helpful
+                                    </button>
+                                    <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                            class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                        👎 Not Helpful
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
             `).join('');
         }
 
@@ -934,6 +983,151 @@
             }
         }
 
+        async function getRealTimeStats() {
+            try {
+                const response = await fetch('/api/embedding/realtime-stats');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-teal-100 text-teal-800 rounded-lg">
+                            <h3 class="font-semibold">Real-time Embedding Statistics</h3>
+                            <div class="mt-2 text-sm space-y-1">
+                                <p><strong>Status:</strong> ${stats.realtime_enabled ? '✅ Enabled' : '❌ Disabled'}</p>
+                                ${stats.realtime_enabled ? `
+                                    <p><strong>Model:</strong> ${stats.model_name || 'N/A'}</p>
+                                    <p><strong>Embedding Dimension:</strong> ${stats.embedding_dimension || 'N/A'}</p>
+                                    <p><strong>Query Cache:</strong> ${stats.query_cache_count || 0} entries</p>
+                                    <p><strong>Document Cache:</strong> ${stats.document_cache_count || 0} entries</p>
+                                    <p><strong>Total Cache:</strong> ${stats.total_cache_entries || 0} entries</p>
+                                    <p><strong>Cache Directory:</strong> ${stats.cache_directory || 'N/A'}</p>
+                                    <p><strong>Cache Efficiency:</strong> ${stats.cache_hit_efficiency || 'N/A'}</p>
+                                ` : `
+                                    <p><strong>Reason:</strong> ${stats.reason || stats.error || 'Unknown'}</p>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Real-time Stats Error</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting real-time stats: ' + error.message);
+            }
+        }
+
+        async function warmUpCache() {
+            const sampleSize = prompt('Enter number of documents to warm up cache (default: 50):', '50');
+            if (!sampleSize) return;
+
+            try {
+                const response = await fetch('/api/embedding/warmup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        sample_size: parseInt(sampleSize) || 50 
+                    })
+                });
+
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+                            <h3 class="font-semibold">Cache Warm-up Completed</h3>
+                            <p class="mt-2 text-sm">${data.message}</p>
+                            <p class="text-sm">Documents processed: ${data.documents_processed}</p>
+                        </div>
+                    `;
+                    
+                    showTemporaryMessage('Cache warmed up successfully!', 'success');
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Cache Warm-up Failed</h3>
+                            <p class="mt-2 text-sm">${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                    
+                    alert('Failed to warm up cache: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error warming up cache: ' + error.message);
+            }
+        }
+
+        async function testSimilarity() {
+            const text1 = prompt('Enter first text:', 'machine learning algorithms');
+            if (!text1) return;
+            
+            const text2 = prompt('Enter second text:', 'artificial intelligence methods');
+            if (!text2) return;
+
+            try {
+                const response = await fetch('/api/similarity/pairwise', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        text1: text1,
+                        text2: text2
+                    })
+                });
+
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    const score = data.similarity_score;
+                    const percentage = data.similarity_percentage;
+                    const colorClass = score > 0.7 ? 'bg-green-100 text-green-800' : 
+                                     score > 0.4 ? 'bg-yellow-100 text-yellow-800' : 
+                                     'bg-red-100 text-red-800';
+                    
+                    statusDiv.innerHTML = `
+                        <div class="p-4 ${colorClass} rounded-lg">
+                            <h3 class="font-semibold">Similarity Test Results</h3>
+                            <div class="mt-2 text-sm space-y-2">
+                                <p><strong>Text 1:</strong> "${text1}"</p>
+                                <p><strong>Text 2:</strong> "${text2}"</p>
+                                <p><strong>Similarity Score:</strong> ${score.toFixed(4)} (${percentage})</p>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                    <div class="h-2 rounded-full ${score > 0.7 ? 'bg-green-500' : score > 0.4 ? 'bg-yellow-500' : 'bg-red-500'}" 
+                                         style="width: ${(score * 100).toFixed(1)}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Similarity Test Failed</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error testing similarity: ' + error.message);
+            }
+        }
+
         async function getPreindexStats() {
             try {
                 const response = await fetch('/api/preindex/stats');
@@ -1124,6 +1318,229 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error in semantic search test: ' + error.message);
+            }
+        }
+
+        // LTR-related functions
+        async function getLTRStats() {
+            try {
+                const response = await fetch('/api/ltr/stats');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-blue-100 text-blue-800 rounded-lg">
+                            <h3 class="font-semibold">Learning-to-Rank Statistics</h3>
+                            <div class="mt-2 text-sm space-y-1">
+                                <p><strong>LTR Available:</strong> ${stats.ltr_available ? '✅ Yes' : '❌ No'}</p>
+                                ${stats.ltr_available ? `
+                                    <p><strong>Model Trained:</strong> ${stats.model_trained ? '✅ Yes' : '❌ No'}</p>
+                                    <p><strong>Feature Count:</strong> ${stats.feature_count || 0}</p>
+                                    ${stats.model_trained ? `
+                                        <p><strong>Training Samples:</strong> ${stats.training_samples || 'N/A'}</p>
+                                        <p><strong>Validation Samples:</strong> ${stats.validation_samples || 'N/A'}</p>
+                                        <p><strong>Train NDCG:</strong> ${(stats.train_ndcg || 0).toFixed(4)}</p>
+                                        <p><strong>Val NDCG:</strong> ${(stats.val_ndcg || 0).toFixed(4)}</p>
+                                        <p><strong>Training Date:</strong> ${stats.training_date || 'N/A'}</p>
+                                    ` : ''}
+                                ` : `
+                                    <p><strong>Reason:</strong> ${stats.reason || 'Unknown'}</p>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">LTR Stats Error</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting LTR stats: ' + error.message);
+            }
+        }
+
+        async function trainLTRModel() {
+            if (!confirm('Are you sure you want to train the LTR model? This will use collected feedback data and may take some time.')) {
+                return;
+            }
+
+            try {
+                const minFeedback = prompt('Minimum feedback entries required (default: 50):', '50');
+                if (!minFeedback) return;
+
+                const response = await fetch('/api/ltr/train', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        min_feedback_count: parseInt(minFeedback) || 50 
+                    })
+                });
+
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    const stats = data.training_stats;
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+                            <h3 class="font-semibold">LTR Model Training Completed</h3>
+                            <div class="mt-2 text-sm space-y-1">
+                                <p><strong>Training Data Size:</strong> ${data.training_data_size}</p>
+                                <p><strong>Training Samples:</strong> ${stats.training_samples}</p>
+                                <p><strong>Validation Samples:</strong> ${stats.validation_samples}</p>
+                                <p><strong>Features:</strong> ${stats.num_features}</p>
+                                <p><strong>Queries:</strong> ${stats.num_queries}</p>
+                                <p><strong>Train NDCG:</strong> ${(stats.train_ndcg || 0).toFixed(4)}</p>
+                                <p><strong>Validation NDCG:</strong> ${(stats.val_ndcg || 0).toFixed(4)}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    showTemporaryMessage('LTR model trained successfully!', 'success');
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">LTR Training Failed</h3>
+                            <p class="mt-2 text-sm">${data.error}</p>
+                        </div>
+                    `;
+                    
+                    alert('Failed to train LTR model: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error training LTR model: ' + error.message);
+            }
+        }
+
+        async function getFeatureImportance() {
+            try {
+                const response = await fetch('/api/ltr/feature-importance');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    const importance = data.feature_importance;
+                    const topFeatures = data.top_features;
+                    
+                    let importanceHtml = `
+                        <div class="p-4 bg-green-100 text-green-800 rounded-lg">
+                            <h3 class="font-semibold">Feature Importance (Top 10)</h3>
+                            <div class="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                    `;
+                    
+                    topFeatures.forEach((feature, index) => {
+                        const [name, score] = feature;
+                        importanceHtml += `
+                            <div class="flex justify-between items-center bg-white p-2 rounded">
+                                <span class="font-medium text-sm">${index + 1}. ${name}</span>
+                                <span class="text-xs">${(score * 100).toFixed(2)}%</span>
+                            </div>
+                        `;
+                    });
+                    
+                    importanceHtml += `
+                            </div>
+                            <p class="mt-2 text-sm"><strong>Total Features:</strong> ${data.total_features}</p>
+                        </div>
+                    `;
+                    
+                    statusDiv.innerHTML = importanceHtml;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Feature Importance Error</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting feature importance: ' + error.message);
+            }
+        }
+
+        async function testLTRFeatures() {
+            const query = prompt('Enter a test query:', 'machine learning medical diagnosis');
+            if (!query) return;
+
+            try {
+                // Use current search results if available, or create sample results
+                let testResults = [];
+                if (currentSearchResults && currentSearchResults.results) {
+                    testResults = currentSearchResults.results.slice(0, 5); // First 5 results
+                } else {
+                    // Create sample results for testing
+                    testResults = [
+                        {
+                            id: 'test1',
+                            title: 'Machine Learning in Healthcare',
+                            description: 'Overview of ML applications in medical diagnosis',
+                            type: 'article',
+                            author: 'Dr. Smith',
+                            metadata: { year: 2023, category: 'Healthcare' }
+                        },
+                        {
+                            id: 'test2',
+                            title: 'AI for Medical Imaging',
+                            description: 'Deep learning approaches for medical image analysis',
+                            type: 'book',
+                            author: 'Prof. Johnson',
+                            metadata: { year: 2022, category: 'Computer Science' }
+                        }
+                    ];
+                }
+
+                const response = await fetch('/api/ltr/features', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        query: query,
+                        results: testResults,
+                        processed_query: {}
+                    })
+                });
+
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-purple-100 text-purple-800 rounded-lg">
+                            <h3 class="font-semibold">LTR Feature Extraction Test</h3>
+                            <div class="mt-2 text-sm space-y-1">
+                                <p><strong>Query:</strong> "${query}"</p>
+                                <p><strong>Results Processed:</strong> ${data.num_results}</p>
+                                <p><strong>Features Extracted:</strong> ${data.num_features}</p>
+                                <p><strong>Feature Names:</strong> ${data.feature_names.slice(0, 5).join(', ')}${data.feature_names.length > 5 ? '...' : ''}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">LTR Feature Test Failed</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error testing LTR features: ' + error.message);
             }
         }
 
