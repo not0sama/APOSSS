@@ -509,6 +509,8 @@
                     ...getSessionData()
                 };
                 
+                console.log('🔍 Sending search request:', requestData);
+                
                 const response = await fetch('/api/search', {
                     method: 'POST',
                     headers: headers,
@@ -516,6 +518,13 @@
                 });
                 
                 const data = await response.json();
+                console.log('📊 Search response received:', {
+                    success: data.success,
+                    hasSearchResults: !!data.search_results,
+                    hasCategorizedResults: !!data.categorized_results,
+                    searchResultsKeys: data.search_results ? Object.keys(data.search_results) : 'none',
+                    totalResults: data.search_results?.total_results || 0
+                });
                 
                 if (data.success) {
                     // Store search results for feedback system
@@ -523,6 +532,7 @@
                     currentQueryId = data.query_id || `query_${Date.now()}`;
                     feedbackSubmitted.clear(); // Reset feedback tracking
                     
+                    console.log('✅ Calling displaySearchResults...');
                     // Display the results
                     displaySearchResults(data);
                     
@@ -545,68 +555,134 @@
         }
 
         function displaySearchResults(data) {
-            const container = document.getElementById('searchResultsContainer');
-            container.classList.remove('hidden');
+            try {
+                console.log('📋 displaySearchResults called with data keys:', Object.keys(data));
+                console.log('📋 search_results structure:', data.search_results ? Object.keys(data.search_results) : 'none');
+                console.log('📋 categorized_results:', !!data.categorized_results);
+                
+                const container = document.getElementById('searchResultsContainer');
+                container.classList.remove('hidden');
 
-            // Display results summary
-            displayResultsSummary(data);
+                console.log('📊 Calling displayResultsSummary...');
+                // Display results summary
+                displayResultsSummary(data);
 
-            // Display categorized results
-            if (data.categorized_results) {
-                displayCategorizedResults(data.categorized_results);
-            } else {
-                // Fallback: display all results in one category
-                const allResults = data.results || [];
-                displayCategorizedResults({
-                    high_relevance: allResults.filter(r => r.ranking_score > 0.7),
-                    medium_relevance: allResults.filter(r => r.ranking_score > 0.4 && r.ranking_score <= 0.7),
-                    low_relevance: allResults.filter(r => r.ranking_score <= 0.4)
-                });
+                console.log('📊 Calling displayCategorizedResults...');
+                // Display categorized results
+                if (data.categorized_results) {
+                    console.log('📋 Using top-level categorized_results');
+                    displayCategorizedResults(data.categorized_results);
+                } else {
+                    console.log('📋 Using fallback categorization from search_results');
+                    // Fallback: display all results in one category
+                    const allResults = data.search_results?.results || [];
+                    console.log('📋 Fallback results count:', allResults.length);
+                    displayCategorizedResults({
+                        high_relevance: allResults.filter(r => r.ranking_score > 0.7),
+                        medium_relevance: allResults.filter(r => r.ranking_score > 0.4 && r.ranking_score <= 0.7),
+                        low_relevance: allResults.filter(r => r.ranking_score <= 0.4)
+                    });
+                }
+                
+                console.log('✅ displaySearchResults completed successfully');
+                
+            } catch (error) {
+                console.error('❌ Error in displaySearchResults:', error);
+                showTemporaryMessage('Error displaying search results: ' + error.message, 'error');
             }
         }
 
         function displayResultsSummary(searchResults) {
             const summary = document.getElementById('resultsSummary');
-            const resultCounts = searchResults.result_counts;
-            const rankingMetadata = searchResults.ranking_metadata || {};
             
-            summary.innerHTML = `
-                <div class="bg-green-100 p-4 rounded-lg text-center">
-                    <div class="text-2xl font-bold text-green-800">${searchResults.total_results}</div>
-                    <div class="text-sm text-green-600">Total Results</div>
-                </div>
-                <div class="bg-blue-100 p-4 rounded-lg">
-                    <div class="text-sm font-medium text-blue-800 mb-2">By Database:</div>
-                    <div class="text-xs text-blue-600 space-y-1">
-                        ${Object.entries(resultCounts.by_database).map(([db, count]) => 
-                            `<div>${db}: ${count}</div>`
-                        ).join('')}
+            // Check if the summary element exists
+            if (!summary) {
+                console.error('Error: resultsSummary element not found in DOM');
+                showTemporaryMessage('Error displaying search summary: DOM element not found', 'error');
+                return;
+            }
+            
+            // Safely access nested properties with fallbacks
+            try {
+                // Access result_counts from the nested search_results object
+                const resultCounts = searchResults.search_results?.result_counts || {};
+                const rankingMetadata = searchResults.search_results?.ranking_metadata || {};
+                const totalResults = searchResults.search_results?.total_results || 0;
+                
+                // Safely access nested properties with fallbacks
+                const byDatabase = resultCounts.by_database || {};
+                const byType = resultCounts.by_type || {};
+                
+                summary.innerHTML = `
+                    <div class="bg-green-100 p-4 rounded-lg text-center">
+                        <div class="text-2xl font-bold text-green-800">${totalResults}</div>
+                        <div class="text-sm text-green-600">Total Results</div>
                     </div>
-                </div>
-                <div class="bg-purple-100 p-4 rounded-lg">
-                    <div class="text-sm font-medium text-purple-800 mb-2">By Type:</div>
-                    <div class="text-xs text-purple-600 space-y-1">
-                        ${Object.entries(resultCounts.by_type).map(([type, count]) => 
-                            `<div>${type}: ${count}</div>`
-                        ).join('')}
+                    <div class="bg-blue-100 p-4 rounded-lg">
+                        <div class="text-sm font-medium text-blue-800 mb-2">By Database:</div>
+                        <div class="text-xs text-blue-600 space-y-1">
+                            ${Object.entries(byDatabase).map(([db, count]) => 
+                                `<div>${db}: ${count}</div>`
+                            ).join('') || '<div>No database breakdown available</div>'}
+                        </div>
                     </div>
-                </div>
-                <div class="bg-orange-100 p-4 rounded-lg">
-                    <div class="text-sm font-medium text-orange-800 mb-2">Ranking Info:</div>
-                    <div class="text-xs text-orange-600 space-y-1">
-                        <div>Algorithm: ${rankingMetadata.ranking_algorithm || 'N/A'}</div>
-                        <div>Ranked: ${rankingMetadata.total_ranked || 0}</div>
-                        <div>Components: ${rankingMetadata.score_components?.join(', ') || 'N/A'}</div>
+                    <div class="bg-purple-100 p-4 rounded-lg">
+                        <div class="text-sm font-medium text-purple-800 mb-2">By Type:</div>
+                        <div class="text-xs text-purple-600 space-y-1">
+                            ${Object.entries(byType).map(([type, count]) => 
+                                `<div>${type}: ${count}</div>`
+                            ).join('') || '<div>No type breakdown available</div>'}
+                        </div>
                     </div>
-                </div>
-            `;
+                    <div class="bg-orange-100 p-4 rounded-lg">
+                        <div class="text-sm font-medium text-orange-800 mb-2">Ranking Info:</div>
+                        <div class="text-xs text-orange-600 space-y-1">
+                            <div>Algorithm: ${rankingMetadata.ranking_algorithm || 'N/A'}</div>
+                            <div>Ranked: ${rankingMetadata.total_ranked || 0}</div>
+                            <div>Components: ${rankingMetadata.score_components?.join(', ') || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error in displayResultsSummary:', error);
+                showTemporaryMessage('Error displaying search summary: ' + error.message, 'error');
+                
+                // Show a fallback summary
+                summary.innerHTML = `
+                    <div class="bg-red-100 p-4 rounded-lg text-center">
+                        <div class="text-red-800 font-semibold">Error displaying summary</div>
+                        <div class="text-sm text-red-600">Please try again</div>
+                    </div>
+                `;
+            }
         }
 
         function displayCategorizedResults(categorizedResults) {
-            // Display high relevance results
-            displayRelevanceCategory('high', categorizedResults.high_relevance || []);
-            displayRelevanceCategory('medium', categorizedResults.medium_relevance || []);
-            displayRelevanceCategory('low', categorizedResults.low_relevance || []);
+            try {
+                console.log('📂 displayCategorizedResults called with keys:', Object.keys(categorizedResults));
+                console.log('📂 Results breakdown:', {
+                    high: categorizedResults.high_relevance?.length || 0,
+                    medium: categorizedResults.medium_relevance?.length || 0,
+                    low: categorizedResults.low_relevance?.length || 0
+                });
+                
+                // Display high relevance results
+                console.log('📊 Displaying high relevance results...');
+                displayRelevanceCategory('high', categorizedResults.high_relevance || []);
+                
+                console.log('📊 Displaying medium relevance results...');
+                displayRelevanceCategory('medium', categorizedResults.medium_relevance || []);
+                
+                console.log('📊 Displaying low relevance results...');
+                displayRelevanceCategory('low', categorizedResults.low_relevance || []);
+                
+                console.log('✅ displayCategorizedResults completed successfully');
+                
+            } catch (error) {
+                console.error('❌ Error in displayCategorizedResults:', error);
+                showTemporaryMessage('Error displaying categorized results: ' + error.message, 'error');
+            }
         }
 
         function displayRelevanceCategory(level, results) {
@@ -616,6 +692,19 @@
             const section = document.getElementById(sectionId);
             const container = document.getElementById(containerId);
             
+            // Check if DOM elements exist
+            if (!section) {
+                console.error(`Error: ${sectionId} element not found in DOM`);
+                showTemporaryMessage(`Error displaying ${level} relevance results: section not found`, 'error');
+                return;
+            }
+            
+            if (!container) {
+                console.error(`Error: ${containerId} element not found in DOM`);
+                showTemporaryMessage(`Error displaying ${level} relevance results: container not found`, 'error');
+                return;
+            }
+            
             if (results.length === 0) {
                 section.classList.add('hidden');
                 return;
@@ -623,66 +712,80 @@
             
             section.classList.remove('hidden');
             
-            container.innerHTML = results.map(result => `
-                    <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="flex items-center space-x-2 flex-1">
-                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
-                                <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
-                                <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
-                                    ${result.type}
-                                </span>
+            try {
+                container.innerHTML = results.map(result => `
+                        <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex items-center space-x-2 flex-1">
+                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
+                                    <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
+                                    <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
+                                        ${result.type}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Ranking Score Display -->
-                        <div class="mb-3">
-                            <div class="flex items-center justify-between text-sm mb-1">
-                                <span class="text-gray-600">Relevance Score</span>
-                                <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
+                            
+                            <!-- Ranking Score Display -->
+                            <div class="mb-3">
+                                <div class="flex items-center justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Relevance Score</span>
+                                    <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                         style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
+                                </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
+                                <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
+                                <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
+                                ${result.score_breakdown?.embedding_score !== undefined ? 
+                                    `<span>Real-time: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
-                                     style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
                             </div>
-                        <div class="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
-                            <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
-                            <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
-                            ${result.score_breakdown?.embedding_score !== undefined ? 
-                                `<span>Real-time: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
-                        </div>
-                        </div>
-                        
-                        ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
-                        
-                        <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
-                        
-                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
-                            <span>Source: ${result.database} → ${result.collection}</span>
-                            <span>ID: ${result.id.substring(0, 8)}...</span>
-                        </div>
-                        
-                        ${displayMetadata(result.metadata)}
-                        
-                        <!-- Feedback Buttons -->
-                        <div class="mt-4 pt-3 border-t border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm text-gray-600">Was this result helpful?</span>
-                                <div class="flex space-x-2">
-                                    <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
-                                            class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                        👍 Helpful
-                                    </button>
-                                    <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
-                                            class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                        👎 Not Helpful
-                                    </button>
+                            
+                            ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
+                            
+                            <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
+                            
+                            <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                                <span>Source: ${result.database} → ${result.collection}</span>
+                                <span>ID: ${result.id.substring(0, 8)}...</span>
+                            </div>
+                            
+                            ${displayMetadata(result.metadata)}
+                            
+                            <!-- Feedback Buttons -->
+                            <div class="mt-4 pt-3 border-t border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Was this result helpful?</span>
+                                    <div class="flex space-x-2">
+                                        <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                                class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                            👍 Helpful
+                                        </button>
+                                        <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                                class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                            👎 Not Helpful
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error(`Error rendering ${level} relevance results:`, error);
+                showTemporaryMessage(`Error displaying ${level} relevance results: ` + error.message, 'error');
+                
+                // Show fallback content
+                container.innerHTML = `
+                    <div class="bg-red-100 p-4 rounded-lg">
+                        <div class="text-red-800 font-semibold">Error displaying results</div>
+                        <div class="text-sm text-red-600">Could not render ${level} relevance results</div>
                     </div>
-            `).join('');
+                `;
+            }
         }
 
         async function submitFeedback(resultId, rating, feedbackType) {
