@@ -37,7 +37,7 @@ class FeedbackSystem:
         self.feedback_file = "feedback_data.jsonl"
         logger.info("Using file-based feedback storage")
     
-    def submit_feedback(self, feedback_data: Dict[str, Any]) -> Dict[str, Any]:
+    def submit_feedback(self, feedback_data: Dict[str, Any], user_manager=None) -> Dict[str, Any]:
         """
         Submit user feedback for a search result
         
@@ -49,6 +49,7 @@ class FeedbackSystem:
                 - feedback_type: 'rating', 'thumbs', 'detailed'
                 - comment: Optional text comment
                 - user_session: Session identifier
+                - user_id: User ID (if authenticated)
                 
         Returns:
             Success/failure status
@@ -69,6 +70,22 @@ class FeedbackSystem:
             else:
                 # Store in file
                 feedback_id = self._store_feedback_to_file(enhanced_feedback)
+            
+            # Track user interaction if user manager is available
+            if user_manager:
+                user_id = feedback_data.get('user_id') or feedback_data.get('user_session', 'anonymous')
+                user_manager.track_user_interaction(user_id, {
+                    'action': 'feedback',
+                    'query': feedback_data.get('query', ''),
+                    'result_id': feedback_data.get('result_id', ''),
+                    'session_id': feedback_data.get('user_session', ''),
+                    'metadata': {
+                        'rating': feedback_data.get('rating'),
+                        'feedback_type': feedback_data.get('feedback_type'),
+                        'result_type': feedback_data.get('result_type', ''),
+                        'feedback_id': feedback_id
+                    }
+                })
             
             logger.info(f"Feedback submitted successfully: {feedback_id}")
             return {
@@ -293,6 +310,59 @@ class FeedbackSystem:
             logger.error(f"Error getting file query feedback: {str(e)}")
         
         return feedback_list
+
+    def get_training_data(self, min_feedback_count: int = 50) -> List[Dict[str, Any]]:
+        """Get feedback data formatted for LTR training"""
+        try:
+            if self.feedback_collection is not None:
+                # Get feedback from MongoDB
+                feedback_list = list(self.feedback_collection.find(
+                    {},
+                    {'_id': 0}
+                ).limit(min_feedback_count * 2))  # Get more to ensure we have enough
+                return feedback_list
+            else:
+                # Get from file
+                feedback_list = []
+                if os.path.exists(self.feedback_file):
+                    with open(self.feedback_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            try:
+                                feedback = json.loads(line.strip())
+                                feedback_list.append(feedback)
+                                if len(feedback_list) >= min_feedback_count * 2:
+                                    break
+                            except json.JSONDecodeError:
+                                continue
+                return feedback_list
+                
+        except Exception as e:
+            logger.error(f"Error getting training data: {str(e)}")
+            return []
+
+    def get_all_feedback(self) -> List[Dict[str, Any]]:
+        """Get all feedback data"""
+        try:
+            if self.feedback_collection is not None:
+                # Get all feedback from MongoDB
+                feedback_list = list(self.feedback_collection.find({}, {'_id': 0}))
+                return feedback_list
+            else:
+                # Get all from file
+                feedback_list = []
+                if os.path.exists(self.feedback_file):
+                    with open(self.feedback_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            try:
+                                feedback = json.loads(line.strip())
+                                feedback_list.append(feedback)
+                            except json.JSONDecodeError:
+                                continue
+                return feedback_list
+                
+        except Exception as e:
+            logger.error(f"Error getting all feedback: {str(e)}")
+            return []
 
     def get_recent_feedback(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get most recent feedback entries"""

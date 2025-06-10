@@ -63,9 +63,33 @@
     <!-- Header -->
     <header class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-6">
-            <h1 class="text-3xl font-bold">APOSSS</h1>
-            <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
-            <p class="text-blue-200 text-sm mt-1">Phase 3: AI Ranking & User Feedback</p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">APOSSS</h1>
+                    <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
+                    <p class="text-blue-200 text-sm mt-1">Phase 3: AI Ranking & User Feedback</p>
+                </div>
+                
+                <!-- User Authentication Section -->
+                <div class="flex items-center space-x-4">
+                    <!-- User Info (when authenticated) -->
+                    <div id="userInfo" class="flex items-center space-x-3" style="display: none;">
+                        <div id="userProfile">
+                            <!-- This will be populated by JavaScript when user is authenticated -->
+                        </div>
+                    </div>
+                    
+                    <!-- Login/Signup Buttons (shown when not authenticated) -->
+                    <div id="authButtons" class="flex space-x-3">
+                        <a href="/login" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-green-500 hover:bg-green-400 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                            Sign Up
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -213,7 +237,7 @@
             <div class="flex gap-4 mb-6">
                 <button 
                     id="searchBtn"
-                    onclick="performSearch()" 
+                    onclick="performSearchWithAuth()" 
                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
                 >
                     <span id="searchText">🔍 Search & Rank Results</span>
@@ -425,7 +449,7 @@
             }
         }
 
-        async function performSearch() {
+        async function performSearchWithAuth() {
             const query = document.getElementById('searchInput').value.trim();
             
             if (!query) {
@@ -437,26 +461,51 @@
             feedbackSubmitted.clear();
 
             try {
+                const searchData = {
+                    query: query,
+                    ranking_mode: document.getElementById('rankingMode').value
+                };
+                
+                // Add auth headers if available
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
                 const response = await fetch('/api/search', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ query: query })
+                    headers: headers,
+                    body: JSON.stringify(searchData)
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (data.success) {
                     currentSearchResults = data.search_results;
                     currentQueryId = data.query_id;
                     displaySearchResults(data.search_results, data.query_analysis, data.categorized_results);
+                    
+                    // Show personalization status
+                    if (data.personalization_applied) {
+                        showTemporaryMessage(`Search personalized for ${data.user_type} user`, 'success');
+                    } else {
+                        showTemporaryMessage(`Standard search results (${data.user_type} user)`, 'info');
+                    }
                 } else {
-                    alert('Error performing search: ' + (data.error || 'Unknown error'));
+                    throw new Error(data.error || 'Search failed');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error connecting to server: ' + error.message);
+                console.error('Search error:', error);
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h3 class="text-red-800 font-semibold">Search Error</h3>
+                        <p class="text-red-600">${error.message}</p>
+                    </div>
+                `;
             } finally {
                 showSearchLoading(false);
             }
@@ -642,13 +691,29 @@
         }
 
         function showTemporaryMessage(message, type) {
+            // Remove any existing message
+            const existingMessage = document.querySelector('.temporary-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Create new message
             const messageDiv = document.createElement('div');
-            messageDiv.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            messageDiv.className = `temporary-message fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'info' ? 'bg-blue-500 text-white' : 
+                'bg-gray-500 text-white'
+            }`;
             messageDiv.textContent = message;
+            
             document.body.appendChild(messageDiv);
             
+            // Auto-remove after 3 seconds
             setTimeout(() => {
-                document.body.removeChild(messageDiv);
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
             }, 3000);
         }
 
@@ -1544,10 +1609,129 @@
             }
         }
 
-        // Auto-check health on page load
+        // Authentication functions
+        function checkAuthenticationStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const userMode = localStorage.getItem('userMode');
+            
+            if (token && userData && userMode === 'authenticated') {
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showUserInfo(JSON.parse(userData));
+                    } else {
+                        // Token invalid, show login buttons
+                        showLoginButtons();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying token:', error);
+                    showLoginButtons();
+                });
+            } else {
+                // No authentication, show login buttons
+                showLoginButtons();
+            }
+        }
+        
+        function showLoginButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (authButtons && userInfo) {
+                authButtons.style.display = 'flex';
+                userInfo.style.display = 'none';
+                console.log('Login buttons displayed');
+            }
+        }
+        
+        function showUserInfo(userData) {
+            try {
+                const authButtons = document.getElementById('authButtons');
+                const userInfo = document.getElementById('userInfo');
+                const userProfile = document.getElementById('userProfile');
+                
+                if (!authButtons || !userInfo || !userProfile) {
+                    console.error('Required DOM elements not found for user info');
+                    return;
+                }
+                
+                authButtons.style.display = 'none';
+                userInfo.style.display = 'flex';
+                
+                // Get full name from profile
+                const firstName = userData.profile?.first_name || '';
+                const lastName = userData.profile?.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
+                
+                // Generate initials
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                userProfile.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <a href="/dashboard" class="flex items-center space-x-2 hover:bg-blue-700 px-2 py-1 rounded transition-colors">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                ${initials}
+                            </div>
+                            <span class="text-sm font-medium text-white">${fullName}</span>
+                        </a>
+                        <button onclick="logout()" class="text-xs text-blue-200 hover:text-white transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                `;
+                console.log('User info displayed successfully for:', fullName);
+            } catch (error) {
+                console.error('Error in showUserInfo:', error);
+                // Fallback to login buttons
+                showLoginButtons();
+            }
+        }
+        
+        function logout() {
+            clearAuthData();
+            showLoginButtons();
+            showTemporaryMessage('Logged out successfully', 'success');
+        }
+        
+        function clearAuthData() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            checkHealth();
+            // Check authentication status on page load
+            try {
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in authentication check:', error);
+                // Fallback: show login buttons
+                showLoginButtons();
+            }
         });
+        
+        // Immediate check in case DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            // DOM is still loading, wait for DOMContentLoaded
+        } else {
+            // DOM is already loaded
+            try {
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in immediate authentication check:', error);
+                showLoginButtons();
+            }
+        }
     </script>
 </body>
 </html> 

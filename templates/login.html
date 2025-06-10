@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - APOSSS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">APOSSS</h1>
+                    <p class="text-blue-100 text-sm">AI-Powered Open-Science Semantic Search System</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/" class="text-blue-200 hover:text-white transition-colors">
+                        🏠 Home
+                    </a>
+                    <a href="/signup" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg transition-colors">
+                        Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+        <div class="max-w-md mx-auto">
+            <!-- Login Card -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🔑</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Welcome Back</h2>
+                    <p class="text-gray-600 mt-2">Sign in to your APOSSS account</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-6">
+                    <!-- Email/Username Input -->
+                    <div>
+                        <label for="identifier" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email or Username
+                        </label>
+                        <input 
+                            type="text" 
+                            id="identifier" 
+                            name="identifier" 
+                            required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Enter your email or username"
+                        >
+                    </div>
+
+                    <!-- Password Input -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12"
+                                placeholder="Enter your password"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="togglePassword()" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                                <span id="passwordToggleIcon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                id="rememberMe" 
+                                name="rememberMe"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            >
+                            <label for="rememberMe" class="ml-2 block text-sm text-gray-700">
+                                Remember me
+                            </label>
+                        </div>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-500">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button 
+                        type="submit" 
+                        id="loginBtn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+                    >
+                        <span id="loginText">Sign In</span>
+                        <span id="loginSpinner" class="loading ml-2 hidden"></span>
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="my-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">or</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Continue as Guest -->
+                <button 
+                    onclick="continueAsGuest()"
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
+                >
+                    Continue as Guest
+                </button>
+
+                <!-- Sign Up Link -->
+                <p class="text-center text-sm text-gray-600 mt-6">
+                    Don't have an account? 
+                    <a href="/signup" class="text-blue-600 hover:text-blue-500 font-medium">
+                        Sign up here
+                    </a>
+                </p>
+            </div>
+
+            <!-- Features Info -->
+            <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Why create an account?</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                        Personalized search results based on your research interests
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                        Save and track your search history
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                        Get better recommendations over time
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                        Contribute to improving the search system
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Error/Success Messages -->
+    <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = '👁️';
+            }
+        }
+
+        function showLoading(show) {
+            const btn = document.getElementById('loginBtn');
+            const text = document.getElementById('loginText');
+            const spinner = document.getElementById('loginSpinner');
+            
+            if (show) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Signing in...';
+                spinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Sign In';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            messageDiv.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-all duration-300`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (container.contains(messageDiv)) {
+                        container.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        function continueAsGuest() {
+            // Store anonymous session
+            localStorage.setItem('userMode', 'guest');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            
+            // Redirect to main application
+            window.location.href = '/';
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const identifier = document.getElementById('identifier').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!identifier || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        identifier: identifier,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store authentication data
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    localStorage.setItem('userMode', 'authenticated');
+                    
+                    showMessage('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect to main application after short delay
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('Connection error. Please try again.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // User is already logged in, redirect to main app
+                        window.location.href = '/';
+                    }
+                })
+                .catch(error => {
+                    // Token is invalid, clear it
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userData');
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

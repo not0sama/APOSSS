@@ -88,7 +88,8 @@ class RankingEngine:
     def rank_search_results(self, search_results: Dict[str, Any], 
                           processed_query: Dict[str, Any],
                           user_feedback_data: Dict[str, Any] = None,
-                          ranking_mode: str = "hybrid") -> Dict[str, Any]:
+                          ranking_mode: str = "hybrid",
+                          user_personalization_data: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Rank search results using multiple algorithms
         
@@ -97,6 +98,7 @@ class RankingEngine:
             processed_query: LLM-processed query with extracted features
             user_feedback_data: Historical user feedback data
             ranking_mode: "hybrid", "ltr_only", or "traditional"
+            user_personalization_data: User preferences and interaction patterns
             
         Returns:
             Ranked search results with scores and explanations
@@ -114,6 +116,11 @@ class RankingEngine:
             heuristic_scores = self._calculate_heuristic_scores(results, processed_query)
             tfidf_scores = self._calculate_tfidf_scores(original_query, results)
             intent_scores = self._calculate_intent_scores(results, processed_query)
+            
+            # Calculate personalization scores
+            personalization_scores = self._calculate_personalization_scores(
+                results, user_personalization_data, processed_query
+            )
             
             # Calculate embedding similarity scores (real-time)
             embedding_scores = []
@@ -134,7 +141,8 @@ class RankingEngine:
                 'heuristic': heuristic_scores,
                 'tfidf': tfidf_scores,
                 'intent': intent_scores,
-                'embedding': embedding_scores
+                'embedding': embedding_scores,
+                'personalization': personalization_scores
             }
             
             # Apply ranking based on mode
@@ -152,15 +160,24 @@ class RankingEngine:
                     original_query, results, processed_query, current_scores, user_feedback_data
                 )
                 
-                # Combine LTR with traditional hybrid scoring
+                # Combine LTR with traditional hybrid scoring (including personalization)
                 for i, result in enumerate(ltr_results):
-                    # Traditional hybrid score
-                    traditional_score = (
-                        0.25 * heuristic_scores[i] +
-                        0.25 * tfidf_scores[i] +
-                        0.25 * intent_scores[i] +
-                        0.25 * embedding_scores[i]
-                    )
+                    # Traditional hybrid score with personalization
+                    if self.use_embedding:
+                        traditional_score = (
+                            0.20 * heuristic_scores[i] +
+                            0.20 * tfidf_scores[i] +
+                            0.20 * intent_scores[i] +
+                            0.20 * embedding_scores[i] +
+                            0.20 * personalization_scores[i]
+                        )
+                    else:
+                        traditional_score = (
+                            0.25 * heuristic_scores[i] +
+                            0.25 * tfidf_scores[i] +
+                            0.25 * intent_scores[i] +
+                            0.25 * personalization_scores[i]
+                        )
                     
                     # Combine with LTR score (weighted)
                     ltr_score = result.get('ltr_score', 0.5)
@@ -172,31 +189,34 @@ class RankingEngine:
                         'tfidf_score': tfidf_scores[i],
                         'intent_score': intent_scores[i],
                         'embedding_score': embedding_scores[i],
+                        'personalization_score': personalization_scores[i],
                         'ltr_score': ltr_score,
                         'traditional_score': traditional_score
                     }
                 
                 # Re-sort by combined score
                 ranked_results = sorted(ltr_results, key=lambda x: x['ranking_score'], reverse=True)
-                ranking_algorithm = "Hybrid (LTR + Traditional)"
-                score_components = ["LTR", "Heuristic", "TF-IDF", "Intent", "Embedding"]
+                ranking_algorithm = "Hybrid (LTR + Traditional + Personalization)"
+                score_components = ["LTR", "Heuristic", "TF-IDF", "Intent", "Embedding", "Personalization"]
                 
             else:
-                # Traditional hybrid ranking
+                # Traditional hybrid ranking with personalization
                 for i, result in enumerate(results):
-                    # Traditional weights (updated with embedding)
+                    # Traditional weights (updated with embedding and personalization)
                     if self.use_embedding:
+                        result['ranking_score'] = (
+                            0.20 * heuristic_scores[i] +
+                            0.20 * tfidf_scores[i] +
+                            0.20 * intent_scores[i] +
+                            0.20 * embedding_scores[i] +
+                            0.20 * personalization_scores[i]
+                        )
+                    else:
                         result['ranking_score'] = (
                             0.25 * heuristic_scores[i] +
                             0.25 * tfidf_scores[i] +
                             0.25 * intent_scores[i] +
-                            0.25 * embedding_scores[i]
-                        )
-                    else:
-                        result['ranking_score'] = (
-                            0.35 * heuristic_scores[i] +
-                            0.35 * tfidf_scores[i] +
-                            0.30 * intent_scores[i]
+                            0.25 * personalization_scores[i]
                         )
                     
                     # Store score breakdown
@@ -204,13 +224,14 @@ class RankingEngine:
                         'heuristic_score': heuristic_scores[i],
                         'tfidf_score': tfidf_scores[i],
                         'intent_score': intent_scores[i],
-                        'embedding_score': embedding_scores[i] if self.use_embedding else 0.0
+                        'embedding_score': embedding_scores[i] if self.use_embedding else 0.0,
+                        'personalization_score': personalization_scores[i]
                     }
                 
                 # Sort by combined score
                 ranked_results = sorted(results, key=lambda x: x['ranking_score'], reverse=True)
-                ranking_algorithm = f"Traditional Hybrid ({'with' if self.use_embedding else 'without'} Embedding)"
-                score_components = ["Heuristic", "TF-IDF", "Intent"] + (["Embedding"] if self.use_embedding else [])
+                ranking_algorithm = f"Traditional Hybrid with Personalization ({'with' if self.use_embedding else 'without'} Embedding)"
+                score_components = ["Heuristic", "TF-IDF", "Intent", "Personalization"] + (["Embedding"] if self.use_embedding else [])
             
             # Add final ranks
             for i, result in enumerate(ranked_results):
@@ -228,6 +249,7 @@ class RankingEngine:
                 'total_ranked': len(ranked_results),
                 'ltr_enabled': self.use_ltr and self.ltr_ranker and self.ltr_ranker.is_trained,
                 'embedding_enabled': self.use_embedding,
+                'personalization_enabled': user_personalization_data is not None,
                 'ranking_mode': ranking_mode
             }
             
@@ -472,6 +494,248 @@ class RankingEngine:
             scores.append(min(score, 1.0))
         
         return scores
+    
+    def _calculate_personalization_scores(self, results: List[Dict[str, Any]], 
+                                         user_personalization_data: Dict[str, Any],
+                                         processed_query: Dict[str, Any]) -> List[float]:
+        """Calculate personalization scores based on user preferences and interaction history"""
+        scores = []
+        
+        # If no personalization data, return neutral scores
+        if not user_personalization_data:
+            return [0.5] * len(results)
+        
+        # Extract user data
+        user_preferences = user_personalization_data.get('preferences', {})
+        user_interactions = user_personalization_data.get('interaction_history', [])
+        user_profile = user_personalization_data.get('profile', {})
+        
+        # Analyze user's historical preferences
+        preferred_types = self._analyze_user_preferred_types(user_interactions)
+        preferred_fields = self._analyze_user_preferred_fields(user_interactions, user_profile)
+        preferred_authors = self._analyze_user_preferred_authors(user_interactions)
+        
+        for result in results:
+            score = 0.5  # Start with neutral score
+            
+            # === TYPE PREFERENCE SCORING ===
+            result_type = result.get('type', '').lower()
+            if result_type in preferred_types:
+                type_preference = preferred_types[result_type]
+                score += 0.15 * type_preference  # Up to 15% boost
+            
+            # === FIELD/CATEGORY PREFERENCE SCORING ===
+            result_category = result.get('metadata', {}).get('category', '').lower()
+            for field, preference_score in preferred_fields.items():
+                if field.lower() in result_category:
+                    score += 0.15 * preference_score  # Up to 15% boost
+                    break
+            
+            # === AUTHOR PREFERENCE SCORING ===
+            result_author = result.get('author', '').lower()
+            if result_author in preferred_authors:
+                author_preference = preferred_authors[result_author]
+                score += 0.10 * author_preference  # Up to 10% boost
+            
+            # === RECENCY PREFERENCE SCORING ===
+            recency_preference = user_preferences.get('recency_preference', 0.5)
+            if recency_preference > 0.6:  # User prefers recent content
+                pub_date = result.get('metadata', {}).get('publication_date') or result.get('metadata', {}).get('year')
+                if pub_date:
+                    try:
+                        if isinstance(pub_date, str) and len(pub_date) == 4:  # Year only
+                            pub_year = int(pub_date)
+                        else:
+                            pub_year = int(str(pub_date)[:4])
+                        
+                        current_year = datetime.now().year
+                        years_old = current_year - pub_year
+                        
+                        if years_old <= 2:  # Very recent
+                            score += 0.10 * recency_preference
+                        elif years_old <= 5:  # Recent
+                            score += 0.05 * recency_preference
+                    except (ValueError, TypeError):
+                        pass
+            
+            # === LANGUAGE PREFERENCE SCORING ===
+            preferred_languages = user_profile.get('languages', [])
+            result_language = result.get('metadata', {}).get('language', 'english').lower()
+            if preferred_languages and result_language in [lang.lower() for lang in preferred_languages]:
+                score += 0.05  # 5% boost for preferred language
+            
+            # === INSTITUTION PREFERENCE SCORING ===
+            user_institution = user_profile.get('institution', '').lower()
+            result_institution = result.get('metadata', {}).get('institution', '').lower()
+            if user_institution and user_institution in result_institution:
+                score += 0.10  # 10% boost for same institution
+            
+            # === COMPLEXITY PREFERENCE SCORING ===
+            complexity_preference = user_preferences.get('complexity_preference', 0.5)
+            # Estimate complexity based on result type and metadata
+            estimated_complexity = self._estimate_content_complexity(result)
+            complexity_match = 1.0 - abs(complexity_preference - estimated_complexity)
+            score += 0.05 * complexity_match  # Up to 5% boost for complexity match
+            
+            # === QUERY SIMILARITY TO PAST INTERACTIONS ===
+            query_similarity_boost = self._calculate_query_similarity_boost(
+                processed_query, user_interactions
+            )
+            score += 0.10 * query_similarity_boost  # Up to 10% boost
+            
+            # === AVAILABILITY PREFERENCE ===
+            availability_preference = user_preferences.get('availability_preference', 0.5)
+            result_status = result.get('metadata', {}).get('status', '').lower()
+            if availability_preference > 0.7 and result_status in ['available', 'active', 'published']:
+                score += 0.05  # 5% boost for available items
+            
+            # Normalize score to [0, 1] range
+            scores.append(max(0.0, min(1.0, score)))
+        
+        return scores
+    
+    def _analyze_user_preferred_types(self, interactions: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Analyze user's preferred resource types from interaction history"""
+        type_counts = Counter()
+        positive_interactions = 0
+        
+        for interaction in interactions:
+            if interaction.get('action') == 'feedback' and interaction.get('metadata', {}).get('rating', 0) >= 4:
+                result_type = interaction.get('metadata', {}).get('result_type', '')
+                if result_type:
+                    type_counts[result_type.lower()] += 1
+                    positive_interactions += 1
+        
+        # Convert counts to preferences (normalized)
+        preferences = {}
+        if positive_interactions > 0:
+            for resource_type, count in type_counts.items():
+                preferences[resource_type] = count / positive_interactions
+        
+        return preferences
+    
+    def _analyze_user_preferred_fields(self, interactions: List[Dict[str, Any]], 
+                                     user_profile: Dict[str, Any]) -> Dict[str, float]:
+        """Analyze user's preferred academic fields"""
+        field_preferences = {}
+        
+        # Start with user's stated academic fields
+        academic_fields = user_profile.get('academic_fields', [])
+        for field in academic_fields:
+            field_preferences[field.lower()] = 0.8  # High preference for stated fields
+        
+        # Analyze interaction history for implicit preferences
+        field_counts = Counter()
+        total_positive = 0
+        
+        for interaction in interactions:
+            if interaction.get('action') == 'search':
+                # Extract fields from query (simplified)
+                query = interaction.get('query', '').lower()
+                for field in academic_fields:
+                    if field.lower() in query:
+                        field_counts[field.lower()] += 1
+                        total_positive += 1
+        
+        # Update preferences based on interaction patterns
+        if total_positive > 0:
+            for field, count in field_counts.items():
+                interaction_preference = count / total_positive
+                existing_preference = field_preferences.get(field, 0.0)
+                # Weighted combination of stated and observed preferences
+                field_preferences[field] = 0.6 * existing_preference + 0.4 * interaction_preference
+        
+        return field_preferences
+    
+    def _analyze_user_preferred_authors(self, interactions: List[Dict[str, Any]]) -> Dict[str, float]:
+        """Analyze user's preferred authors from positive feedback"""
+        author_counts = Counter()
+        positive_interactions = 0
+        
+        for interaction in interactions:
+            if (interaction.get('action') == 'feedback' and 
+                interaction.get('metadata', {}).get('rating', 0) >= 4):
+                
+                # Extract author from interaction metadata (if available)
+                result_data = interaction.get('metadata', {}).get('result_data', {})
+                author = result_data.get('author', '')
+                if author:
+                    author_counts[author.lower()] += 1
+                    positive_interactions += 1
+        
+        # Convert to preferences
+        preferences = {}
+        if positive_interactions > 0:
+            for author, count in author_counts.items():
+                preferences[author] = count / positive_interactions
+        
+        return preferences
+    
+    def _estimate_content_complexity(self, result: Dict[str, Any]) -> float:
+        """Estimate content complexity based on result metadata"""
+        complexity = 0.5  # Default neutral complexity
+        
+        result_type = result.get('type', '').lower()
+        
+        # Type-based complexity estimation
+        type_complexity = {
+            'article': 0.8,      # Research articles tend to be complex
+            'thesis': 0.9,       # Theses are typically very complex
+            'book': 0.6,         # Books vary but generally accessible
+            'journal': 0.7,      # Journal articles are moderately complex
+            'expert': 0.4,       # Expert profiles are relatively simple
+            'equipment': 0.3,    # Equipment specs are straightforward
+            'material': 0.3,     # Material info is straightforward
+            'project': 0.6       # Projects vary in complexity
+        }
+        
+        complexity = type_complexity.get(result_type, 0.5)
+        
+        # Adjust based on description length (longer = more complex)
+        description = result.get('description', '')
+        if len(description) > 500:
+            complexity = min(1.0, complexity + 0.1)
+        elif len(description) < 100:
+            complexity = max(0.0, complexity - 0.1)
+        
+        return complexity
+    
+    def _calculate_query_similarity_boost(self, processed_query: Dict[str, Any], 
+                                        interactions: List[Dict[str, Any]]) -> float:
+        """Calculate boost based on similarity to past successful queries"""
+        current_keywords = set()
+        
+        # Extract keywords from current query
+        keywords = processed_query.get('keywords', {})
+        for keyword_list in keywords.values():
+            if isinstance(keyword_list, list):
+                current_keywords.update([kw.lower() for kw in keyword_list])
+        
+        if not current_keywords:
+            return 0.0
+        
+        # Analyze past successful queries
+        similarity_scores = []
+        
+        for interaction in interactions:
+            if (interaction.get('action') == 'search' and 
+                len(interaction.get('query', '')) > 0):
+                
+                # Simple keyword overlap calculation
+                past_query = interaction.get('query', '').lower()
+                past_keywords = set(past_query.split())
+                
+                if past_keywords:
+                    overlap = len(current_keywords.intersection(past_keywords))
+                    similarity = overlap / len(current_keywords.union(past_keywords))
+                    similarity_scores.append(similarity)
+        
+        # Return average similarity (capped at reasonable boost)
+        if similarity_scores:
+            avg_similarity = sum(similarity_scores) / len(similarity_scores)
+            return min(0.5, avg_similarity)  # Cap at 50% boost
+        
+        return 0.0
     
     def _categorize_by_relevance(self, ranked_results: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
         """Categorize results by relevance level"""

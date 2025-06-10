@@ -5,6 +5,7 @@ import os
 import logging
 import uuid
 from datetime import datetime
+from functools import wraps
 
 # Import our modules
 from modules.database_manager import DatabaseManager
@@ -13,6 +14,7 @@ from modules.query_processor import QueryProcessor
 from modules.search_engine import SearchEngine
 from modules.ranking_engine import RankingEngine
 from modules.feedback_system import FeedbackSystem
+from modules.user_manager import UserManager
 
 # Load environment variables
 load_dotenv()
@@ -33,6 +35,7 @@ try:
     search_engine = SearchEngine(db_manager)
     ranking_engine = RankingEngine()
     feedback_system = FeedbackSystem(db_manager)
+    user_manager = UserManager(db_manager)
     logger.info("All components initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize components: {str(e)}")
@@ -42,11 +45,188 @@ except Exception as e:
     search_engine = None
     ranking_engine = None
     feedback_system = None
+    user_manager = None
+
+def get_current_user():
+    """Get current user from request headers or return anonymous user"""
+    try:
+        # Check for Authorization header
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            if user_manager:
+                verification = user_manager.verify_token(token)
+                if verification['success']:
+                    return verification['user']
+        
+        # Check for user_id in request data (for anonymous users)
+        if request.is_json:
+            data = request.get_json()
+            user_id = data.get('user_id')
+            if user_id and user_id.startswith('anon_'):
+                return {'user_id': user_id, 'is_anonymous': True}
+        
+        # Generate anonymous user if none found
+        if user_manager:
+            anonymous_id = user_manager.generate_anonymous_user_id()
+            return {'user_id': anonymous_id, 'is_anonymous': True}
+        
+        return {'user_id': 'anonymous', 'is_anonymous': True}
+        
+    except Exception as e:
+        logger.warning(f"Error getting current user: {e}")
+        return {'user_id': 'anonymous', 'is_anonymous': True}
+
+def track_search_interaction(user_id: str, query: str, session_id: str = None):
+    """Track search interaction for personalization"""
+    try:
+        if user_manager:
+            user_manager.track_user_interaction(user_id, {
+                'action': 'search',
+                'query': query,
+                'session_id': session_id or f"session_{int(datetime.now().timestamp())}",
+                'metadata': {
+                    'timestamp': datetime.now().isoformat(),
+                    'query_length': len(query),
+                    'query_words': len(query.split())
+                }
+            })
+    except Exception as e:
+        logger.warning(f"Error tracking search interaction: {e}")
 
 @app.route('/')
 def index():
     """Serve the main interface"""
     return render_template('index.html')
+
+@app.route('/login')
+def login():
+    """Serve the login page"""
+    return render_template('login.html')
+
+@app.route('/signup')
+def signup():
+    """Serve the signup page"""
+    return render_template('signup.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Serve the user dashboard page"""
+    return render_template('dashboard.html')
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    """User registration endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Register user
+        result = user_manager.register_user(data)
+        
+        if result['success']:
+            return jsonify(result), 201
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in registration endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/login', methods=['POST'])
+def login_api():
+    """User login endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'identifier' not in data or 'password' not in data:
+            return jsonify({'error': 'Email/username and password required'}), 400
+        
+        # Authenticate user
+        result = user_manager.authenticate_user(data['identifier'], data['password'])
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        logger.error(f"Error in login endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/verify', methods=['POST'])
+def verify_token():
+    """Token verification endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'No valid token provided'}), 401
+        
+        token = auth_header.split(' ')[1]
+        result = user_manager.verify_token(token)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        logger.error(f"Error in token verification: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile', methods=['GET'])
+def get_profile():
+    """Get user profile endpoint"""
+    try:
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        return jsonify({
+            'success': True,
+            'user': current_user
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting profile: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile', methods=['PUT'])
+def update_profile():
+    """Update user profile endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Update user profile
+        user_id = current_user['user_id']
+        result = user_manager.update_user_profile(user_id, data)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error updating profile: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/search', methods=['POST'])
 def search():
@@ -61,6 +241,14 @@ def search():
         
         if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
+        
+        # Get current user for personalization
+        current_user = get_current_user()
+        user_id = current_user.get('user_id', 'anonymous')
+        session_id = data.get('session_id', f"session_{int(datetime.now().timestamp())}")
+        
+        # Track search interaction
+        track_search_interaction(user_id, user_query, session_id)
         
         # Step 1: Process query with LLM
         logger.info(f"Processing search query: {user_query[:50]}...")
@@ -80,7 +268,8 @@ def search():
                 'query_analysis': processed_query,
                 'search_results': {'results': [], 'total_results': 0},
                 'categorized_results': {'high_relevance': [], 'medium_relevance': [], 'low_relevance': []},
-                'query_id': None
+                'query_id': None,
+                'personalization_applied': False
             })
         
         # Step 3: Get user feedback data for LTR
@@ -100,10 +289,25 @@ def search():
             logger.warning(f"Error getting feedback data for LTR: {e}")
             user_feedback_data = {}
         
-        # Step 4: Rank results using selected mode
-        logger.info(f"Ranking results using mode: {ranking_mode}...")
+        # Step 4: Get user personalization data
+        user_personalization_data = None
+        try:
+            if user_manager and not current_user.get('is_anonymous', True):
+                # Get user preferences and interaction history
+                user_personalization_data = user_manager.get_user_personalization_data(user_id)
+                logger.info(f"Retrieved personalization data for user: {user_id}")
+            elif user_manager and current_user.get('is_anonymous', True):
+                # For anonymous users, get basic interaction patterns
+                user_personalization_data = user_manager.get_anonymous_personalization_data(user_id)
+                logger.info(f"Retrieved anonymous personalization data for: {user_id}")
+        except Exception as e:
+            logger.warning(f"Error getting personalization data: {e}")
+            user_personalization_data = None
+        
+        # Step 5: Rank results using selected mode with personalization
+        logger.info(f"Ranking results using mode: {ranking_mode} with personalization...")
         ranked_results = ranking_engine.rank_search_results(
-            search_results, processed_query, user_feedback_data, ranking_mode
+            search_results, processed_query, user_feedback_data, ranking_mode, user_personalization_data
         )
         
         # Generate unique query ID for feedback tracking
@@ -115,7 +319,9 @@ def search():
             'search_results': ranked_results,
             'categorized_results': ranked_results.get('categorized_results', {}),
             'query_id': query_id,
-            'ranking_mode': ranking_mode
+            'ranking_mode': ranking_mode,
+            'personalization_applied': user_personalization_data is not None,
+            'user_type': 'authenticated' if not current_user.get('is_anonymous', True) else 'anonymous'
         })
         
     except Exception as e:

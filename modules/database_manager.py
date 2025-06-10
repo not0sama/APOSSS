@@ -34,7 +34,7 @@ class DatabaseManager:
             },
             'aposss': {
                 'uri': os.getenv('MONGODB_URI_APOSSS', 'mongodb://localhost:27017/APOSSS'),
-                'collections': ['user_feedback']
+                'collections': ['user_feedback', 'users', 'user_interactions', 'user_preferences', 'user_sessions']
             }
         }
         

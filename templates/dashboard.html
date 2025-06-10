@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Dashboard - APOSSS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">APOSSS</h1>
+                    <p class="text-blue-100 text-sm">Account Dashboard</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-blue-200 hover:text-white transition-colors">
+                        🏠 Back to Search
+                    </a>
+                    <button onclick="logout()" class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded-lg transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            
+            <!-- Profile Overview Card -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <div class="flex items-center space-x-6 mb-6">
+                    <div id="profileAvatar" class="profile-avatar">
+                        <!-- Initials will be populated by JavaScript -->
+                    </div>
+                    <div>
+                        <h2 id="fullName" class="text-2xl font-bold text-gray-900">Loading...</h2>
+                        <p id="userEmail" class="text-gray-600">Loading...</p>
+                        <p id="userRole" class="text-sm text-gray-500">Loading...</p>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-blue-800">Total Searches</h3>
+                        <p id="totalSearches" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-green-800">Feedback Given</h3>
+                        <p id="totalFeedback" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h3 class="text-sm font-medium text-purple-800">Account Age</h3>
+                        <p id="accountAge" class="text-2xl font-bold text-purple-600">0 days</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-6">
+                        <button onclick="showTab('profile')" id="profileTab" class="py-4 border-b-2 border-blue-500 text-blue-600 font-medium">
+                            Profile Information
+                        </button>
+                        <button onclick="showTab('preferences')" id="preferencesTab" class="py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                            Search Preferences
+                        </button>
+                        <button onclick="showTab('activity')" id="activityTab" class="py-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
+                            Activity History
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Profile Tab -->
+                <div id="profileTabContent" class="p-6">
+                    <form id="profileForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Basic Information -->
+                            <div>
+                                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
+                                    First Name
+                                </label>
+                                <input type="text" id="firstName" name="firstName" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            </div>
+                            
+                            <div>
+                                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Last Name
+                                </label>
+                                <input type="text" id="lastName" name="lastName" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            </div>
+                            
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Email
+                                </label>
+                                <input type="email" id="email" name="email" readonly
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                            </div>
+                            
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Username
+                                </label>
+                                <input type="text" id="username" name="username" readonly
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                            </div>
+                            
+                            <div>
+                                <label for="institution" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Institution
+                                </label>
+                                <input type="text" id="institution" name="institution" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            </div>
+                            
+                            <div>
+                                <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Role
+                                </label>
+                                <select id="role" name="role" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                    <option value="researcher">Researcher</option>
+                                    <option value="student">Student</option>
+                                    <option value="professor">Professor</option>
+                                    <option value="industry">Industry Professional</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Academic Fields -->
+                        <div>
+                            <label for="academicFields" class="block text-sm font-medium text-gray-700 mb-2">
+                                Academic Fields/Interests
+                            </label>
+                            <input type="text" id="academicFields" name="academicFields" placeholder="e.g., Machine Learning, Environmental Science, Chemistry"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <p class="text-sm text-gray-500 mt-1">Separate multiple fields with commas</p>
+                        </div>
+                        
+                        <!-- Bio -->
+                        <div>
+                            <label for="bio" class="block text-sm font-medium text-gray-700 mb-2">
+                                Bio
+                            </label>
+                            <textarea id="bio" name="bio" rows="4" placeholder="Tell us about yourself..."
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div class="flex justify-end">
+                            <button type="submit" id="saveProfileBtn"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center">
+                                <span id="saveProfileText">Save Changes</span>
+                                <span id="saveProfileSpinner" class="loading ml-2 hidden"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preferences Tab -->
+                <div id="preferencesTabContent" class="p-6 hidden">
+                    <div class="text-center py-8 text-gray-500">
+                        <p>Preferences functionality will be available soon</p>
+                    </div>
+                </div>
+
+                <!-- Activity Tab -->
+                <div id="activityTabContent" class="p-6 hidden">
+                    <div class="text-center py-8 text-gray-500">
+                        <p>Activity history will be available soon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        let currentUserData = null;
+
+        // Tab switching functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.getElementById('profileTabContent').classList.add('hidden');
+            document.getElementById('preferencesTabContent').classList.add('hidden');
+            document.getElementById('activityTabContent').classList.add('hidden');
+            
+            // Reset all tab buttons
+            document.getElementById('profileTab').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('profileTab').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('preferencesTab').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('preferencesTab').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('activityTab').classList.remove('border-blue-500', 'text-blue-600');
+            document.getElementById('activityTab').classList.add('border-transparent', 'text-gray-500');
+            
+            // Show selected tab content and activate tab button
+            document.getElementById(tabName + 'TabContent').classList.remove('hidden');
+            document.getElementById(tabName + 'Tab').classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById(tabName + 'Tab').classList.add('border-blue-500', 'text-blue-600');
+        }
+
+        // Authentication check and user data loading
+        async function loadUserData() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (!token || !userData) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                // Verify token and get fresh user data
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUserData = data.user;
+                    populateUserData(data.user);
+                } else {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        function populateUserData(userData) {
+            // Profile overview
+            const firstName = userData.profile?.first_name || '';
+            const lastName = userData.profile?.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
+            
+            // Generate initials
+            const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            document.getElementById('profileAvatar').textContent = initials;
+            document.getElementById('fullName').textContent = fullName;
+            document.getElementById('userEmail').textContent = userData.email;
+            document.getElementById('userRole').textContent = userData.profile?.role || 'Researcher';
+            
+            // Statistics
+            document.getElementById('totalSearches').textContent = userData.statistics?.total_searches || 0;
+            document.getElementById('totalFeedback').textContent = userData.statistics?.total_feedback || 0;
+            
+            // Calculate account age
+            const createdDate = new Date(userData.created_at);
+            const now = new Date();
+            const daysDiff = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+            document.getElementById('accountAge').textContent = `${daysDiff} days`;
+            
+            // Populate form fields
+            document.getElementById('firstName').value = firstName;
+            document.getElementById('lastName').value = lastName;
+            document.getElementById('email').value = userData.email;
+            document.getElementById('username').value = userData.username;
+            document.getElementById('institution').value = userData.profile?.institution || '';
+            document.getElementById('role').value = userData.profile?.role || 'researcher';
+            document.getElementById('bio').value = userData.profile?.bio || '';
+            
+            // Handle academic fields (array to comma-separated string)
+            const academicFields = userData.profile?.academic_fields || [];
+            document.getElementById('academicFields').value = academicFields.join(', ');
+        }
+
+        // Profile form submission
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('saveProfileBtn');
+            const text = document.getElementById('saveProfileText');
+            const spinner = document.getElementById('saveProfileSpinner');
+            
+            // Show loading state
+            btn.disabled = true;
+            text.textContent = 'Saving...';
+            spinner.classList.remove('hidden');
+            
+            try {
+                const formData = new FormData(e.target);
+                const profileData = {
+                    first_name: formData.get('firstName'),
+                    last_name: formData.get('lastName'),
+                    institution: formData.get('institution'),
+                    role: formData.get('role'),
+                    bio: formData.get('bio'),
+                    academic_fields: formData.get('academicFields').split(',').map(field => field.trim()).filter(field => field)
+                };
+
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update localStorage with new user data
+                    currentUserData.profile = { ...currentUserData.profile, ...profileData };
+                    localStorage.setItem('userData', JSON.stringify(currentUserData));
+                    
+                    showMessage('Profile updated successfully!', 'success');
+                    
+                    // Update the profile overview display
+                    const fullName = `${profileData.first_name} ${profileData.last_name}`.trim() || currentUserData.username;
+                    document.getElementById('fullName').textContent = fullName;
+                    document.getElementById('userRole').textContent = profileData.role;
+                    
+                    // Update initials
+                    const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                    document.getElementById('profileAvatar').textContent = initials;
+                } else {
+                    showMessage(result.error || 'Failed to update profile', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showMessage('Connection error. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                btn.disabled = false;
+                text.textContent = 'Save Changes';
+                spinner.classList.add('hidden');
+            }
+        });
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            messageDiv.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-all duration-300`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (container.contains(messageDiv)) {
+                        container.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
+            window.location.href = '/';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+        });
+    </script>
+</body>
+</html> 

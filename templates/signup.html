@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - APOSSS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .field-group {
+            transition: all 0.3s ease;
+        }
+        .field-group.error {
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">APOSSS</h1>
+                    <p class="text-blue-100 text-sm">AI-Powered Open-Science Semantic Search System</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/" class="text-blue-200 hover:text-white transition-colors">
+                        🏠 Home
+                    </a>
+                    <a href="/login" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg transition-colors">
+                        Sign In
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <!-- Sign Up Card -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">👨‍🔬</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Join APOSSS</h2>
+                    <p class="text-gray-600 mt-2">Create your account to get personalized research assistance</p>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-center space-x-4">
+                        <div class="flex items-center">
+                            <div id="step1Indicator" class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                                1
+                            </div>
+                            <span class="ml-2 text-sm font-medium text-blue-600">Basic Info</span>
+                        </div>
+                        <div class="w-12 h-1 bg-gray-300" id="step1Line"></div>
+                        <div class="flex items-center">
+                            <div id="step2Indicator" class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-medium">
+                                2
+                            </div>
+                            <span class="ml-2 text-sm font-medium text-gray-500">Academic Profile</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sign Up Form -->
+                <form id="signupForm" class="space-y-6">
+                    <!-- Step 1: Basic Information -->
+                    <div id="step1" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- First Name -->
+                            <div class="field-group">
+                                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
+                                    First Name
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="firstName" 
+                                    name="firstName" 
+                                    required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    placeholder="Enter your first name"
+                                >
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="field-group">
+                                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Last Name
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="lastName" 
+                                    name="lastName" 
+                                    required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    placeholder="Enter your last name"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="field-group">
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                                Username <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Choose a unique username"
+                            >
+                            <p class="mt-1 text-sm text-gray-500">This will be your unique identifier in APOSSS</p>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="field-group">
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Enter your email address"
+                            >
+                        </div>
+
+                        <!-- Password -->
+                        <div class="field-group">
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                                Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password" 
+                                    required
+                                    minlength="8"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12"
+                                    placeholder="Create a strong password"
+                                >
+                                <button 
+                                    type="button" 
+                                    onclick="togglePassword('password')" 
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    <span id="passwordToggleIcon">👁️</span>
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <div class="text-sm text-gray-600">Password strength:</div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="passwordStrength" class="bg-red-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                                <div id="passwordHints" class="text-xs text-gray-500 mt-1">At least 8 characters required</div>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="field-group">
+                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
+                                Confirm Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input 
+                                    type="password" 
+                                    id="confirmPassword" 
+                                    name="confirmPassword" 
+                                    required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12"
+                                    placeholder="Confirm your password"
+                                >
+                                <button 
+                                    type="button" 
+                                    onclick="togglePassword('confirmPassword')" 
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    <span id="confirmPasswordToggleIcon">👁️</span>
+                                </button>
+                            </div>
+                            <div id="passwordMatch" class="mt-1 text-sm hidden"></div>
+                        </div>
+
+                        <!-- Next Button -->
+                        <div class="flex justify-end">
+                            <button 
+                                type="button" 
+                                onclick="nextStep()"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                            >
+                                Next: Academic Profile →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Academic Profile -->
+                    <div id="step2" class="space-y-6 hidden">
+                        <!-- Institution -->
+                        <div class="field-group">
+                            <label for="institution" class="block text-sm font-medium text-gray-700 mb-2">
+                                Institution/Organization
+                            </label>
+                            <input 
+                                type="text" 
+                                id="institution" 
+                                name="institution" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="e.g., University of Science, Research Institute"
+                            >
+                        </div>
+
+                        <!-- Role -->
+                        <div class="field-group">
+                            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
+                                Role
+                            </label>
+                            <select 
+                                id="role" 
+                                name="role" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            >
+                                <option value="researcher">Researcher</option>
+                                <option value="student">Student</option>
+                                <option value="professor">Professor</option>
+                                <option value="postdoc">Postdoc</option>
+                                <option value="industry">Industry Professional</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Academic Fields -->
+                        <div class="field-group">
+                            <label for="academicFields" class="block text-sm font-medium text-gray-700 mb-2">
+                                Academic Fields/Interests
+                            </label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Computer Science" class="mr-2">
+                                    <span class="text-sm">Computer Science</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Biology" class="mr-2">
+                                    <span class="text-sm">Biology</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Physics" class="mr-2">
+                                    <span class="text-sm">Physics</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Chemistry" class="mr-2">
+                                    <span class="text-sm">Chemistry</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Medicine" class="mr-2">
+                                    <span class="text-sm">Medicine</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Engineering" class="mr-2">
+                                    <span class="text-sm">Engineering</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Mathematics" class="mr-2">
+                                    <span class="text-sm">Mathematics</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Psychology" class="mr-2">
+                                    <span class="text-sm">Psychology</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="academicFields" value="Environmental Science" class="mr-2">
+                                    <span class="text-sm">Environmental</span>
+                                </label>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="customFields" 
+                                name="customFields" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Other fields (comma-separated)"
+                            >
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="field-group">
+                            <label for="bio" class="block text-sm font-medium text-gray-700 mb-2">
+                                Bio/Research Interests (Optional)
+                            </label>
+                            <textarea 
+                                id="bio" 
+                                name="bio" 
+                                rows="3"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                                placeholder="Tell us about your research interests or current projects..."
+                            ></textarea>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="flex justify-between">
+                            <button 
+                                type="button" 
+                                onclick="previousStep()"
+                                class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                            >
+                                ← Previous
+                            </button>
+                            <button 
+                                type="submit" 
+                                id="signupBtn"
+                                class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center"
+                            >
+                                <span id="signupText">Create Account</span>
+                                <span id="signupSpinner" class="loading ml-2 hidden"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Terms and Conditions -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <p class="text-xs text-gray-500 text-center">
+                        By creating an account, you agree to our 
+                        <a href="#" class="text-blue-600 hover:text-blue-500">Terms of Service</a> and 
+                        <a href="#" class="text-blue-600 hover:text-blue-500">Privacy Policy</a>.
+                        Your data will be used to personalize your research experience.
+                    </p>
+                </div>
+
+                <!-- Sign In Link -->
+                <p class="text-center text-sm text-gray-600 mt-6">
+                    Already have an account? 
+                    <a href="/login" class="text-blue-600 hover:text-blue-500 font-medium">
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Error/Success Messages -->
+    <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        let currentStep = 1;
+
+        function togglePassword(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            const toggleIcon = document.getElementById(fieldId + 'ToggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = '👁️';
+            }
+        }
+
+        function nextStep() {
+            if (validateStep1()) {
+                currentStep = 2;
+                updateStepUI();
+            }
+        }
+
+        function previousStep() {
+            currentStep = 1;
+            updateStepUI();
+        }
+
+        function updateStepUI() {
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step1Indicator = document.getElementById('step1Indicator');
+            const step2Indicator = document.getElementById('step2Indicator');
+            const step1Line = document.getElementById('step1Line');
+
+            if (currentStep === 1) {
+                step1.classList.remove('hidden');
+                step2.classList.add('hidden');
+                step1Indicator.className = 'w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium';
+                step2Indicator.className = 'w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-medium';
+                step1Line.className = 'w-12 h-1 bg-gray-300';
+            } else {
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                step1Indicator.className = 'w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-medium';
+                step2Indicator.className = 'w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium';
+                step1Line.className = 'w-12 h-1 bg-green-500';
+                step1Indicator.innerHTML = '✓';
+            }
+        }
+
+        function validateStep1() {
+            const fields = ['firstName', 'lastName', 'username', 'email', 'password', 'confirmPassword'];
+            let isValid = true;
+
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                const fieldGroup = field.closest('.field-group');
+                
+                if (!field.value.trim()) {
+                    fieldGroup.classList.add('error');
+                    field.classList.add('border-red-500');
+                    isValid = false;
+                    setTimeout(() => {
+                        fieldGroup.classList.remove('error');
+                    }, 500);
+                } else {
+                    field.classList.remove('border-red-500');
+                }
+            });
+
+            // Validate password match
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match', 'error');
+                isValid = false;
+            }
+
+            // Validate password strength
+            if (password.length < 8) {
+                showMessage('Password must be at least 8 characters long', 'error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                showMessage('Please fill in all required fields correctly', 'error');
+            }
+
+            return isValid;
+        }
+
+        function showLoading(show) {
+            const btn = document.getElementById('signupBtn');
+            const text = document.getElementById('signupText');
+            const spinner = document.getElementById('signupSpinner');
+            
+            if (show) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Creating Account...';
+                spinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                text.textContent = 'Create Account';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            messageDiv.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-all duration-300`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (container.contains(messageDiv)) {
+                        container.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Password strength checker
+        document.getElementById('password').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthBar = document.getElementById('passwordStrength');
+            const hintsDiv = document.getElementById('passwordHints');
+            
+            let strength = 0;
+            let hints = [];
+            
+            if (password.length >= 8) strength += 25;
+            else hints.push('At least 8 characters');
+            
+            if (/[a-z]/.test(password)) strength += 25;
+            else hints.push('Lowercase letter');
+            
+            if (/[A-Z]/.test(password)) strength += 25;
+            else hints.push('Uppercase letter');
+            
+            if (/[0-9]/.test(password)) strength += 25;
+            else hints.push('Number');
+            
+            strengthBar.style.width = strength + '%';
+            
+            if (strength < 25) {
+                strengthBar.className = 'bg-red-500 h-2 rounded-full transition-all duration-300';
+            } else if (strength < 50) {
+                strengthBar.className = 'bg-orange-500 h-2 rounded-full transition-all duration-300';
+            } else if (strength < 75) {
+                strengthBar.className = 'bg-yellow-500 h-2 rounded-full transition-all duration-300';
+            } else {
+                strengthBar.className = 'bg-green-500 h-2 rounded-full transition-all duration-300';
+            }
+            
+            hintsDiv.textContent = hints.length > 0 ? 'Missing: ' + hints.join(', ') : 'Strong password!';
+        });
+
+        // Password match checker
+        document.getElementById('confirmPassword').addEventListener('input', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = e.target.value;
+            const matchDiv = document.getElementById('passwordMatch');
+            
+            if (confirmPassword.length > 0) {
+                if (password === confirmPassword) {
+                    matchDiv.textContent = 'Passwords match!';
+                    matchDiv.className = 'mt-1 text-sm text-green-600';
+                    matchDiv.classList.remove('hidden');
+                } else {
+                    matchDiv.textContent = 'Passwords do not match';
+                    matchDiv.className = 'mt-1 text-sm text-red-600';
+                    matchDiv.classList.remove('hidden');
+                }
+            } else {
+                matchDiv.classList.add('hidden');
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!validateStep1()) {
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                // Collect form data
+                const formData = new FormData(e.target);
+                const academicFields = Array.from(document.querySelectorAll('input[name="academicFields"]:checked'))
+                    .map(cb => cb.value);
+                
+                const customFields = document.getElementById('customFields').value;
+                if (customFields) {
+                    academicFields.push(...customFields.split(',').map(field => field.trim()).filter(field => field));
+                }
+
+                const userData = {
+                    username: formData.get('username'),
+                    email: formData.get('email'),
+                    password: formData.get('password'),
+                    first_name: formData.get('firstName'),
+                    last_name: formData.get('lastName'),
+                    institution: formData.get('institution'),
+                    role: formData.get('role'),
+                    academic_fields: academicFields,
+                    bio: formData.get('bio')
+                };
+
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Account created successfully! Redirecting to login...', 'success');
+                    
+                    // Redirect to login page after short delay
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    showMessage(data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showMessage('Connection error. Please try again.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+    </script>
+</body>
+</html> 
