@@ -18,11 +18,11 @@ class EmbeddingRanker:
     """Semantic similarity ranker using sentence transformers and FAISS"""
     
     def __init__(self, cache_dir: str = 'embedding_cache'):
-        """Initialize the embedding ranker with sentence transformer model"""
+        """Initialize the embedding ranker with multilingual sentence transformer model"""
         self.cache_dir = cache_dir
-        self.model_name = 'all-MiniLM-L6-v2'
+        self.model_name = 'paraphrase-multilingual-mpnet-base-v2'
         self.model = None
-        self.embedding_dimension = 384  # Initialize embedding dimension
+        self.embedding_dimension = 768  # Updated dimension for multilingual mpnet model
         self.faiss_index = None
         self.document_cache = {}  # Store document metadata with embeddings
         self.embedding_cache = {}  # Store cached embeddings
@@ -247,13 +247,22 @@ class EmbeddingRanker:
         return ' '.join(filter(None, text_parts))
     
     def _build_enhanced_query(self, original_query: str, processed_query: Dict[str, Any] = None) -> str:
-        """Build enhanced query from original + LLM processing"""
-        components = [original_query]
+        """Build enhanced query from original + LLM processing with multilingual support"""
+        components = []
+        
+        # Always start with the original query for multilingual matching
+        components.append(original_query)
         
         if processed_query:
+            # Add translated query if available and different from original
+            translation = processed_query.get('translation', {})
+            translated_query = translation.get('translated_query', '')
+            if translated_query and translated_query != original_query:
+                components.append(translated_query)
+            
             # Add corrected query
             corrected = processed_query.get('corrected_query', '')
-            if corrected and corrected != original_query:
+            if corrected and corrected not in components:
                 components.append(corrected)
             
             # Add keywords
@@ -300,13 +309,16 @@ class EmbeddingRanker:
             logger.error(f"Error saving FAISS index: {str(e)}")
     
     def get_cache_stats(self) -> Dict[str, Any]:
-        """Get statistics about the embedding cache"""
+        """Get statistics about the embedding cache with multilingual support info"""
         return {
             'model_name': self.model_name,
+            'model_type': 'multilingual',
+            'supported_languages': 'English, French, Spanish, German, Italian, Dutch, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, and 50+ more',
             'embedding_dimension': self.embedding_dimension,
             'total_vectors': self.faiss_index.ntotal if self.faiss_index else 0,
             'cache_size': len(self.document_cache),
-            'cache_directory': self.cache_dir
+            'cache_directory': self.cache_dir,
+            'multilingual_capable': True
         }
     
     def clear_cache(self):
@@ -501,13 +513,19 @@ class EmbeddingRanker:
         return combined_text
     
     def _build_enhanced_query_text(self, original_query: str, processed_query: Dict[str, Any] = None) -> str:
-        """Build enhanced query text using LLM processing results"""
+        """Build enhanced query text using LLM processing results with multilingual support"""
         text_parts = [original_query]
         
         if processed_query:
+            # Add translated query if available and different from original  
+            translation = processed_query.get('translation', {})
+            translated_query = translation.get('translated_query', '')
+            if translated_query and translated_query != original_query:
+                text_parts.append(translated_query)
+            
             # Add corrected query if different
             corrected = processed_query.get('corrected_query', '')
-            if corrected and corrected != original_query:
+            if corrected and corrected not in text_parts:
                 text_parts.append(corrected)
             
             # Add primary keywords
@@ -614,14 +632,15 @@ class EmbeddingRanker:
             return False
 
     def _initialize_model(self):
-        """Initialize the sentence transformer model"""
+        """Initialize the multilingual sentence transformer model"""
         try:
-            logger.info(f"Loading sentence transformer model: {self.model_name}")
+            logger.info(f"Loading multilingual sentence transformer model: {self.model_name}")
             self.model = SentenceTransformer(self.model_name)
             self.embedding_dimension = self.model.get_sentence_embedding_dimension()
-            logger.info(f"Model loaded successfully. Embedding dimension: {self.embedding_dimension}")
+            logger.info(f"Multilingual model loaded successfully. Embedding dimension: {self.embedding_dimension}")
+            logger.info("Model supports multiple languages including English, French, Spanish, German, Italian, Dutch, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, and many others")
         except Exception as e:
-            logger.error(f"Failed to load sentence transformer model: {str(e)}")
+            logger.error(f"Failed to load multilingual sentence transformer model: {str(e)}")
             raise
 
     def _load_cache(self):
