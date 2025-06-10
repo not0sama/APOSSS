@@ -300,14 +300,15 @@ class RankingEngine:
             return False
         
         try:
-            # Pre-compute embeddings for sample documents
-            for doc in sample_documents:
-                doc_text = f"{doc.get('title', '')} {doc.get('description', '')}"
-                if doc_text.strip():
-                    self.embedding_ranker._get_text_embedding(doc_text, use_cache=True)
+            # Use the embedding ranker's warm_up_cache method
+            success = self.embedding_ranker.warm_up_cache(sample_documents)
             
-            logger.info(f"Cache warmed up with {len(sample_documents)} documents")
-            return True
+            if success:
+                logger.info(f"Cache warmed up with {len(sample_documents)} documents")
+            else:
+                logger.warning(f"Cache warm-up failed for {len(sample_documents)} documents")
+            
+            return success
             
         except Exception as e:
             logger.error(f"Error warming up cache: {e}")
