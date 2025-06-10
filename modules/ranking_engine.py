@@ -257,10 +257,16 @@ class RankingEngine:
     
     def get_ltr_stats(self) -> Dict[str, Any]:
         """Get LTR model statistics"""
+        if not LTR_AVAILABLE:
+            return {
+                'ltr_available': False,
+                'reason': 'XGBoost/LTR dependencies not available'
+            }
+        
         if not self.use_ltr or not self.ltr_ranker:
             return {
                 'ltr_available': False,
-                'reason': 'LTR ranker not initialized'
+                'reason': 'LTR ranker failed to initialize'
             }
         
         return self.ltr_ranker.get_model_stats()
