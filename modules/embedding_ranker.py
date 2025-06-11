@@ -20,9 +20,10 @@ class EmbeddingRanker:
     def __init__(self, cache_dir: str = 'embedding_cache'):
         """Initialize the embedding ranker with multilingual sentence transformer model"""
         self.cache_dir = cache_dir
-        self.model_name = 'paraphrase-multilingual-mpnet-base-v2'
+        # Use smaller multilingual model for better download reliability
+        self.model_name = 'paraphrase-multilingual-MiniLM-L12-v2'  # 470MB vs 1.11GB
         self.model = None
-        self.embedding_dimension = 768  # Updated dimension for multilingual mpnet model
+        self.embedding_dimension = 384  # Dimension for multilingual MiniLM model
         self.faiss_index = None
         self.document_cache = {}  # Store document metadata with embeddings
         self.embedding_cache = {}  # Store cached embeddings
