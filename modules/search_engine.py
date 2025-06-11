@@ -44,28 +44,29 @@ class SearchEngine:
         logger.info(f"Search engine initialized successfully (pre-index: {'enabled' if self.use_preindex else 'disabled'})")
     
     def search_all_databases(self, processed_query: Dict[str, Any], 
-                           hybrid_search: bool = True) -> Dict[str, Any]:
+                           hybrid_search: bool = True, database_filters: List[str] = None) -> Dict[str, Any]:
         """
         Search across all databases using processed query data
         
         Args:
             processed_query: The structured query data from LLM processing
             hybrid_search: Whether to combine traditional + pre-index search
+            database_filters: Optional list of database names to filter by
             
         Returns:
             Aggregated search results from all databases
         """
         try:
             if self.use_preindex and hybrid_search:
-                return self._hybrid_search(processed_query)
+                return self._hybrid_search(processed_query, database_filters)
             else:
-                return self._traditional_search(processed_query)
+                return self._traditional_search(processed_query, database_filters)
                 
         except Exception as e:
             logger.error(f"Error in search_all_databases: {str(e)}")
             return self._create_empty_results(str(e))
     
-    def _hybrid_search(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+    def _hybrid_search(self, processed_query: Dict[str, Any], database_filters: List[str] = None) -> Dict[str, Any]:
         """Combine pre-index semantic search with traditional keyword search"""
         try:
             # Get original query for semantic search
@@ -79,7 +80,7 @@ class SearchEngine:
             
             # Step 2: Traditional keyword search for precision
             logger.info("🔍 Performing traditional keyword search...")
-            traditional_results = self._traditional_search(processed_query)
+            traditional_results = self._traditional_search(processed_query, database_filters)
             
             # Step 3: Merge and deduplicate results
             logger.info("🔄 Merging semantic and keyword search results...")
@@ -91,26 +92,38 @@ class SearchEngine:
         except Exception as e:
             logger.error(f"Error in hybrid search: {e}")
             # Fallback to traditional search
-            return self._traditional_search(processed_query)
+            return self._traditional_search(processed_query, database_filters)
     
-    def _traditional_search(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+    def _traditional_search(self, processed_query: Dict[str, Any], database_filters: List[str] = None) -> Dict[str, Any]:
         """Traditional MongoDB keyword search"""
         # Extract search parameters
         search_params = self._extract_search_parameters(processed_query)
         
-        # Search each database
-        academic_results = self._search_academic_library(search_params)
-        experts_results = self._search_experts_system(search_params)
-        papers_results = self._search_research_papers(search_params)
-        labs_results = self._search_laboratories(search_params)
+        # Search each database (with filtering if specified)
+        results_dict = {}
+        
+        if not database_filters or 'academic_library' in database_filters:
+            results_dict['academic_library'] = self._search_academic_library(search_params)
+        else:
+            results_dict['academic_library'] = []
+            
+        if not database_filters or 'experts_system' in database_filters:
+            results_dict['experts_system'] = self._search_experts_system(search_params)
+        else:
+            results_dict['experts_system'] = []
+            
+        if not database_filters or 'research_papers' in database_filters:
+            results_dict['research_papers'] = self._search_research_papers(search_params)
+        else:
+            results_dict['research_papers'] = []
+            
+        if not database_filters or 'laboratories' in database_filters:
+            results_dict['laboratories'] = self._search_laboratories(search_params)
+        else:
+            results_dict['laboratories'] = []
         
         # Aggregate results
-        aggregated_results = self._aggregate_results({
-            'academic_library': academic_results,
-            'experts_system': experts_results,
-            'research_papers': papers_results,
-            'laboratories': labs_results
-        }, processed_query)
+        aggregated_results = self._aggregate_results(results_dict, processed_query)
         
         return aggregated_results
     

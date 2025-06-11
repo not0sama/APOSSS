@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - Libyan Open Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .result-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .result-type-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .score-bar {
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.3s ease-in-out;
+        }
+        .feedback-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .feedback-btn:hover {
+            transform: scale(1.1);
+        }
+        .feedback-submitted {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .relevance-high { border-left: 4px solid #10b981; }
+        .relevance-medium { border-left: 4px solid #f59e0b; }
+        .relevance-low { border-left: 4px solid #ef4444; }
+        .filter-toggle {
+            transition: all 0.3s ease;
+        }
+        .filter-toggle.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo and Search -->
+                <div class="flex items-center space-x-6 flex-1">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                            <span class="text-white text-lg">🔬</span>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900">Libyan Open Science</span>
+                    </a>
+                    
+                    <!-- Search Bar -->
+                    <div class="flex-1 max-w-2xl relative">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search for researches, experts, and more"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        >
+                        <button 
+                            id="searchBtn"
+                            onclick="performNewSearch()"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-lg transition-colors flex items-center"
+                        >
+                            <span id="searchText">Search</span>
+                            <span id="searchSpinner" class="loading ml-2 hidden"></span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Authentication -->
+                <div class="flex items-center space-x-4">
+                    <div id="userInfo" class="flex items-center space-x-3" style="display: none;">
+                        <div id="userProfile"></div>
+                    </div>
+                    <div id="authButtons" class="flex space-x-3">
+                        <a href="/login" class="text-gray-600 hover:text-blue-600 transition-colors px-3 py-2">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
+                            Sign Up
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Search Summary -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Search Results</h1>
+                    <p class="text-gray-600" id="searchSummary">Loading...</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Sort Options -->
+                    <select id="sortSelect" onchange="sortResults()" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="relevance">Sort by Relevance</option>
+                        <option value="date">Sort by Date</option>
+                        <option value="title">Sort by Title</option>
+                    </select>
+                    
+                    <!-- View Toggle -->
+                    <div class="flex bg-gray-200 rounded-lg p-1">
+                        <button onclick="setView('list')" id="listViewBtn" class="px-3 py-1 rounded-md transition-colors">
+                            📋 List
+                        </button>
+                        <button onclick="setView('grid')" id="gridViewBtn" class="px-3 py-1 rounded-md transition-colors">
+                            📱 Grid
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6" id="filterBar">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-900">Filter Results</h3>
+                <button onclick="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-800">
+                    Clear All
+                </button>
+            </div>
+            
+            <!-- Database Filters -->
+            <div class="mb-4">
+                <p class="text-sm font-medium text-gray-700 mb-2">Databases:</p>
+                <div class="flex flex-wrap gap-2" id="databaseFilters">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Type Filters -->
+            <div class="mb-4">
+                <p class="text-sm font-medium text-gray-700 mb-2">Content Type:</p>
+                <div class="flex flex-wrap gap-2" id="typeFilters">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Relevance Filters -->
+            <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">Relevance:</p>
+                <div class="flex flex-wrap gap-2">
+                    <button class="filter-toggle px-3 py-1 rounded-full border border-gray-300 text-sm" 
+                            data-relevance="high" onclick="toggleRelevanceFilter(this)">
+                        🟢 High Relevance
+                    </button>
+                    <button class="filter-toggle px-3 py-1 rounded-full border border-gray-300 text-sm" 
+                            data-relevance="medium" onclick="toggleRelevanceFilter(this)">
+                        🟡 Medium Relevance
+                    </button>
+                    <button class="filter-toggle px-3 py-1 rounded-full border border-gray-300 text-sm" 
+                            data-relevance="low" onclick="toggleRelevanceFilter(this)">
+                        🔴 Low Relevance
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer">
+            <!-- Results will be populated here -->
+        </div>
+        
+        <!-- No Results Message -->
+        <div id="noResults" class="text-center py-12 hidden">
+            <div class="text-6xl mb-4">🔍</div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No results found</h3>
+            <p class="text-gray-600 mb-6">Try adjusting your search terms or filters</p>
+            <a href="/" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                New Search
+            </a>
+        </div>
+    </main>
+
+    <!-- Error/Success Messages -->
+    <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        let allResults = [];
+        let filteredResults = [];
+        let currentView = 'list';
+        let currentSort = 'relevance';
+        let feedbackSubmitted = new Set();
+        let currentQueryId = null;
+        
+        // Filter states
+        let activeFilters = {
+            databases: new Set(),
+            types: new Set(),
+            relevance: new Set()
+        };
+
+        function loadSearchResults() {
+            const searchResults = sessionStorage.getItem('searchResults');
+            const searchQuery = sessionStorage.getItem('searchQuery');
+            const selectedFilters = sessionStorage.getItem('selectedFilters');
+            
+            if (!searchResults || !searchQuery) {
+                // No search results, redirect to home
+                window.location.href = '/';
+                return;
+            }
+            
+            const data = JSON.parse(searchResults);
+            const query = searchQuery;
+            const filters = selectedFilters ? JSON.parse(selectedFilters) : [];
+            
+            // Populate search input
+            document.getElementById('searchInput').value = query;
+            
+            // Update search summary
+            document.getElementById('searchSummary').textContent = 
+                `Found ${data.search_results.total_results} results for "${query}"`;
+            
+            // Store data
+            allResults = data.search_results.results || [];
+            currentQueryId = data.query_id;
+            filteredResults = [...allResults];
+            
+            // Initialize filters
+            initializeFilters();
+            
+            // Display results
+            displayResults();
+            
+            // Apply original filters if any
+            if (filters.length > 0) {
+                filters.forEach(filter => {
+                    const filterBtn = document.querySelector(`[data-filter="${filter}"]`);
+                    if (filterBtn) {
+                        filterBtn.classList.add('active');
+                    }
+                });
+            }
+        }
+        
+        function initializeFilters() {
+            // Get unique databases and types
+            const databases = new Set();
+            const types = new Set();
+            
+            allResults.forEach(result => {
+                if (result.database) databases.add(result.database);
+                if (result.type) types.add(result.type);
+            });
+            
+            // Populate database filters
+            const dbContainer = document.getElementById('databaseFilters');
+            dbContainer.innerHTML = '';
+            databases.forEach(db => {
+                const button = document.createElement('button');
+                button.className = 'filter-toggle px-3 py-1 rounded-full border border-gray-300 text-sm';
+                button.setAttribute('data-database', db);
+                button.onclick = () => toggleDatabaseFilter(button);
+                button.textContent = formatDatabaseName(db);
+                dbContainer.appendChild(button);
+            });
+            
+            // Populate type filters
+            const typeContainer = document.getElementById('typeFilters');
+            typeContainer.innerHTML = '';
+            types.forEach(type => {
+                const button = document.createElement('button');
+                button.className = 'filter-toggle px-3 py-1 rounded-full border border-gray-300 text-sm';
+                button.setAttribute('data-type', type);
+                button.onclick = () => toggleTypeFilter(button);
+                button.textContent = formatTypeName(type);
+                typeContainer.appendChild(button);
+            });
+        }
+        
+        function formatDatabaseName(db) {
+            const names = {
+                'experts_db': '👨‍🔬 Experts',
+                'labs_db': '🧪 Labs',
+                'library_db': '📚 Library',
+                'funding_db': '💰 Funding',
+                'papers_db': '📄 Papers'
+            };
+            return names[db] || db;
+        }
+        
+        function formatTypeName(type) {
+            const icons = {
+                'book': '📖',
+                'journal': '📰',
+                'project': '🚀',
+                'expert': '👨‍🔬',
+                'certificate': '🏆',
+                'article': '📄',
+                'conference': '🎤',
+                'thesis': '🎓',
+                'equipment': '⚙️',
+                'material': '🧬'
+            };
+            return `${icons[type] || '📋'} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        }
+        
+        function toggleDatabaseFilter(button) {
+            const database = button.getAttribute('data-database');
+            
+            if (activeFilters.databases.has(database)) {
+                activeFilters.databases.delete(database);
+                button.classList.remove('active');
+            } else {
+                activeFilters.databases.add(database);
+                button.classList.add('active');
+            }
+            
+            applyFilters();
+        }
+        
+        function toggleTypeFilter(button) {
+            const type = button.getAttribute('data-type');
+            
+            if (activeFilters.types.has(type)) {
+                activeFilters.types.delete(type);
+                button.classList.remove('active');
+            } else {
+                activeFilters.types.add(type);
+                button.classList.add('active');
+            }
+            
+            applyFilters();
+        }
+        
+        function toggleRelevanceFilter(button) {
+            const relevance = button.getAttribute('data-relevance');
+            
+            if (activeFilters.relevance.has(relevance)) {
+                activeFilters.relevance.delete(relevance);
+                button.classList.remove('active');
+            } else {
+                activeFilters.relevance.add(relevance);
+                button.classList.add('active');
+            }
+            
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            filteredResults = allResults.filter(result => {
+                // Database filter
+                if (activeFilters.databases.size > 0 && !activeFilters.databases.has(result.database)) {
+                    return false;
+                }
+                
+                // Type filter
+                if (activeFilters.types.size > 0 && !activeFilters.types.has(result.type)) {
+                    return false;
+                }
+                
+                // Relevance filter
+                if (activeFilters.relevance.size > 0) {
+                    const relevanceLevel = getRelevanceLevel(result.ranking_score || 0);
+                    if (!activeFilters.relevance.has(relevanceLevel)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            displayResults();
+        }
+        
+        function getRelevanceLevel(score) {
+            if (score >= 0.7) return 'high';
+            if (score >= 0.4) return 'medium';
+            return 'low';
+        }
+        
+        function clearAllFilters() {
+            activeFilters.databases.clear();
+            activeFilters.types.clear();
+            activeFilters.relevance.clear();
+            
+            // Remove active class from all filter buttons
+            document.querySelectorAll('.filter-toggle.active').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            filteredResults = [...allResults];
+            displayResults();
+        }
+        
+        function sortResults() {
+            const sortValue = document.getElementById('sortSelect').value;
+            currentSort = sortValue;
+            
+            filteredResults.sort((a, b) => {
+                switch (sortValue) {
+                    case 'relevance':
+                        return (b.ranking_score || 0) - (a.ranking_score || 0);
+                    case 'date':
+                        return new Date(b.date || 0) - new Date(a.date || 0);
+                    case 'title':
+                        return (a.title || '').localeCompare(b.title || '');
+                    default:
+                        return 0;
+                }
+            });
+            
+            displayResults();
+        }
+        
+        function setView(view) {
+            currentView = view;
+            
+            // Update button states
+            document.getElementById('listViewBtn').className = 
+                `px-3 py-1 rounded-md transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600'}`;
+            document.getElementById('gridViewBtn').className = 
+                `px-3 py-1 rounded-md transition-colors ${view === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600'}`;
+            
+            displayResults();
+        }
+        
+        function displayResults() {
+            const container = document.getElementById('resultsContainer');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredResults.length === 0) {
+                container.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            
+            const gridClass = currentView === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6';
+            
+            container.innerHTML = `
+                <div class="${gridClass}">
+                    ${filteredResults.map((result, index) => createResultCard(result, index)).join('')}
+                </div>
+            `;
+        }
+        
+        function createResultCard(result, index) {
+            const relevanceLevel = getRelevanceLevel(result.ranking_score || 0);
+            const relevanceClass = `relevance-${relevanceLevel}`;
+            
+            return `
+                <div class="result-card bg-white border border-gray-200 rounded-lg p-6 ${relevanceClass}">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-2 flex-1">
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${index + 1}</span>
+                            <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
+                            <span class="result-type-badge ${getTypeBadgeClass(result.type)}">
+                                ${result.type || 'unknown'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Ranking Score Display -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between text-sm mb-1">
+                            <span class="text-gray-600">Relevance Score</span>
+                            <span class="font-medium">${((result.ranking_score || 0) * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                 style="width: ${((result.ranking_score || 0) * 100).toFixed(1)}%"></div>
+                        </div>
+                    </div>
+                    
+                    ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
+                    
+                    <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
+                    
+                    <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                        <span>Source: ${result.database} → ${result.collection || 'N/A'}</span>
+                        <span>ID: ${(result.id || '').substring(0, 8)}...</span>
+                    </div>
+                    
+                    ${displayMetadata(result.metadata)}
+                    
+                    <!-- Feedback Buttons -->
+                    <div class="mt-4 pt-3 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Was this result helpful?</span>
+                            <div class="flex space-x-2">
+                                <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                        class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                    👍 Helpful
+                                </button>
+                                <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                        class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                    👎 Not Helpful
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getTypeBadgeClass(type) {
+            const classes = {
+                'book': 'bg-blue-100 text-blue-800',
+                'journal': 'bg-green-100 text-green-800',
+                'project': 'bg-purple-100 text-purple-800',
+                'expert': 'bg-yellow-100 text-yellow-800',
+                'certificate': 'bg-orange-100 text-orange-800',
+                'article': 'bg-red-100 text-red-800',
+                'conference': 'bg-pink-100 text-pink-800',
+                'thesis': 'bg-indigo-100 text-indigo-800',
+                'equipment': 'bg-gray-100 text-gray-800',
+                'material': 'bg-teal-100 text-teal-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+        
+        function displayMetadata(metadata) {
+            if (!metadata || Object.keys(metadata).length === 0) return '';
+            
+            const items = Object.entries(metadata)
+                .filter(([key, value]) => value && value !== '' && !(Array.isArray(value) && value.length === 0))
+                .slice(0, 3)
+                .map(([key, value]) => {
+                    const displayValue = Array.isArray(value) ? value.join(', ') : value;
+                    return `<span class="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs mr-2 mb-1">${key}: ${displayValue}</span>`;
+                });
+            
+            return items.length > 0 ? `<div class="mt-3">${items.join('')}</div>` : '';
+        }
+        
+        async function submitFeedback(resultId, rating, feedbackType) {
+            if (!currentQueryId) {
+                showTemporaryMessage('No active query for feedback', 'error');
+                return;
+            }
+            
+            if (feedbackSubmitted.has(resultId)) {
+                showTemporaryMessage('Feedback already submitted for this result', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query_id: currentQueryId,
+                        result_id: resultId,
+                        rating: rating,
+                        feedback_type: feedbackType,
+                        user_session: 'web_session_' + Date.now()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    feedbackSubmitted.add(resultId);
+                    const buttons = document.querySelectorAll(`[onclick*="${resultId}"]`);
+                    buttons.forEach(btn => {
+                        btn.classList.add('feedback-submitted');
+                        btn.textContent = btn.textContent.includes('👍') ? '✅ Submitted' : '❌ Submitted';
+                    });
+                    
+                    showTemporaryMessage('Feedback submitted successfully!', 'success');
+                } else {
+                    showTemporaryMessage('Error submitting feedback: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showTemporaryMessage('Error submitting feedback: ' + error.message, 'error');
+            }
+        }
+        
+        async function performNewSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                showTemporaryMessage('Please enter a search query', 'error');
+                return;
+            }
+            
+            showSearchLoading(true);
+            
+            try {
+                const searchData = {
+                    query: query,
+                    ranking_mode: 'hybrid'
+                };
+                
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(searchData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionStorage.setItem('searchResults', JSON.stringify(data));
+                    sessionStorage.setItem('searchQuery', query);
+                    sessionStorage.removeItem('selectedFilters');
+                    
+                    // Reload results
+                    window.location.reload();
+                } else {
+                    throw new Error(data.error || 'Search failed');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showTemporaryMessage('Search failed: ' + error.message, 'error');
+            } finally {
+                showSearchLoading(false);
+            }
+        }
+        
+        function showSearchLoading(show) {
+            const btn = document.getElementById('searchBtn');
+            const text = document.getElementById('searchText');
+            const spinner = document.getElementById('searchSpinner');
+            
+            if (show) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75');
+                text.textContent = 'Searching...';
+                spinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                text.textContent = 'Search';
+                spinner.classList.add('hidden');
+            }
+        }
+        
+        function showTemporaryMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `px-6 py-3 rounded-lg shadow-lg mb-2 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            messageDiv.textContent = message;
+            
+            document.getElementById('messageContainer').appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+        
+        // Authentication functions (similar to home page)
+        function checkAuthenticationStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const userMode = localStorage.getItem('userMode');
+            
+            if (token && userData && userMode === 'authenticated') {
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showUserInfo(JSON.parse(userData));
+                    } else {
+                        showLoginButtons();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying token:', error);
+                    showLoginButtons();
+                });
+            } else {
+                showLoginButtons();
+            }
+        }
+        
+        function showLoginButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (authButtons && userInfo) {
+                authButtons.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        }
+        
+        function showUserInfo(userData) {
+            try {
+                const authButtons = document.getElementById('authButtons');
+                const userInfo = document.getElementById('userInfo');
+                const userProfile = document.getElementById('userProfile');
+                
+                if (!authButtons || !userInfo || !userProfile) return;
+                
+                authButtons.style.display = 'none';
+                userInfo.style.display = 'flex';
+                
+                const firstName = userData.profile?.first_name || '';
+                const lastName = userData.profile?.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                userProfile.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <a href="/dashboard" class="flex items-center space-x-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
+                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                ${initials}
+                            </div>
+                            <span class="text-sm font-medium text-gray-900">${fullName}</span>
+                        </a>
+                        <button onclick="logout()" class="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error in showUserInfo:', error);
+                showLoginButtons();
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
+            showLoginButtons();
+            showTemporaryMessage('Logged out successfully', 'success');
+        }
+        
+        // Handle Enter key in search input
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performNewSearch();
+            }
+        });
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthenticationStatus();
+            loadSearchResults();
+            setView('list'); // Default view
+        });
+    </script>
+</body>
+</html> 

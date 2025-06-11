@@ -95,9 +95,19 @@ def track_search_interaction(user_id: str, query: str, session_id: str = None):
         logger.warning(f"Error tracking search interaction: {e}")
 
 @app.route('/')
-def index():
-    """Serve the main interface"""
+def home():
+    """Serve the main landing page"""
+    return render_template('home.html')
+
+@app.route('/dev')
+def dev_index():
+    """Serve the developer interface"""
     return render_template('index.html')
+
+@app.route('/results')
+def results():
+    """Serve the search results page"""
+    return render_template('results.html')
 
 @app.route('/login')
 def login():
@@ -238,6 +248,7 @@ def search():
         
         user_query = data['query']
         ranking_mode = data.get('ranking_mode', 'hybrid')  # hybrid, ltr_only, traditional
+        database_filters = data.get('database_filters', None)  # Optional database filtering
         
         if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
@@ -257,9 +268,9 @@ def search():
         if not processed_query:
             return jsonify({'error': 'Failed to process query'}), 500
         
-        # Step 2: Search databases
-        logger.info("Searching databases...")
-        search_results = search_engine.search_all_databases(processed_query)
+        # Step 2: Search databases (with optional filtering)
+        logger.info(f"Searching databases{' with filters: ' + str(database_filters) if database_filters else ''}...")
+        search_results = search_engine.search_all_databases(processed_query, database_filters=database_filters)
         
         if not search_results or not search_results.get('results'):
             return jsonify({
