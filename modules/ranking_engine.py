@@ -31,6 +31,13 @@ except ImportError:
     LTR_AVAILABLE = False
     LTRRanker = None
 
+try:
+    from .knowledge_graph import KnowledgeGraph
+    KNOWLEDGE_GRAPH_AVAILABLE = True
+except ImportError:
+    KNOWLEDGE_GRAPH_AVAILABLE = False
+    KnowledgeGraph = None
+
 logger = logging.getLogger(__name__)
 
 class RankingEngine:
@@ -41,12 +48,22 @@ class RankingEngine:
     - Intent alignment based on LLM analysis
     - Real-time embedding similarity
     - Learning-to-Rank (LTR) with XGBoost
+    - Graph-based features from knowledge graph
     """
     
     def __init__(self, use_embedding: bool = True, use_ltr: bool = True):
         """Initialize the ranking engine with multiple rankers"""
         self.use_embedding = use_embedding and EMBEDDING_AVAILABLE
         self.use_ltr = use_ltr and LTR_AVAILABLE
+        
+        # Initialize knowledge graph
+        try:
+            self.knowledge_graph = KnowledgeGraph() if KNOWLEDGE_GRAPH_AVAILABLE else None
+            if self.knowledge_graph:
+                logger.info("Knowledge graph initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize knowledge graph: {e}")
+            self.knowledge_graph = None
         
         # Initialize embedding ranker
         if self.use_embedding:
@@ -111,6 +128,26 @@ class RankingEngine:
                 return search_results
             
             logger.info(f"Ranking {len(results)} search results using mode: {ranking_mode}")
+            
+            # Build knowledge graph from search results
+            if self.knowledge_graph:
+                for result in results:
+                    result_type = result.get('type', '').lower()
+                    result_id = result.get('id')
+                    
+                    if not result_id:
+                        continue
+                    
+                    if result_type in ['paper', 'article', 'publication']:
+                        self.knowledge_graph.add_paper(result_id, result)
+                    elif result_type in ['expert', 'author', 'researcher']:
+                        self.knowledge_graph.add_expert(result_id, result)
+                    elif result_type in ['equipment', 'resource', 'facility']:
+                        self.knowledge_graph.add_equipment(result_id, result)
+                
+                # Calculate PageRank scores
+                self.knowledge_graph.calculate_pagerank()
+                logger.info("Knowledge graph built from search results")
             
             # Calculate different types of scores
             heuristic_scores = self._calculate_heuristic_scores(results, processed_query)
@@ -187,11 +224,15 @@ class RankingEngine:
                     result['score_breakdown'] = {
                         'heuristic_score': heuristic_scores[i],
                         'tfidf_score': tfidf_scores[i],
+                        'bm25_score': self._calculate_bm25_score(original_query, result),
                         'intent_score': intent_scores[i],
                         'embedding_score': embedding_scores[i],
                         'personalization_score': personalization_scores[i],
                         'ltr_score': ltr_score,
-                        'traditional_score': traditional_score
+                        'traditional_score': traditional_score,
+                        'graph_authority': self.knowledge_graph.get_authority_score(result['id']) if self.knowledge_graph else 0.0,
+                        'graph_connection': self.knowledge_graph.get_connection_strength(result['id'], f"keyword_{original_query.lower()}") if self.knowledge_graph else 0.0,
+                        'graph_pagerank': self.knowledge_graph.get_node_pagerank(result['id']) if self.knowledge_graph else 0.0
                     }
                 
                 # Re-sort by combined score
@@ -223,9 +264,13 @@ class RankingEngine:
                     result['score_breakdown'] = {
                         'heuristic_score': heuristic_scores[i],
                         'tfidf_score': tfidf_scores[i],
+                        'bm25_score': self._calculate_bm25_score(original_query, result),
                         'intent_score': intent_scores[i],
                         'embedding_score': embedding_scores[i] if self.use_embedding else 0.0,
-                        'personalization_score': personalization_scores[i]
+                        'personalization_score': personalization_scores[i],
+                        'graph_authority': self.knowledge_graph.get_authority_score(result['id']) if self.knowledge_graph else 0.0,
+                        'graph_connection': self.knowledge_graph.get_connection_strength(result['id'], f"keyword_{original_query.lower()}") if self.knowledge_graph else 0.0,
+                        'graph_pagerank': self.knowledge_graph.get_node_pagerank(result['id']) if self.knowledge_graph else 0.0
                     }
                 
                 # Sort by combined score
@@ -757,4 +802,38 @@ class RankingEngine:
             'high_relevance': high_relevance,
             'medium_relevance': medium_relevance,
             'low_relevance': low_relevance
-        } 
+        }
+    
+    def _calculate_bm25_score(self, query: str, result: Dict[str, Any]) -> float:
+        """Calculate BM25 score for a result"""
+        try:
+            # Get text content
+            title = result.get('title', '')
+            description = result.get('description', '')
+            content = f"{title} {description}"
+            
+            # Tokenize
+            query_tokens = query.lower().split()
+            content_tokens = content.lower().split()
+            
+            # BM25 parameters
+            k1, b = 1.2, 0.75
+            avg_doc_len = 100  # Assumed average document length
+            
+            # Calculate BM25 score
+            doc_len = len(content_tokens)
+            doc_freq = Counter(content_tokens)
+            score = 0.0
+            
+            for term in query_tokens:
+                tf = doc_freq.get(term, 0)
+                if tf > 0:
+                    idf = math.log(1000 / (1 + 1))  # Simplified IDF
+                    score += idf * (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * doc_len / avg_doc_len))
+            
+            # Normalize score to [0,1] range
+            return min(1.0, score / 10.0)  # Assuming max score around 10
+            
+        except Exception as e:
+            logger.warning(f"Error calculating BM25 score: {e}")
+            return 0.0 

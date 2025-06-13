@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from collections import Counter
 import re
 import math
+from modules.enhanced_text_features import EnhancedTextFeatures
 
 try:
     import xgboost as xgb
@@ -40,6 +41,7 @@ class LTRRanker:
         
         # Feature engineering components
         self.feature_extractor = FeatureExtractor()
+        self.enhanced_text_features = EnhancedTextFeatures()  # Add enhanced text features
         
         # Create model directory
         os.makedirs(model_dir, exist_ok=True)
@@ -109,6 +111,16 @@ class LTRRanker:
             
             # === USER INTERACTION FEATURES ===
             feature_row.update(self.feature_extractor.extract_user_features(result, user_feedback_data))
+            
+            # Add enhanced textual features
+            enhanced_features = self.enhanced_text_features.extract_all_features(query, result, processed_query)
+            feature_row.update(enhanced_features)
+            
+            # Add current scores if available
+            if current_scores:
+                for score_type, scores in current_scores.items():
+                    if len(scores) > i:
+                        feature_row[f'current_{score_type}'] = scores[i]
             
             features_list.append(feature_row)
         
@@ -443,6 +455,31 @@ class LTRRanker:
             self.model = None
             self.is_trained = False
 
+    def build_knowledge_graph(self, search_results: List[Dict[str, Any]]) -> None:
+        """Build the knowledge graph from search results"""
+        if not self.knowledge_graph:
+            return
+        
+        logger.info("Building knowledge graph from search results...")
+        
+        for result in search_results:
+            result_type = result.get('type', '').lower()
+            result_id = result.get('id')
+            
+            if not result_id:
+                continue
+            
+            if result_type in ['paper', 'article', 'publication']:
+                self.knowledge_graph.add_paper(result_id, result)
+            elif result_type in ['expert', 'author', 'researcher']:
+                self.knowledge_graph.add_expert(result_id, result)
+            elif result_type in ['equipment', 'resource', 'facility']:
+                self.knowledge_graph.add_equipment(result_id, result)
+        
+        # Calculate PageRank scores
+        self.knowledge_graph.calculate_pagerank()
+        logger.info("Knowledge graph built successfully")
+
 
 class FeatureExtractor:
     """Advanced feature extraction for LTR"""
@@ -479,6 +516,26 @@ class FeatureExtractor:
         query_terms = set(query_lower.split())
         text_terms = set(full_text.split())
         features['query_coverage'] = len(query_terms.intersection(text_terms)) / len(query_terms) if query_terms else 0
+        
+        # === Graph-based features ===
+        if hasattr(self, 'knowledge_graph'):
+            result_id = result.get('id')
+            if result_id:
+                # Get graph features
+                graph_features = self.knowledge_graph.extract_graph_features(result_id)
+                features.update(graph_features)
+                
+                # Get authority score
+                features['authority_score'] = self.knowledge_graph.get_authority_score(result_id)
+                
+                # Get connection strength to query terms
+                query_keywords = processed_query.get('keywords', {}).get('primary', []) if processed_query else []
+                connection_strengths = []
+                for keyword in query_keywords:
+                    keyword_id = f"keyword_{keyword.lower()}"
+                    strength = self.knowledge_graph.get_connection_strength(result_id, keyword_id)
+                    connection_strengths.append(strength)
+                features['query_connection_strength'] = max(connection_strengths) if connection_strengths else 0.0
         
         return features
     

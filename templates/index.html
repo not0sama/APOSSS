@@ -604,11 +604,22 @@
                             </div>
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
                             <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
-                            <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
+                            <span>Text Match: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
+                            <span>BM25: ${(result.score_breakdown?.bm25_score * 100).toFixed(0)}%</span>
                             <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
                             ${result.score_breakdown?.embedding_score !== undefined ? 
                                 `<span>Real-time: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
                         </div>
+                        ${result.score_breakdown?.graph_authority !== undefined ? `
+                        <div class="mt-2">
+                            <div class="text-xs text-gray-500 mb-1">Graph-based Features:</div>
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Authority: ${(result.score_breakdown.graph_authority * 100).toFixed(0)}%</span>
+                                <span>Connection: ${(result.score_breakdown.graph_connection * 100).toFixed(0)}%</span>
+                                <span>PageRank: ${(result.score_breakdown.graph_pagerank * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+                        ` : ''}
                         </div>
                         
                         ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}

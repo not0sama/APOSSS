@@ -115,52 +115,56 @@ Return only the JSON response, no additional text.
         return prompt
     
     def process_query(self, user_query: str) -> Optional[Dict[str, Any]]:
-        """Process user query with Gemini and return structured analysis"""
+        """Process query with LLM to extract structured information"""
         try:
-            # Create the analysis prompt
+            # Create prompt for LLM
             prompt = self.create_query_analysis_prompt(user_query)
             
-            # Generate response from Gemini
+            # Get LLM response
             response = self.model.generate_content(prompt)
             
-            # Extract text from response
-            if not response.text:
-                logger.error("Empty response from Gemini")
-                return None
-            
-            # Parse JSON response
-            try:
-                # Clean up the response text (remove any markdown formatting)
-                response_text = response.text.strip()
-                if response_text.startswith('```json'):
-                    response_text = response_text[7:]
-                if response_text.endswith('```'):
-                    response_text = response_text[:-3]
-                response_text = response_text.strip()
+            if response and response.text:
+                # Parse LLM response
+                processed_query = json.loads(response.text)
                 
-                parsed_response = json.loads(response_text)
+                # Add user expertise estimation
+                processed_query['user_expertise'] = self._estimate_user_expertise(user_query, processed_query)
                 
-                # Add metadata
-                parsed_response['_metadata'] = {
-                    'original_query': user_query,
-                    'processing_timestamp': self._get_timestamp(),
-                    'model_used': 'gemini-2.0-flash-exp',
-                    'success': True
-                }
+                return processed_query
+            else:
+                return self._create_fallback_response(user_query, "No response from LLM")
                 
-                logger.info(f"Successfully processed query: {user_query[:50]}...")
-                return parsed_response
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON response: {str(e)}")
-                logger.error(f"Raw response: {response.text}")
-                
-                # Return fallback response
-                return self._create_fallback_response(user_query, f"JSON parsing error: {str(e)}")
-        
         except Exception as e:
-            logger.error(f"Error processing query with Gemini: {str(e)}")
+            logger.error(f"Error processing query: {str(e)}")
             return self._create_fallback_response(user_query, str(e))
+    
+    def _estimate_user_expertise(self, query: str, processed_query: Dict[str, Any]) -> float:
+        """Estimate user expertise level based on query and processed information"""
+        try:
+            # Initialize expertise score
+            expertise_score = 0.5  # Default to medium expertise
+            
+            # Check for technical terms
+            technical_terms = processed_query.get('keywords', {}).get('technical_terms', [])
+            if technical_terms:
+                expertise_score += 0.2  # Technical terms indicate higher expertise
+            
+            # Check for specific entities
+            entities = processed_query.get('entities', {})
+            if entities.get('technologies') or entities.get('concepts'):
+                expertise_score += 0.1  # Technical entities indicate higher expertise
+            
+            # Check query complexity
+            query_words = len(query.split())
+            if query_words > 10:
+                expertise_score += 0.1  # Longer queries might indicate higher expertise
+            
+            # Normalize to [0,1] range
+            return min(1.0, max(0.0, expertise_score))
+            
+        except Exception as e:
+            logger.warning(f"Error estimating user expertise: {str(e)}")
+            return 0.5  # Return default medium expertise
     
     def _create_fallback_response(self, user_query: str, error_msg: str) -> Dict[str, Any]:
         """Create a fallback response when LLM processing fails"""
