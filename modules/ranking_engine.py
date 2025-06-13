@@ -8,6 +8,7 @@ import re
 from typing import Dict, Any, List, Optional, Tuple
 from collections import Counter, defaultdict
 from datetime import datetime
+from .llm_processor import LLMProcessor
 
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -38,6 +39,13 @@ except ImportError:
     KNOWLEDGE_GRAPH_AVAILABLE = False
     KnowledgeGraph = None
 
+try:
+    from .llm_ranker import LLMRanker
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
+    LLMRanker = None
+
 logger = logging.getLogger(__name__)
 
 class RankingEngine:
@@ -51,7 +59,7 @@ class RankingEngine:
     - Graph-based features from knowledge graph
     """
     
-    def __init__(self, use_embedding: bool = True, use_ltr: bool = True):
+    def __init__(self, llm_processor: LLMProcessor, use_embedding: bool = True, use_ltr: bool = True):
         """Initialize the ranking engine with multiple rankers"""
         self.use_embedding = use_embedding and EMBEDDING_AVAILABLE
         self.use_ltr = use_ltr and LTR_AVAILABLE
@@ -99,6 +107,13 @@ class RankingEngine:
             )
         else:
             self.tfidf_vectorizer = None
+        
+        # Initialize LLM ranker
+        if LLM_AVAILABLE:
+            self.llm_ranker = LLMRanker(llm_processor)
+            logger.info("LLM ranker initialized successfully")
+        else:
+            self.llm_ranker = None
         
         logger.info(f"Ranking engine initialized - Embedding: {self.use_embedding}, LTR: {self.use_ltr}, TF-IDF: {SKLEARN_AVAILABLE}")
     
