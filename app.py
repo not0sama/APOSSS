@@ -19,8 +19,8 @@ from modules.user_manager import UserManager
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
-app = Flask(__name__)
+# Initialize Flask app with static folder configuration
+app = Flask(__name__, static_folder='templates/static', static_url_path='/static')
 CORS(app)
 
 # Configure logging
@@ -793,6 +793,123 @@ def get_preindex_progress():
         
     except Exception as e:
         logger.error(f"Error getting pre-index progress: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/preferences', methods=['GET'])
+def get_user_preferences():
+    """Get user preferences including theme"""
+    try:
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user_id = current_user['user_id']
+        
+        # Get user preferences from database
+        preferences_collection = db_manager.get_collection('aposss', 'user_preferences')
+        if not preferences_collection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        user_prefs = preferences_collection.find_one({'user_id': user_id})
+        
+        if not user_prefs:
+            # Return default preferences
+            default_prefs = {
+                'theme_preference': 'light',
+                'search_preferences': {
+                    'preferred_resource_types': [],
+                    'preferred_databases': [],
+                    'language_preference': 'en',
+                    'results_per_page': 20,
+                    'sort_preference': 'relevance'
+                },
+                'ranking_preferences': {
+                    'weight_recency': 0.2,
+                    'weight_relevance': 0.4,
+                    'weight_authority': 0.2,
+                    'weight_user_feedback': 0.2
+                }
+            }
+            return jsonify({
+                'success': True,
+                'preferences': default_prefs
+            })
+        
+        return jsonify({
+            'success': True,
+            'preferences': {
+                'theme_preference': user_prefs.get('theme_preference', 'light'),
+                'search_preferences': user_prefs.get('search_preferences', {}),
+                'ranking_preferences': user_prefs.get('ranking_preferences', {})
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user preferences: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/preferences', methods=['POST'])
+def update_user_preferences():
+    """Update user preferences including theme"""
+    try:
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        user_id = current_user['user_id']
+        
+        # Get user preferences collection
+        preferences_collection = db_manager.get_collection('aposss', 'user_preferences')
+        if not preferences_collection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        # Prepare update data
+        update_data = {}
+        
+        if 'theme_preference' in data:
+            if data['theme_preference'] not in ['light', 'dark']:
+                return jsonify({'error': 'Invalid theme preference. Must be "light" or "dark"'}), 400
+            update_data['theme_preference'] = data['theme_preference']
+        
+        if 'search_preferences' in data:
+            update_data['search_preferences'] = data['search_preferences']
+        
+        if 'ranking_preferences' in data:
+            update_data['ranking_preferences'] = data['ranking_preferences']
+        
+        if not update_data:
+            return jsonify({'error': 'No valid preferences to update'}), 400
+        
+        # Add timestamp
+        update_data['updated_at'] = datetime.utcnow().isoformat()
+        
+        # Update or insert preferences
+        result = preferences_collection.update_one(
+            {'user_id': user_id},
+            {
+                '$set': update_data,
+                '$setOnInsert': {
+                    'user_id': user_id,
+                    'created_at': datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        logger.info(f"Updated preferences for user {user_id}: {update_data}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Preferences updated successfully',
+            'updated_fields': list(update_data.keys())
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating user preferences: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ltr/stats', methods=['GET'])

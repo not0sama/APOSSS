@@ -3,9 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - APOSSS</title>
+    <title>Login - Libyan Open Science</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@heroicons/v2/24/outline/esm/index.js"></script>
     <style>
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #4a5568;
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --container-border: rgba(255, 255, 255, 0.3);
+            --input-bg: #ffffff;
+            --input-border: #e2e8f0;
+            --button-bg: rgba(255, 255, 255, 0.9);
+            --button-hover: #f1f3f4;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #F8F9FA;
+            --text-secondary: #a0aec0;
+            --container-bg: rgba(18, 18, 18, 0.95);
+            --container-border: rgba(255, 255, 255, 0.1);
+            --input-bg: #1a1a1a;
+            --input-border: #2d3748;
+            --button-bg: rgba(18, 18, 18, 0.9);
+            --button-hover: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --glass-bg: rgba(18, 18, 18, 0.95);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            transition: background 0.3s ease;
+        }
+        
+        .login-container {
+            backdrop-filter: blur(10px);
+            background: var(--glass-bg);
+            transition: all 0.3s ease;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+        }
+
+        /* Input styles */
+        input, textarea, select {
+            background: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Text color overrides */
+        .text-themed-primary { color: var(--text-primary) !important; }
+        .text-themed-secondary { color: var(--text-secondary) !important; }
+
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .floating-elements::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(59, 130, 246, 0.15) 0%,
+                rgba(99, 102, 241, 0.1) 30%,
+                rgba(139, 92, 246, 0.05) 60%,
+                rgba(139, 92, 246, 0) 100%
+            );
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            animation: float 12s ease-in-out infinite, morph 20s ease-in-out infinite;
+            filter: blur(20px);
+        }
+        .floating-elements::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            right: 5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(99, 102, 241, 0.15) 0%,
+                rgba(139, 92, 246, 0.1) 30%,
+                rgba(59, 130, 246, 0.05) 60%,
+                rgba(59, 130, 246, 0) 100%
+            );
+            border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%;
+            animation: float 15s ease-in-out infinite reverse, morph 25s ease-in-out infinite;
+            filter: blur(20px);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        @keyframes morph {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            25% { border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 70%; }
+            75% { border-radius: 60% 40% 50% 50% / 30% 60% 70% 40%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
         .loading {
             display: inline-block;
             width: 20px;
@@ -20,306 +152,213 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="min-h-screen gradient-bg relative">
+    <!-- Theme Toggle Button -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="themeToggle" class="theme-toggle p-2 rounded-lg transition-colors">
+            <!-- Sun icon for dark mode -->
+            <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+            </svg>
+            <!-- Moon icon for light mode -->
+            <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements"></div>
+    
     <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold">APOSSS</h1>
-                    <p class="text-blue-100 text-sm">AI-Powered Open-Science Semantic Search System</p>
-                </div>
-                <div class="flex space-x-4">
-                    <a href="/" class="text-blue-200 hover:text-white transition-colors">
-                        🏠 Home
-                    </a>
-                    <a href="/signup" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg transition-colors">
-                        Sign Up
-                    </a>
-                </div>
+    <header class="relative z-10 bg-transparent">
+        <div class="container mx-auto px-6 py-6">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <a href="/" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img 
+                            id="headerLogo"
+                            src="/static/images/logo-light.svg" 
+                            alt="Libyan Open Science Logo"
+                            class="w-full h-full object-contain"
+                            onerror="this.onerror=null; this.src='/static/images/logo.png';"
+                        >
+                    </div>
+                    <div>
+                        <h1 class="text-themed-primary text-xl font-bold">Libyan Open Science</h1>
+                        <p class="text-themed-secondary text-sm">Advanced Research Search</p>
+                    </div>
+                </a>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-12">
-        <div class="max-w-md mx-auto">
-            <!-- Login Card -->
-            <div class="bg-white rounded-xl shadow-lg p-8">
+    <main class="relative z-10 flex-1 flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-md">
+            <!-- Login Container -->
+            <div class="login-container rounded-2xl p-8 shadow-2xl">
                 <div class="text-center mb-8">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl">🔑</span>
-                    </div>
-                    <h2 class="text-2xl font-bold text-gray-900">Welcome Back</h2>
-                    <p class="text-gray-600 mt-2">Sign in to your APOSSS account</p>
+                    <h2 class="text-3xl font-bold text-themed-primary mb-2">Welcome Back</h2>
+                    <p class="text-themed-secondary">Sign in to your account</p>
                 </div>
 
-                <!-- Login Form -->
                 <form id="loginForm" class="space-y-6">
-                    <!-- Email/Username Input -->
                     <div>
-                        <label for="identifier" class="block text-sm font-medium text-gray-700 mb-2">
-                            Email or Username
-                        </label>
+                        <label for="identifier" class="block text-sm font-medium text-themed-primary mb-2">Email or Username</label>
                         <input 
                             type="text" 
-                            id="identifier" 
-                            name="identifier" 
+                            id="identifier"
+                            name="identifier"
                             required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Enter your email or username"
                         >
                     </div>
 
-                    <!-- Password Input -->
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <div class="relative">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors pr-12"
-                                placeholder="Enter your password"
-                            >
-                            <button 
-                                type="button" 
-                                onclick="togglePassword()" 
-                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                            >
-                                <span id="passwordToggleIcon">👁️</span>
-                            </button>
-                        </div>
+                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2">Password</label>
+                        <input 
+                            type="password" 
+                            id="password"
+                            name="password"
+                            required
+                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            placeholder="Enter your password"
+                        >
                     </div>
 
-                    <!-- Remember Me -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <input 
                                 type="checkbox" 
-                                id="rememberMe" 
-                                name="rememberMe"
+                                id="remember"
+                                name="remember"
                                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             >
-                            <label for="rememberMe" class="ml-2 block text-sm text-gray-700">
-                                Remember me
-                            </label>
+                            <label for="remember" class="ml-2 block text-sm text-themed-secondary">Remember me</label>
                         </div>
-                        <a href="#" class="text-sm text-blue-600 hover:text-blue-500">
-                            Forgot password?
-                        </a>
+                        <a href="/forgot-password" class="text-sm text-blue-600 hover:text-blue-800">Forgot password?</a>
                     </div>
 
-                    <!-- Login Button -->
                     <button 
-                        type="submit" 
-                        id="loginBtn"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+                        type="submit"
+                        class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
                     >
                         <span id="loginText">Sign In</span>
                         <span id="loginSpinner" class="loading ml-2 hidden"></span>
                     </button>
                 </form>
 
-                <!-- Divider -->
-                <div class="my-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">or</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Continue as Guest -->
-                <button 
-                    onclick="continueAsGuest()"
-                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors"
-                >
-                    Continue as Guest
-                </button>
-
-                <!-- Sign Up Link -->
-                <p class="text-center text-sm text-gray-600 mt-6">
-                    Don't have an account? 
-                    <a href="/signup" class="text-blue-600 hover:text-blue-500 font-medium">
-                        Sign up here
-                    </a>
-                </p>
-            </div>
-
-            <!-- Features Info -->
-            <div class="mt-8 bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Why create an account?</h3>
-                <div class="space-y-3">
-                    <div class="flex items-center text-sm text-gray-600">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                        Personalized search results based on your research interests
-                    </div>
-                    <div class="flex items-center text-sm text-gray-600">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                        Save and track your search history
-                    </div>
-                    <div class="flex items-center text-sm text-gray-600">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                        Get better recommendations over time
-                    </div>
-                    <div class="flex items-center text-sm text-gray-600">
-                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                        Contribute to improving the search system
-                    </div>
+                <div class="mt-8 text-center">
+                    <p class="text-themed-secondary text-sm">
+                        Don't have an account? 
+                        <a href="/signup" class="text-blue-600 hover:text-blue-800 font-medium">Sign up</a>
+                    </p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Error/Success Messages -->
-    <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
+    <!-- Footer -->
+    <footer class="relative z-10 text-center py-8">
+        <div class="container mx-auto px-6">
+            <p class="text-themed-secondary text-sm">
+                © 2024 Libyan Open Science • 
+                <a href="/dev" class="hover:text-blue-600 transition-colors">Developer Portal</a>
+            </p>
+        </div>
+    </footer>
 
     <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('passwordToggleIcon');
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
             
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.textContent = '🙈';
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+            const headerLogo = document.getElementById('headerLogo');
+            
+            if (theme === 'dark') {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-dark.svg';
+                }
             } else {
-                passwordInput.type = 'password';
-                toggleIcon.textContent = '👁️';
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-light.svg';
+                }
             }
         }
 
-        function showLoading(show) {
-            const btn = document.getElementById('loginBtn');
-            const text = document.getElementById('loginText');
-            const spinner = document.getElementById('loginSpinner');
-            
-            if (show) {
-                btn.disabled = true;
-                btn.classList.add('opacity-75', 'cursor-not-allowed');
-                text.textContent = 'Signing in...';
-                spinner.classList.remove('hidden');
-            } else {
-                btn.disabled = false;
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                text.textContent = 'Sign In';
-                spinner.classList.add('hidden');
-            }
-        }
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
 
-        function showMessage(message, type) {
-            const container = document.getElementById('messageContainer');
-            const messageDiv = document.createElement('div');
-            
-            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-            messageDiv.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-all duration-300`;
-            messageDiv.textContent = message;
-            
-            container.appendChild(messageDiv);
-            
-            // Remove message after 5 seconds
-            setTimeout(() => {
-                messageDiv.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (container.contains(messageDiv)) {
-                        container.removeChild(messageDiv);
-                    }
-                }, 300);
-            }, 5000);
-        }
-
-        function continueAsGuest() {
-            // Store anonymous session
-            localStorage.setItem('userMode', 'guest');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            
-            // Redirect to main application
-            window.location.href = '/';
-        }
-
-        // Handle form submission
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const identifier = document.getElementById('identifier').value.trim();
+            const identifier = document.getElementById('identifier').value;
             const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
             
-            if (!identifier || !password) {
-                showMessage('Please fill in all fields', 'error');
-                return;
-            }
-
-            showLoading(true);
-
+            // Show loading state
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            loginText.textContent = 'Signing in...';
+            loginSpinner.classList.remove('hidden');
+            
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        identifier: identifier,
-                        password: password
+                        identifier,
+                        password,
+                        remember
                     })
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (data.success) {
-                    // Store authentication data
+                    // Store auth token and user data
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('userData', JSON.stringify(data.user));
                     localStorage.setItem('userMode', 'authenticated');
                     
-                    showMessage('Login successful! Redirecting...', 'success');
-                    
-                    // Redirect to main application after short delay
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1500);
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
                 } else {
-                    showMessage(data.error || 'Login failed', 'error');
+                    throw new Error(data.error || 'Login failed');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                showMessage('Connection error. Please try again.', 'error');
-            } finally {
-                showLoading(false);
+                // Show error message
+                alert(error.message);
+                
+                // Reset loading state
+                loginText.textContent = 'Sign In';
+                loginSpinner.classList.add('hidden');
             }
         });
 
-        // Check if user is already logged in
+        // Initialize theme on page load
         document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                // Verify token is still valid
-                fetch('/api/auth/verify', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // User is already logged in, redirect to main app
-                        window.location.href = '/';
-                    }
-                })
-                .catch(error => {
-                    // Token is invalid, clear it
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userData');
-                });
-            }
+            initializeTheme();
         });
     </script>
 </body>

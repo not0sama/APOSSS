@@ -219,3 +219,134 @@ Laboratories database :
             "created_at": "Date", 
             "updated_at": "Date"
         }
+
+APOSSS database:
+    users :
+        {
+            "_id": {
+                "$oid": "6848742f0abf2a263c020f93"
+            },
+            "user_id": "a91aa71e-166f-4fcb-862a-35bcf6a3230e",
+            "username": "not0sama",
+            "email": "thats.osama@gmail.com",
+            "password_hash": {
+                "$binary": {
+                "base64": "JDJiJDEyJE80ZEpxbXY1SWY5UVZYMi5aNjVYVHVJcndTakVLeTNIUTJxdkczOUZHU2UvTlRVMWthSkd5",
+                "subType": "00"
+                }
+            },
+            "profile": {
+                "first_name": "Osama",
+                "last_name": "Ramadan",
+                "academic_fields": [
+                "Computer Science",
+                "Computer Engineering"
+                ],
+                "institution": "University of sabratha",
+                "role": "student",
+                "bio": "i'm the creator of this app",
+                "avatar_url": ""
+            },
+            "preferences": {
+                "search_preferences": {
+                "preferred_resource_types": [
+                    "article",
+                    "book",
+                    "expert"
+                ],
+                "preferred_databases": [],
+                "language_preference": "en",
+                "results_per_page": 20
+                },
+                "notification_preferences": {
+                "email_notifications": true,
+                "search_alerts": false,
+                "feedback_requests": true
+                },
+                "privacy_settings": {
+                "profile_visibility": "public",
+                "interaction_tracking": true,
+                "personalized_recommendations": true
+                }
+            },
+            "statistics": {
+                "total_searches": 0,
+                "total_feedback": 0,
+                "average_rating": 0,
+                "favorite_topics": [],
+                "most_used_resources": []
+            },
+            "created_at": "2025-06-10T20:06:39.417075",
+            "updated_at": "2025-06-13T20:06:44.858446",
+            "last_login": "2025-06-13T20:06:44.858321",
+            "is_active": true,
+            "email_verified": false,
+            "login_count": 3
+            }
+
+    user_feedback :
+        {
+            "_id": {
+                "$oid": "683ae4662c5a2412afa93c87"
+            },
+            "query_id": "test_query_001",
+            "result_id": "test_result_001",
+            "rating": 5,
+            "feedback_type": "thumbs_up",
+            "user_session": "test_session_001",
+            "submitted_at": "2025-05-31T13:13:42.077501",
+            "feedback_version": "1.0"
+        }
+    
+    user_interactions :
+            {
+        "_id": {
+            "$oid": "68487b5d564f05d75c8eddd2"
+        },
+        "user_id": "eee41353-af32-4038-a706-8c5114bfbb24",
+        "action": "search",
+        "query": "machine learning for medical diagnosis",
+        "result_id": "",
+        "session_id": "session_1749580637",
+        "timestamp": "2025-06-10T20:37:17.873415",
+        "metadata": {
+            "timestamp": "2025-06-10T20:37:17.873404",
+            "query_length": 38,
+            "query_words": 5
+        }
+        }
+
+    user_preferences :
+        {
+        "_id": {
+            "$oid": "6848742f0abf2a263c020f94"
+        },
+        "user_id": "a91aa71e-166f-4fcb-862a-35bcf6a3230e",
+        "search_preferences": {
+            "preferred_resource_types": [],
+            "preferred_databases": [],
+            "language_preference": "en",
+            "results_per_page": 20,
+            "sort_preference": "relevance"
+        },
+        "ranking_preferences": {
+            "weight_recency": 0.2,
+            "weight_relevance": 0.4,
+            "weight_authority": 0.2,
+            "weight_user_feedback": 0.2
+        },
+        "created_at": "2025-06-10T20:06:39.422241",
+        "updated_at": "2025-06-10T20:06:39.422243"
+        }
+
+    user_sessions :
+        {
+        "_id": {
+            "$oid": "684875669648384c1d2d4aa7"
+        },
+        "user_id": "44840604-7f80-47bc-9c48-1c75f9a892ba",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNDQ4NDA2MDQtN2Y4MC00N2JjLTljNDgtMWM3NWY5YTg5MmJhIiwiZXhwIjoxNzQ5NjY1NTEwLCJpYXQiOjE3NDk1NzkxMTB9.indt1MsfRRlMsGJD8Ez4U0ZaAKU80h4p8yVKHINaBDw",
+        "created_at": "2025-06-10T20:11:50.382122",
+        "expires_at": "2025-06-11T20:11:50.382126",
+        "is_active": true
+        }
