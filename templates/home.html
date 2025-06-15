@@ -286,6 +286,20 @@
                     
                     <!-- User Info (when authenticated) -->
                     <div id="userInfo" class="flex items-center space-x-3" style="display: none;">
+                        <!-- Bookmarks Button -->
+                        <button onclick="showBookmarks()" class="theme-toggle p-2 rounded-lg transition-colors" title="Bookmarks">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                            </svg>
+                        </button>
+                        
+                        <!-- History Button -->
+                        <button onclick="showHistory()" class="theme-toggle p-2 rounded-lg transition-colors" title="Search History">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                        
                         <div id="userProfile">
                             <!-- This will be populated by JavaScript when user is authenticated -->
                         </div>
@@ -617,7 +631,18 @@
                     sessionStorage.setItem('searchQuery', query);
                     sessionStorage.setItem('selectedFilters', JSON.stringify(Array.from(selectedFilters)));
                     
-                    window.location.href = '/results';
+                    // Save search to history immediately and wait for completion
+                    try {
+                        await saveSearchToHistory(query, Array.from(selectedFilters));
+                        console.log('History saved successfully, redirecting...');
+                    } catch (historyError) {
+                        console.error('Error saving history, but continuing with search:', historyError);
+                    }
+                    
+                    // Small delay to ensure localStorage write completes
+                    setTimeout(() => {
+                        window.location.href = '/results';
+                    }, 100);
                 } else {
                     throw new Error(data.error || 'Search failed');
                 }
@@ -723,6 +748,412 @@
             localStorage.removeItem('userMode');
             showLoginButtons();
             showTemporaryMessage('Logged out successfully', 'success');
+        }
+        
+        function getCurrentUser() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        async function saveSearchToHistory(query, filters) {
+            const currentUser = getCurrentUser();
+            console.log('saveSearchToHistory called from home:', { query, filters, currentUser });
+            
+            if (!query || query.trim() === '') {
+                console.log('Empty query, skipping history save');
+                return;
+            }
+            
+            if (currentUser) {
+                // Save to database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    console.log('Saving search to history from home:', { query, filters, hasToken: !!token });
+                    
+                    const response = await fetch('/api/user/history', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: query,
+                            filters: filters,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('History save response from home:', data);
+                    
+                    if (!data.success) {
+                        console.error('Failed to save search to history:', data.error);
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error saving search to history:', error);
+                    throw error;
+                }
+            } else {
+                // Save to localStorage for anonymous users
+                console.log('Saving search to local storage for anonymous user');
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    console.log('Current localStorage history:', localHistory);
+                    
+                    // Check if this exact search already exists recently (within last hour)
+                    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                    const existingSearch = localHistory.find(item => 
+                        item.query === query && item.timestamp > oneHourAgo
+                    );
+                    
+                    if (!existingSearch) {
+                        const historyItem = {
+                            _id: Date.now().toString(), // Simple ID for local storage
+                            query: query,
+                            filters: filters || [],
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        localHistory.unshift(historyItem); // Add to beginning
+                        
+                        // Keep only last 50 searches
+                        if (localHistory.length > 50) {
+                            localHistory.splice(50);
+                        }
+                        
+                        localStorage.setItem('searchHistory', JSON.stringify(localHistory));
+                        console.log('Search saved to local storage:', historyItem);
+                        console.log('Updated localStorage history:', localHistory);
+                        
+                        // Verify the save worked
+                        const verifyHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                        console.log('Verification - localStorage now contains:', verifyHistory);
+                    } else {
+                        console.log('Search already exists in recent history, skipping save');
+                    }
+                } catch (error) {
+                    console.error('Error saving search to local storage:', error);
+                    throw error;
+                }
+            }
+        }
+        
+        async function showBookmarks() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayBookmarksModal(data.bookmarks);
+                } else {
+                    throw new Error(data.error || 'Failed to load bookmarks');
+                }
+            } catch (error) {
+                console.error('Error loading bookmarks:', error);
+                showTemporaryMessage('Error loading bookmarks: ' + error.message, 'error');
+            }
+        }
+        
+        async function showHistory() {
+            const currentUser = getCurrentUser();
+            
+            if (currentUser) {
+                // Load from database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/user/history', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        displayHistoryModal(data.history);
+                    } else {
+                        throw new Error(data.error || 'Failed to load history');
+                    }
+                } catch (error) {
+                    console.error('Error loading history:', error);
+                    showTemporaryMessage('Error loading history: ' + error.message, 'error');
+                }
+            } else {
+                // Load from localStorage for anonymous users
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    console.log('Loading local history:', localHistory);
+                    displayHistoryModal(localHistory);
+                } catch (error) {
+                    console.error('Error loading local history:', error);
+                    showTemporaryMessage('Error loading history: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function displayBookmarksModal(bookmarks) {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.id = 'bookmarksModal';
+            
+            const bookmarksList = bookmarks.length > 0 ? bookmarks.map(bookmark => `
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-themed-primary mb-1">${bookmark.title}</h4>
+                            <div class="text-sm text-themed-secondary mb-2">
+                                <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs mr-2">
+                                    ${bookmark.type}
+                                </span>
+                                <span class="text-xs">${formatDate(bookmark.created_at)}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeBookmark('${bookmark.result_id}')" class="text-red-500 hover:text-red-700 ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="searchFromBookmark('${bookmark.title}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                        Search similar results
+                    </button>
+                </div>
+            `).join('') : '<p class="text-themed-secondary text-center py-8">No bookmarks yet</p>';
+            
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                    <div class="p-6 border-b" style="border-color: var(--container-border);">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-themed-primary">Your Bookmarks</h3>
+                            <button onclick="closeModal('bookmarksModal')" class="text-themed-secondary hover:text-themed-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-96">
+                        ${bookmarksList}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeModal('bookmarksModal');
+                }
+            });
+        }
+        
+        function displayHistoryModal(history) {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.id = 'historyModal';
+            
+            const historyList = history.length > 0 ? history.map(item => `
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-themed-primary mb-1">"${item.query}"</h4>
+                            <div class="text-sm text-themed-secondary mb-2">
+                                <span class="text-xs">${formatDate(item.timestamp)}</span>
+                                ${item.filters && item.filters.length > 0 ? `
+                                    <div class="mt-1">
+                                        ${item.filters.map(filter => `
+                                            <span class="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs mr-1">
+                                                ${filter}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <button onclick="removeFromHistory('${item._id}')" class="text-red-500 hover:text-red-700 ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="searchFromHistory('${item.query}', '${JSON.stringify(item.filters || []).replace(/'/g, '&apos;')}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                        Search again
+                    </button>
+                </div>
+            `).join('') : '<p class="text-themed-secondary text-center py-8">No search history yet</p>';
+            
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                    <div class="p-6 border-b" style="border-color: var(--container-border);">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-themed-primary">Search History</h3>
+                            <button onclick="closeModal('historyModal')" class="text-themed-secondary hover:text-themed-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-96">
+                        ${historyList}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeModal('historyModal');
+                }
+            });
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        async function removeBookmark(resultId) {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks/remove', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ result_id: resultId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Bookmark removed', 'success');
+                    closeModal('bookmarksModal');
+                    // Refresh bookmarks
+                    setTimeout(() => showBookmarks(), 500);
+                } else {
+                    throw new Error(data.error || 'Failed to remove bookmark');
+                }
+            } catch (error) {
+                console.error('Error removing bookmark:', error);
+                showTemporaryMessage('Error removing bookmark: ' + error.message, 'error');
+            }
+        }
+        
+        async function removeFromHistory(historyId) {
+            const currentUser = getCurrentUser();
+            
+            if (currentUser) {
+                // Remove from database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/user/history/remove', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ history_id: historyId })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showTemporaryMessage('History item removed', 'success');
+                        closeModal('historyModal');
+                        // Refresh history
+                        setTimeout(() => showHistory(), 500);
+                    } else {
+                        throw new Error(data.error || 'Failed to remove history item');
+                    }
+                } catch (error) {
+                    console.error('Error removing history item:', error);
+                    showTemporaryMessage('Error removing history item: ' + error.message, 'error');
+                }
+            } else {
+                // Remove from localStorage for anonymous users
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    const updatedHistory = localHistory.filter(item => item._id !== historyId);
+                    localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+                    
+                    showTemporaryMessage('History item removed', 'success');
+                    closeModal('historyModal');
+                    // Refresh history
+                    setTimeout(() => showHistory(), 500);
+                } catch (error) {
+                    console.error('Error removing local history item:', error);
+                    showTemporaryMessage('Error removing history item: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function searchFromBookmark(title) {
+            document.getElementById('searchInput').value = title;
+            closeModal('bookmarksModal');
+            performSearch();
+        }
+        
+        function searchFromHistory(query, filtersJson) {
+            document.getElementById('searchInput').value = query;
+            closeModal('historyModal');
+            
+            // Restore filters if any
+            try {
+                const filters = JSON.parse(filtersJson);
+                selectedFilters.clear();
+                filters.forEach(filter => {
+                    selectedFilters.add(filter);
+                    const filterBtn = document.querySelector(`[data-filter="${filter}"]`);
+                    if (filterBtn) {
+                        filterBtn.classList.add('active');
+                    }
+                });
+            } catch (e) {
+                // Ignore filter parsing errors
+            }
+            
+            performSearch();
         }
         
         // Check authentication on page load

@@ -897,8 +897,16 @@
                                 </div>
                             </div>
                             
-                            <!-- Read More Button -->
-                            <div class="flex items-end">
+                            <!-- Action Buttons -->
+                            <div class="flex items-end space-x-3">
+                                <button onclick="event.stopPropagation(); toggleBookmark('${result.id}', '${result.title}', '${result.database}', '${result.type}')" 
+                                        id="bookmark-btn-${index}"
+                                        class="bookmark-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm flex items-center transition-colors">
+                                    <svg id="bookmark-icon-${index}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                                    </svg>
+                                    <span id="bookmark-text-${index}">Bookmark</span>
+                                </button>
                                 <button onclick="event.stopPropagation(); openInSubsystem('${result.database}', '${result.id}', '${result.type}')" 
                                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm flex items-center transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
@@ -1072,9 +1080,232 @@
         }
         
         function getCurrentUser() {
-            // This would typically get the current user from your auth system
-            // For now, return a placeholder
-            return { user_id: 'current_user' };
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        async function toggleBookmark(resultId, title, database, type) {
+            const currentUser = getCurrentUser();
+            
+            if (!currentUser) {
+                showLoginPrompt();
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        result_id: resultId,
+                        title: title,
+                        database: database,
+                        type: type
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateBookmarkButton(resultId, data.bookmarked);
+                    showTemporaryMessage(
+                        data.bookmarked ? 'Added to bookmarks' : 'Removed from bookmarks', 
+                        'success'
+                    );
+                } else {
+                    throw new Error(data.error || 'Failed to toggle bookmark');
+                }
+            } catch (error) {
+                console.error('Error toggling bookmark:', error);
+                showTemporaryMessage('Error updating bookmark: ' + error.message, 'error');
+            }
+        }
+        
+        function updateBookmarkButton(resultId, isBookmarked) {
+            // Find all bookmark buttons for this result (there might be multiple in different views)
+            const buttons = document.querySelectorAll(`[onclick*="toggleBookmark('${resultId}'"]`);
+            
+            buttons.forEach(button => {
+                const icon = button.querySelector('svg');
+                const text = button.querySelector('span');
+                
+                if (isBookmarked) {
+                    button.className = 'bookmark-btn bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors';
+                    if (icon) {
+                        icon.setAttribute('fill', 'currentColor');
+                    }
+                    if (text) {
+                        text.textContent = 'Bookmarked';
+                    }
+                } else {
+                    button.className = 'bookmark-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm flex items-center transition-colors';
+                    if (icon) {
+                        icon.setAttribute('fill', 'none');
+                    }
+                    if (text) {
+                        text.textContent = 'Bookmark';
+                    }
+                }
+            });
+        }
+        
+        function showLoginPrompt() {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            overlay.id = 'loginPromptModal';
+            
+            // Create modal content
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg p-8 max-w-md mx-4 shadow-2xl">
+                    <div class="text-center">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mx-auto text-yellow-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-themed-primary mb-2">Save to Bookmarks</h3>
+                        <p class="text-themed-secondary mb-6">Sign in to bookmark results and access them later from any device.</p>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <a href="/login" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                                Sign In
+                            </a>
+                            <a href="/signup" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition-colors text-center">
+                                Sign Up
+                            </a>
+                        </div>
+                        
+                        <button onclick="closeLoginPrompt()" class="mt-4 text-themed-secondary hover:text-themed-primary text-sm transition-colors">
+                            Maybe later
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeLoginPrompt();
+                }
+            });
+        }
+        
+        function closeLoginPrompt() {
+            const modal = document.getElementById('loginPromptModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        async function loadUserBookmarks() {
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update bookmark buttons based on user's bookmarks
+                    data.bookmarks.forEach(bookmark => {
+                        updateBookmarkButton(bookmark.result_id, true);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading bookmarks:', error);
+            }
+        }
+        
+        async function saveSearchToHistory(query, filters) {
+            const currentUser = getCurrentUser();
+            console.log('saveSearchToHistory called:', { query, filters, currentUser });
+            
+            if (currentUser) {
+                // Save to database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    console.log('Saving search to history:', { query, filters, hasToken: !!token });
+                    
+                    const response = await fetch('/api/user/history', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: query,
+                            filters: filters,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('History save response:', data);
+                    
+                    if (!data.success) {
+                        console.error('Failed to save search to history:', data.error);
+                    }
+                } catch (error) {
+                    console.error('Error saving search to history:', error);
+                }
+            } else {
+                // Save to localStorage for anonymous users
+                console.log('Saving search to local storage for anonymous user');
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    
+                    // Check if this exact search already exists recently (within last hour)
+                    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                    const existingSearch = localHistory.find(item => 
+                        item.query === query && item.timestamp > oneHourAgo
+                    );
+                    
+                    if (!existingSearch) {
+                        const historyItem = {
+                            _id: Date.now().toString(), // Simple ID for local storage
+                            query: query,
+                            filters: filters,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        localHistory.unshift(historyItem); // Add to beginning
+                        
+                        // Keep only last 50 searches
+                        if (localHistory.length > 50) {
+                            localHistory.splice(50);
+                        }
+                        
+                        localStorage.setItem('searchHistory', JSON.stringify(localHistory));
+                        console.log('Search saved to local storage:', historyItem);
+                    }
+                } catch (error) {
+                    console.error('Error saving search to local storage:', error);
+                }
+            }
         }
         
         async function submitFeedback(resultId, rating, feedbackType) {
@@ -1311,6 +1542,13 @@
             checkAuthenticationStatus();
             loadSearchResults();
             setView('list'); // Default view
+            
+            // Load user bookmarks if logged in
+            setTimeout(() => {
+                loadUserBookmarks();
+            }, 1000);
+            
+            // Note: Search history is already saved in home.html before redirecting here
         });
     </script>
 </body>

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 
 # Import our modules
@@ -124,6 +124,11 @@ def signup():
 def dashboard():
     """Serve the user dashboard page"""
     return render_template('dashboard.html')
+
+@app.route('/test-history')
+def test_history():
+    """Test history page for debugging"""
+    return render_template('test_history.html')
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
@@ -1081,6 +1086,287 @@ def get_feature_importance():
     except Exception as e:
         logger.error(f"Error getting feature importance: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# Bookmark and History Management APIs
+@app.route('/api/user/bookmarks', methods=['GET'])
+def get_user_bookmarks():
+    """Get user's bookmarks"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get bookmarks from database
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        bookmarks = list(bookmarks_collection.find(
+            {'user_id': user_id},
+            {'_id': 0}
+        ).sort('created_at', -1))
+        
+        return jsonify({
+            'success': True,
+            'bookmarks': bookmarks
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting bookmarks: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/toggle', methods=['POST'])
+def toggle_bookmark():
+    """Toggle bookmark for a result"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        result_id = data.get('result_id')
+        title = data.get('title', '')
+        database = data.get('database', '')
+        result_type = data.get('type', '')
+        
+        if not result_id:
+            return jsonify({'success': False, 'error': 'Result ID required'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Check if bookmark exists
+        existing_bookmark = bookmarks_collection.find_one({
+            'user_id': user_id,
+            'result_id': result_id
+        })
+        
+        if existing_bookmark:
+            # Remove bookmark
+            bookmarks_collection.delete_one({
+                'user_id': user_id,
+                'result_id': result_id
+            })
+            bookmarked = False
+        else:
+            # Add bookmark
+            bookmark_doc = {
+                'user_id': user_id,
+                'result_id': result_id,
+                'title': title,
+                'database': database,
+                'type': result_type,
+                'created_at': datetime.now().isoformat()
+            }
+            bookmarks_collection.insert_one(bookmark_doc)
+            bookmarked = True
+        
+        return jsonify({
+            'success': True,
+            'bookmarked': bookmarked
+        })
+        
+    except Exception as e:
+        logger.error(f"Error toggling bookmark: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/remove', methods=['POST'])
+def remove_bookmark():
+    """Remove a bookmark"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        result_id = data.get('result_id')
+        
+        if not result_id:
+            return jsonify({'success': False, 'error': 'Result ID required'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Remove bookmark
+        result = bookmarks_collection.delete_one({
+            'user_id': user_id,
+            'result_id': result_id
+        })
+        
+        return jsonify({
+            'success': True,
+            'removed': result.deleted_count > 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing bookmark: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history', methods=['GET'])
+def get_user_history():
+    """Get user's search history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get history from database
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        history = list(history_collection.find(
+            {'user_id': user_id},
+            {'_id': 1, 'query': 1, 'filters': 1, 'timestamp': 1}
+        ).sort('timestamp', -1).limit(50))
+        
+        # Convert ObjectId to string for JSON serialization
+        for item in history:
+            item['_id'] = str(item['_id'])
+        
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history', methods=['POST'])
+def add_to_history():
+    """Add search to user's history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        query = data.get('query', '')
+        filters = data.get('filters', [])
+        timestamp = data.get('timestamp', datetime.now().isoformat())
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query required'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Check if this exact search already exists recently (within last hour)
+        recent_cutoff = datetime.now() - timedelta(hours=1)
+        existing_search = history_collection.find_one({
+            'user_id': user_id,
+            'query': query,
+            'timestamp': {'$gte': recent_cutoff.isoformat()}
+        })
+        
+        if not existing_search:
+            # Add to history
+            history_doc = {
+                'user_id': user_id,
+                'query': query,
+                'filters': filters,
+                'timestamp': timestamp
+            }
+            history_collection.insert_one(history_doc)
+            
+            # Keep only last 100 searches per user
+            user_history = list(history_collection.find(
+                {'user_id': user_id}
+            ).sort('timestamp', -1))
+            
+            if len(user_history) > 100:
+                # Remove oldest entries
+                oldest_entries = user_history[100:]
+                for entry in oldest_entries:
+                    history_collection.delete_one({'_id': entry['_id']})
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error adding to history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history/remove', methods=['POST'])
+def remove_from_history():
+    """Remove an item from search history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        history_id = data.get('history_id')
+        
+        if not history_id:
+            return jsonify({'success': False, 'error': 'History ID required'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Remove history item
+        from bson import ObjectId
+        result = history_collection.delete_one({
+            '_id': ObjectId(history_id),
+            'user_id': user_id  # Ensure user can only delete their own history
+        })
+        
+        return jsonify({
+            'success': True,
+            'removed': result.deleted_count > 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing from history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
