@@ -168,6 +168,48 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Line clamping for truncated text */
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Expanded card styling */
+        .result-card.expanded {
+            transform: none;
+            box-shadow: 0 20px 40px var(--shadow-color);
+        }
+        
+        /* Smooth transitions for expand/collapse */
+        .result-card {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .expand-icon {
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        /* Dark mode adjustments for expanded sections */
+        [data-theme="dark"] .bg-gray-50 {
+            background-color: #1f2937 !important;
+        }
+        
+        [data-theme="dark"] .text-gray-700 {
+            color: #d1d5db !important;
+        }
+        
+        /* Hover effects for clickable cards */
+        .result-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px var(--shadow-color);
+        }
+        
+        .result-card.expanded:hover {
+            transform: none;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -266,14 +308,14 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
                         </svg>
-                        Databases
+                        Categories
                     </p>
                     <div class="grid grid-cols-2 gap-2" id="databaseFilters">
                         <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
                 
-                <!-- Type Filters -->
+                            <!-- Type Filters -->
                 <div class="mb-6">
                     <p class="text-sm font-medium text-themed-primary mb-3 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
@@ -281,10 +323,10 @@
                         </svg>
                         Content Type
                     </p>
-                    <div class="grid grid-cols-2 gap-2" id="typeFilters">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
+                    <div id="typeFilters">
+                    <!-- Will be populated by JavaScript with custom row layout -->
                 </div>
+            </div>
                 
                 <!-- Relevance Filters -->
                 <div class="mb-6">
@@ -294,21 +336,21 @@
                         </svg>
                         Relevance
                     </p>
-                    <div class="grid grid-cols-1 gap-2">
-                        <button class="filter-toggle w-full text-left px-3 py-2 rounded-lg text-sm flex items-center" 
+                    <div class="grid grid-cols-3 gap-1">
+                        <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
                                 data-relevance="high" onclick="toggleRelevanceFilter(this)">
-                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                            High (70%+)
+                            <div class="w-3 h-3 bg-green-500 rounded-full mb-1"></div>
+                            <span class="leading-tight">High<br/>(70%+)</span>
                         </button>
-                        <button class="filter-toggle w-full text-left px-3 py-2 rounded-lg text-sm flex items-center" 
+                        <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
                                 data-relevance="medium" onclick="toggleRelevanceFilter(this)">
-                            <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
-                            Medium (40-70%)
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full mb-1"></div>
+                            <span class="leading-tight">Medium<br/>(40-70%)</span>
                         </button>
-                        <button class="filter-toggle w-full text-left px-3 py-2 rounded-lg text-sm flex items-center" 
+                        <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
                                 data-relevance="low" onclick="toggleRelevanceFilter(this)">
-                            <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-                            Low (<40%)
+                            <div class="w-3 h-3 bg-red-500 rounded-full mb-1"></div>
+                            <span class="leading-tight">Low<br/>(<40%)</span>
                         </button>
                     </div>
                 </div>
@@ -487,26 +529,52 @@
                 dbContainer.appendChild(button);
             });
             
-            // Populate type filters
+            // Populate type filters with custom layout
             const typeContainer = document.getElementById('typeFilters');
             typeContainer.innerHTML = '';
-            types.forEach(type => {
-                const button = document.createElement('button');
-                button.className = 'filter-toggle w-full text-left px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center min-h-[60px] hover:scale-105 transition-transform';
-                button.setAttribute('data-type', type);
-                button.onclick = () => toggleTypeFilter(button);
-                button.innerHTML = `
-                    <div class="mb-1">${getTypeIcon(type)}</div>
-                    <span class="text-center leading-tight">${formatTypeName(type)}</span>
-                `;
-                typeContainer.appendChild(button);
+            
+            // Define the specific layout structure
+            const typeLayout = [
+                ['book', 'journal', 'project'], // Row 1: books, journals, projects
+                ['article', 'conference', 'thesis'], // Row 2: articles, conferences, theses  
+                ['equipment', 'material'], // Row 3: equipments, materials
+                ['expert', 'certificate'] // Row 4: experts, certificates
+            ];
+            
+            // Create rows based on the layout
+            typeLayout.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = `grid grid-cols-${row.length} gap-1 mb-2`;
+                
+                row.forEach(type => {
+                    // Check if this type exists in the current results
+                    const hasType = types.has(type) || types.has(type + 's'); // Handle plural forms
+                    const actualType = types.has(type) ? type : (types.has(type + 's') ? type + 's' : type);
+                    
+                    if (hasType || types.has(actualType)) {
+                        const button = document.createElement('button');
+                        button.className = 'filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center min-h-[50px] hover:scale-105 transition-transform';
+                        button.setAttribute('data-type', actualType);
+                        button.onclick = () => toggleTypeFilter(button);
+                        button.innerHTML = `
+                            <div class="mb-1">${getTypeIcon(actualType)}</div>
+                            <span class="text-center leading-tight">${formatTypeName(actualType)}</span>
+                        `;
+                        rowDiv.appendChild(button);
+                    }
+                });
+                
+                // Only add the row if it has buttons
+                if (rowDiv.children.length > 0) {
+                    typeContainer.appendChild(rowDiv);
+                }
             });
         }
         
         function formatDatabaseName(db) {
             const names = {
-                'experts_system': 'Experts System',
-                'laboratories': 'Laboratories System',
+                'experts_system': 'Experts',
+                'laboratories': 'Laboratories',
                 'academic_library': 'Academic Library',
                 'funding_system': 'Funding System',
                 'research_papers': 'Research Papers'
@@ -676,60 +744,167 @@
         function createResultCard(result, index) {
             const relevanceLevel = getRelevanceLevel(result.ranking_score || 0);
             const relevanceClass = `relevance-${relevanceLevel}`;
+            const cardId = `result-card-${index}`;
             
             return `
-                <div class="result-card rounded-lg p-6 ${relevanceClass}">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex items-center space-x-2 flex-1">
-                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${index + 1}</span>
-                            <h3 class="text-lg font-semibold text-themed-primary flex-1">${result.title || 'Untitled'}</h3>
-                            <span class="result-type-badge ${getTypeBadgeClass(result.type)}">
-                                ${result.type || 'unknown'}
-                            </span>
+                <div class="result-card rounded-lg p-6 ${relevanceClass} cursor-pointer" id="${cardId}" onclick="toggleResultCard('${cardId}', ${index})">
+                    <!-- Collapsed View (Default) -->
+                    <div class="collapsed-view">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center space-x-2 flex-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${index + 1}</span>
+                                <h3 class="text-lg font-semibold text-themed-primary flex-1">${result.title || 'Untitled'}</h3>
+                                <span class="result-type-badge ${getTypeBadgeClass(result.type)}">
+                                    ${formatTypeName(result.type || 'unknown')}
+                                </span>
+                            </div>
+                            <div class="expand-icon ml-2 transition-transform duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-themed-secondary">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Ranking Score Display -->
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <span class="text-themed-secondary">Relevance Score</span>
+                                <span class="font-medium text-themed-primary">${((result.ranking_score || 0) * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                     style="width: ${((result.ranking_score || 0) * 100).toFixed(1)}%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Brief Description -->
+                        <div class="text-themed-primary mb-3 line-clamp-3">
+                            ${truncateText(result.snippet || result.description || result.abstract || 'No description available', 200)}
+                        </div>
+                        
+                        <div class="text-xs text-themed-secondary">
+                            Click to expand for more details...
                         </div>
                     </div>
                     
-                    <!-- Ranking Score Display -->
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="text-themed-secondary">Relevance Score</span>
-                            <span class="font-medium text-themed-primary">${((result.ranking_score || 0) * 100).toFixed(1)}%</span>
+                    <!-- Expanded View (Hidden by default) -->
+                    <div class="expanded-view hidden">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center space-x-2 flex-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${index + 1}</span>
+                                <h3 class="text-xl font-bold text-themed-primary flex-1">${result.title || 'Untitled'}</h3>
+                                <span class="result-type-badge ${getTypeBadgeClass(result.type)}">
+                                    ${formatTypeName(result.type || 'unknown')}
+                                </span>
+                            </div>
+                            <div class="expand-icon ml-2 transition-transform duration-200 rotate-180">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-themed-secondary">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
-                                 style="width: ${((result.ranking_score || 0) * 100).toFixed(1)}%"></div>
+                        
+                        <!-- Detailed Information -->
+                        <div class="space-y-4 mb-6">
+                            <!-- Author/Creator Information -->
+                            ${result.author || result.student_name || result.supervisor || result.name ? `
+                                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                    <h4 class="font-semibold text-themed-primary mb-2">Author/Creator</h4>
+                                    <div class="text-themed-secondary">
+                                        ${result.author || result.student_name || result.name || 'Unknown'}
+                                        ${result.supervisor ? `<br><span class="text-xs">Supervisor: ${result.supervisor}</span>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <!-- Full Description/Abstract -->
+                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                <h4 class="font-semibold text-themed-primary mb-2">Description</h4>
+                                <div class="text-themed-secondary">
+                                    ${result.description || result.abstract || result.snippet || 'No description available'}
+                                </div>
+                            </div>
+                            
+                            <!-- Keywords -->
+                            ${result.keywords && result.keywords.length > 0 ? `
+                                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                    <h4 class="font-semibold text-themed-primary mb-2">Keywords</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${result.keywords.map(keyword => `
+                                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">${keyword}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <!-- Publication/Creation Details -->
+                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                <h4 class="font-semibold text-themed-primary mb-2">Details</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm text-themed-secondary">
+                                    <div><strong>Source:</strong> ${formatDatabaseName(result.database)}</div>
+                                    <div><strong>Collection:</strong> ${result.collection || 'N/A'}</div>
+                                    ${result.publication_date || result.created_at ? `
+                                        <div><strong>Date:</strong> ${formatDate(result.publication_date || result.created_at)}</div>
+                                    ` : ''}
+                                    ${result.language ? `<div><strong>Language:</strong> ${result.language}</div>` : ''}
+                                    ${result.category ? `<div><strong>Category:</strong> ${result.category}</div>` : ''}
+                                    ${result.institution || result.university ? `
+                                        <div><strong>Institution:</strong> ${result.institution || result.university}</div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            <!-- Additional Metadata -->
+                            ${displayExpandedMetadata(result)}
+                            
+                            <!-- Ranking Score Display -->
+                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                <h4 class="font-semibold text-themed-primary mb-2">Relevance Analysis</h4>
+                                <div class="flex items-center justify-between text-sm mb-2">
+                                    <span class="text-themed-secondary">Relevance Score</span>
+                                    <span class="font-medium text-themed-primary">${((result.ranking_score || 0) * 100).toFixed(1)}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                         style="width: ${((result.ranking_score || 0) * 100).toFixed(1)}%"></div>
+                                </div>
+                                <div class="text-xs text-themed-secondary mt-1">
+                                    ${getRelevanceDescription(result.ranking_score || 0)}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    ${result.author ? `<div class="text-sm text-themed-secondary mb-2">By: ${result.author}</div>` : ''}
-                    
-                    <div class="text-themed-primary mb-3">${result.snippet || result.description || 'No description available'}</div>
-                    
-                    <div class="flex items-center justify-between text-xs text-themed-secondary mb-3">
-                        <span>Source: ${result.database} → ${result.collection || 'N/A'}</span>
-                        <span>ID: ${(result.id || '').substring(0, 8)}...</span>
-                    </div>
-                    
-                    ${displayMetadata(result.metadata)}
-                    
-                    <!-- Feedback Buttons -->
-                    <div class="mt-4 pt-3 border-t" style="border-color: var(--container-border);">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-themed-secondary">Was this result helpful?</span>
-                            <div class="flex space-x-2">
-                                <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
-                                        class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5.25 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t" style="border-color: var(--container-border);">
+                            <!-- Feedback Buttons -->
+                            <div class="flex-1">
+                                <span class="text-sm text-themed-secondary mb-2 block">Was this result helpful?</span>
+                                <div class="flex space-x-2">
+                                    <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                            class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5.25 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
+                                        </svg>
+                                        Helpful
+                                    </button>
+                                    <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                            class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.25-9.75a3 3 0 11-6 0 3 3 0 016 0zM12.75 18a3.75 3.75 0 01-6.364-2.77L8.25 13.5H12a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H5.25a2.25 2.25 0 00-2.25 2.25v.557c0 .357.078.717.22 1.037l.671 1.342c.08.161.187.306.316.423a.75.75 0 01.296.632v.25a.75.75 0 01-.75.75z" />
+                                        </svg>
+                                        Not Helpful
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Read More Button -->
+                            <div class="flex items-end">
+                                <button onclick="event.stopPropagation(); openInSubsystem('${result.database}', '${result.id}', '${result.type}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm flex items-center transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                                     </svg>
-                                    Helpful
-                                </button>
-                                <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
-                                        class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.25-9.75a3 3 0 11-6 0 3 3 0 016 0zM12.75 18a3.75 3.75 0 01-6.364-2.77L8.25 13.5H12a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H5.25a2.25 2.25 0 00-2.25 2.25v.557c0 .357.078.717.22 1.037l.671 1.342c.08.161.187.306.316.423a.75.75 0 01.296.632v.25a.75.75 0 01-.75.75z" />
-                                    </svg>
-                                    Not Helpful
+                                    Read More
                                 </button>
                             </div>
                         </div>
@@ -770,6 +945,136 @@
                 });
             
             return items.length > 0 ? `<div class="mt-3">${items.join('')}</div>` : '';
+        }
+        
+        function displayExpandedMetadata(result) {
+            if (!result.metadata || Object.keys(result.metadata).length === 0) return '';
+            
+            const items = Object.entries(result.metadata)
+                .filter(([key, value]) => value && value !== '' && !(Array.isArray(value) && value.length === 0))
+                .map(([key, value]) => {
+                    const displayValue = Array.isArray(value) ? value.join(', ') : value;
+                    return `<div><strong>${formatMetadataKey(key)}:</strong> ${displayValue}</div>`;
+                });
+            
+            if (items.length === 0) return '';
+            
+            return `
+                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                    <h4 class="font-semibold text-themed-primary mb-2">Additional Information</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-themed-secondary">
+                        ${items.join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function formatMetadataKey(key) {
+            return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        function truncateText(text, maxLength) {
+            if (!text || text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        function getRelevanceDescription(score) {
+            if (score >= 0.8) return 'Highly relevant to your search query';
+            if (score >= 0.6) return 'Very relevant to your search query';
+            if (score >= 0.4) return 'Moderately relevant to your search query';
+            if (score >= 0.2) return 'Somewhat relevant to your search query';
+            return 'Limited relevance to your search query';
+        }
+        
+        function toggleResultCard(cardId, index) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            const collapsedView = card.querySelector('.collapsed-view');
+            const expandedView = card.querySelector('.expanded-view');
+            const expandIcon = card.querySelector('.expand-icon');
+            
+            if (collapsedView && expandedView && expandIcon) {
+                const isExpanded = expandedView.classList.contains('hidden');
+                
+                if (isExpanded) {
+                    // Expand
+                    collapsedView.classList.add('hidden');
+                    expandedView.classList.remove('hidden');
+                    expandIcon.classList.add('rotate-180');
+                    card.classList.add('expanded');
+                } else {
+                    // Collapse
+                    collapsedView.classList.remove('hidden');
+                    expandedView.classList.add('hidden');
+                    expandIcon.classList.remove('rotate-180');
+                    card.classList.remove('expanded');
+                }
+            }
+        }
+        
+        function openInSubsystem(database, resultId, resultType) {
+            // Map databases to their respective subsystem URLs
+            const subsystemUrls = {
+                'academic_library': '/library',
+                'experts_system': '/experts',
+                'research_papers': '/papers',
+                'laboratories': '/labs'
+            };
+            
+            const baseUrl = subsystemUrls[database];
+            if (!baseUrl) {
+                showTemporaryMessage('Subsystem not available for this database', 'error');
+                return;
+            }
+            
+            // Construct the URL with result ID and type
+            let targetUrl = `${baseUrl}?id=${encodeURIComponent(resultId)}`;
+            if (resultType) {
+                targetUrl += `&type=${encodeURIComponent(resultType)}`;
+            }
+            
+            // Open in new tab
+            window.open(targetUrl, '_blank');
+            
+            // Track interaction
+            try {
+                const currentUser = getCurrentUser();
+                if (currentUser && user_manager) {
+                    user_manager.track_user_interaction(currentUser.user_id, {
+                        'action': 'open_subsystem',
+                        'result_id': resultId,
+                        'database': database,
+                        'result_type': resultType,
+                        'metadata': {
+                            'timestamp': new Date().toISOString(),
+                            'subsystem_url': targetUrl
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to track subsystem interaction:', e);
+            }
+        }
+        
+        function getCurrentUser() {
+            // This would typically get the current user from your auth system
+            // For now, return a placeholder
+            return { user_id: 'current_user' };
         }
         
         async function submitFeedback(resultId, rating, feedbackType) {
