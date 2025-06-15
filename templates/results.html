@@ -142,6 +142,27 @@
         /* Sidebar styles */
         #filterSidebar {
             min-height: calc(100vh - 5rem);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        #filterSidebar.collapsed {
+            width: 4rem;
+        }
+        
+        #filterSidebar.collapsed .filter-content {
+            display: none;
+        }
+        
+        #filterSidebar.collapsed .sidebar-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .sidebar-toggle {
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .filter-content {
+            transition: opacity 0.3s ease-in-out;
         }
         
         /* Responsive adjustments */
@@ -149,11 +170,36 @@
             #filterSidebar {
                 width: 16rem;
             }
+            
+            #filterSidebar.collapsed {
+                width: 3rem;
+            }
         }
         
         @media (max-width: 768px) {
             #filterSidebar {
-                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 50;
+                height: 100vh;
+                width: 20rem;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            
+            #filterSidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .mobile-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
             }
         }
         .loading {
@@ -286,21 +332,31 @@
     <main class="flex">
         <!-- Left Sidebar - Filters -->
         <aside class="w-80 bg-themed-card border-r sticky top-20 h-screen overflow-y-auto p-6" style="border-color: var(--container-border);" id="filterSidebar">
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-themed-primary flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                        </svg>
-                        Filter Results
-                    </h3>
-                    <button onclick="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Clear All
-                    </button>
-                </div>
+            <!-- Sidebar Toggle Button -->
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="toggleSidebar()" class="sidebar-toggle p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Toggle Filters">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-themed-primary">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="filter-content">
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-themed-primary flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                            </svg>
+                            Filter Results
+                        </h3>
+                        <button onclick="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Clear All
+                        </button>
+                    </div>
                 
                 <!-- Database Filters -->
                 <div class="mb-6">
@@ -355,10 +411,21 @@
                     </div>
                 </div>
             </div>
+            </div>
         </aside>
 
         <!-- Main Content Area -->
         <div class="flex-1 px-6 py-8">
+            <!-- Mobile Filter Toggle -->
+            <div class="md:hidden mb-4">
+                <button onclick="toggleMobileFilters()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                    </svg>
+                    Filters
+                </button>
+            </div>
+            
             <!-- Search Summary -->
             <div class="mb-8">
                 <div class="flex items-center justify-between">
@@ -424,6 +491,9 @@
             types: new Set(),
             relevance: new Set()
         };
+        
+        // Sidebar state
+        let sidebarCollapsed = false;
 
         // Theme management
         function initializeTheme() {
@@ -703,6 +773,79 @@
             
             filteredResults = [...allResults];
             displayResults();
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('filterSidebar');
+            const toggleButton = document.querySelector('.sidebar-toggle');
+            
+            sidebarCollapsed = !sidebarCollapsed;
+            
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                toggleButton.title = 'Expand Filters';
+            } else {
+                sidebar.classList.remove('collapsed');
+                toggleButton.title = 'Collapse Filters';
+            }
+            
+            // Save sidebar state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebarCollapsed.toString());
+        }
+        
+        function initializeSidebar() {
+            // Restore sidebar state from localStorage
+            const savedState = localStorage.getItem('sidebarCollapsed');
+            if (savedState === 'true') {
+                sidebarCollapsed = true;
+                const sidebar = document.getElementById('filterSidebar');
+                const toggleButton = document.querySelector('.sidebar-toggle');
+                sidebar.classList.add('collapsed');
+                toggleButton.title = 'Expand Filters';
+            }
+        }
+        
+        function toggleMobileFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            const isOpen = sidebar.classList.contains('mobile-open');
+            
+            if (isOpen) {
+                closeMobileFilters();
+            } else {
+                openMobileFilters();
+            }
+        }
+        
+        function openMobileFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'mobile-overlay';
+            overlay.onclick = closeMobileFilters;
+            document.body.appendChild(overlay);
+            
+            // Show sidebar
+            sidebar.classList.add('mobile-open');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeMobileFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            const overlay = document.querySelector('.mobile-overlay');
+            
+            // Hide sidebar
+            sidebar.classList.remove('mobile-open');
+            
+            // Remove overlay
+            if (overlay) {
+                overlay.remove();
+            }
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
         }
         
         // Results are always sorted by relevance (ranking_score) by default
@@ -1539,6 +1682,7 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
+            initializeSidebar();
             checkAuthenticationStatus();
             loadSearchResults();
             setView('list'); // Default view
