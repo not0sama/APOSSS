@@ -283,19 +283,19 @@ def get_user_statistics():
         bookmarks_collection = aposss_db['user_bookmarks']
         bookmarks_count = bookmarks_collection.count_documents({'user_id': user_id})
         
-        # Get feedback statistics
+        # Get feedback statistics by user_id
         feedback_collection = aposss_db['user_feedback']
+        total_feedback = feedback_collection.count_documents({'user_id': user_id})
         positive_feedback = feedback_collection.count_documents({
-            'user_session': {'$regex': user_id},
+            'user_id': user_id,
             'rating': {'$gte': 4}
         })
         negative_feedback = feedback_collection.count_documents({
-            'user_session': {'$regex': user_id},
+            'user_id': user_id,
             'rating': {'$lte': 2}
         })
-        total_feedback = feedback_collection.count_documents({
-            'user_session': {'$regex': user_id}
-        })
+        
+
         
         # Get recent activity
         recent_searches = list(history_collection.find(
@@ -496,6 +496,12 @@ def submit_feedback():
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
+        # Get current user for feedback linking
+        current_user = get_current_user()
+        user_id = current_user.get('user_id', 'anonymous')
+        
+
+        
         # Submit feedback through feedback system
         feedback_result = feedback_system.submit_feedback({
             'query_id': data['query_id'],
@@ -503,6 +509,7 @@ def submit_feedback():
             'rating': data['rating'],
             'feedback_type': data['feedback_type'],
             'user_session': data.get('user_session', 'anonymous'),
+            'user_id': user_id,  # Add user_id for proper linking
             'additional_data': data.get('additional_data', {}),
             'timestamp': datetime.now().isoformat()
         })

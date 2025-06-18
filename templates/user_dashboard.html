@@ -231,9 +231,9 @@
             </div>
             
             <div class="card stat-card rounded-lg shadow-md p-6 text-center">
-                <div class="text-3xl mb-2">👍</div>
-                <h3 id="positiveFeedback" class="text-2xl font-bold text-themed-primary">-</h3>
-                <p class="text-themed-secondary">Positive Feedback</p>
+                <div class="text-3xl mb-2">💬</div>
+                <h3 id="totalFeedback" class="text-2xl font-bold text-themed-primary">-</h3>
+                <p class="text-themed-secondary">Total Feedback</p>
             </div>
             
             <div class="card stat-card rounded-lg shadow-md p-6 text-center">
@@ -524,7 +524,7 @@
             // Update statistic cards
             document.getElementById('totalSearches').textContent = stats.total_searches || 0;
             document.getElementById('totalBookmarks').textContent = stats.total_bookmarks || 0;
-            document.getElementById('positiveFeedback').textContent = stats.positive_feedback || 0;
+            document.getElementById('totalFeedback').textContent = stats.total_feedback || 0;
             document.getElementById('accountAge').textContent = stats.account_age_days || 0;
 
             // Display recent searches
@@ -541,7 +541,7 @@
         function displayDefaultStatistics() {
             document.getElementById('totalSearches').textContent = '0';
             document.getElementById('totalBookmarks').textContent = '0';
-            document.getElementById('positiveFeedback').textContent = '0';
+            document.getElementById('totalFeedback').textContent = '0';
             document.getElementById('accountAge').textContent = '0';
             
             document.getElementById('recentSearches').innerHTML = '<div class="text-center text-themed-secondary py-8">No searches yet</div>';

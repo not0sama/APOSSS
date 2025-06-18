@@ -392,4 +392,107 @@ class FeedbackSystem:
                 
         except Exception as e:
             logger.error(f"Error getting recent feedback: {str(e)}")
-            return [] 
+            return []
+
+    def get_user_feedback_stats(self, user_id: str) -> Dict[str, Any]:
+        """Get feedback statistics for a specific user"""
+        try:
+            if self.feedback_collection is not None:
+                # Get stats from MongoDB for specific user
+                total_feedback = self.feedback_collection.count_documents({'user_id': user_id})
+                
+                if total_feedback == 0:
+                    return {
+                        'total_feedback': 0,
+                        'positive_feedback': 0,
+                        'negative_feedback': 0,
+                        'average_rating': 0,
+                        'storage_type': 'mongodb'
+                    }
+                
+                # Aggregate rating statistics for this user
+                pipeline = [
+                    {"$match": {"user_id": user_id}},
+                    {"$group": {
+                        "_id": None,
+                        "avg_rating": {"$avg": "$rating"},
+                        "total_positive": {"$sum": {"$cond": [{"$gte": ["$rating", 4]}, 1, 0]}},
+                        "total_negative": {"$sum": {"$cond": [{"$lte": ["$rating", 2]}, 1, 0]}}
+                    }}
+                ]
+                
+                stats_result = list(self.feedback_collection.aggregate(pipeline))
+                if stats_result:
+                    stats = stats_result[0]
+                    return {
+                        'total_feedback': total_feedback,
+                        'average_rating': round(stats.get('avg_rating', 0), 2),
+                        'positive_feedback': stats.get('total_positive', 0),
+                        'negative_feedback': stats.get('total_negative', 0),
+                        'storage_type': 'mongodb'
+                    }
+            
+            # Fallback to file-based stats for specific user
+            return self._get_file_user_feedback_stats(user_id)
+            
+        except Exception as e:
+            logger.error(f"Error getting user feedback stats: {str(e)}")
+            return {
+                'total_feedback': 0,
+                'average_rating': 0,
+                'positive_feedback': 0,
+                'negative_feedback': 0,
+                'storage_type': 'error'
+            }
+
+    def _get_file_user_feedback_stats(self, user_id: str) -> Dict[str, Any]:
+        """Get feedback statistics for a specific user from file storage"""
+        try:
+            if not os.path.exists(self.feedback_file):
+                return {
+                    'total_feedback': 0,
+                    'average_rating': 0,
+                    'positive_feedback': 0,
+                    'negative_feedback': 0,
+                    'storage_type': 'file'
+                }
+            
+            ratings = []
+            positive_count = 0
+            negative_count = 0
+            
+            with open(self.feedback_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        feedback = json.loads(line.strip())
+                        # Only count feedback from this user
+                        if feedback.get('user_id') == user_id:
+                            rating = feedback.get('rating', 0)
+                            ratings.append(rating)
+                            
+                            if rating >= 4:
+                                positive_count += 1
+                            elif rating <= 2:
+                                negative_count += 1
+                    except json.JSONDecodeError:
+                        continue
+            
+            avg_rating = sum(ratings) / len(ratings) if ratings else 0
+            
+            return {
+                'total_feedback': len(ratings),
+                'average_rating': round(avg_rating, 2),
+                'positive_feedback': positive_count,
+                'negative_feedback': negative_count,
+                'storage_type': 'file'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting file user feedback stats: {str(e)}")
+            return {
+                'total_feedback': 0,
+                'average_rating': 0,
+                'positive_feedback': 0,
+                'negative_feedback': 0,
+                'storage_type': 'file_error'
+            } 
