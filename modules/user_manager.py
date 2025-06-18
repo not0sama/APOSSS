@@ -185,7 +185,7 @@ class UserManager:
             if self.users_collection is None:
                 return {'success': False, 'error': 'User authentication not available'}
             
-            # Find user by email or username
+            # Find user by email or username (exclude profile picture from response)
             user = self.users_collection.find_one({
                 '$or': [
                     {'email': identifier.lower().strip()},
@@ -219,9 +219,12 @@ class UserManager:
             # Create session record
             self._create_session(user['user_id'], token)
             
-            # Remove password hash from response
+            # Remove password hash and profile picture from response
             user.pop('password_hash', None)
             user.pop('_id', None)
+            # Remove profile picture binary data to prevent JSON serialization errors
+            if 'profile' in user and 'profile_picture' in user['profile']:
+                user['profile'].pop('profile_picture', None)
             
             logger.info(f"User authenticated successfully: {user['username']}")
             
@@ -269,7 +272,7 @@ class UserManager:
             
             user = self.users_collection.find_one(
                 {'user_id': user_id, 'is_active': True},
-                {'password_hash': 0, '_id': 0}
+                {'password_hash': 0, '_id': 0, 'profile.profile_picture': 0}
             )
             return user
         except Exception as e:
@@ -793,4 +796,94 @@ class UserManager:
             
         except Exception as e:
             logger.error(f"Error changing password for user {user_id}: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def update_profile_picture(self, user_id: str, picture_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update user profile picture"""
+        try:
+            if self.users_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Get user
+            user = self.users_collection.find_one({'user_id': user_id})
+            if not user:
+                return {'success': False, 'error': 'User not found'}
+            
+            # Prepare profile picture data
+            profile_picture = {
+                'filename': picture_data['filename'],
+                'data': picture_data['data'],
+                'content_type': picture_data['content_type'],
+                'size': picture_data['size'],
+                'uploaded_at': picture_data['uploaded_at']
+            }
+            
+            # Update user profile with picture data
+            result = self.users_collection.update_one(
+                {'user_id': user_id},
+                {
+                    '$set': {
+                        'profile.profile_picture': profile_picture,
+                        'updated_at': datetime.now().isoformat()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                logger.info(f"Profile picture updated successfully for user: {user_id}")
+                return {
+                    'success': True,
+                    'message': 'Profile picture updated successfully',
+                    'profile_picture_id': user_id
+                }
+            else:
+                return {'success': False, 'error': 'Failed to update profile picture'}
+            
+        except Exception as e:
+            logger.error(f"Error updating profile picture for user {user_id}: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def get_profile_picture(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user profile picture"""
+        try:
+            if self.users_collection is None:
+                return None
+            
+            user = self.users_collection.find_one(
+                {'user_id': user_id},
+                {'profile.profile_picture': 1}
+            )
+            
+            if user and 'profile' in user and 'profile_picture' in user['profile']:
+                return user['profile']['profile_picture']
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error getting profile picture for user {user_id}: {str(e)}")
+            return None
+    
+    def delete_profile_picture(self, user_id: str) -> Dict[str, Any]:
+        """Delete user profile picture"""
+        try:
+            if self.users_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Remove profile picture from user document
+            result = self.users_collection.update_one(
+                {'user_id': user_id},
+                {
+                    '$unset': {'profile.profile_picture': ''},
+                    '$set': {'updated_at': datetime.now().isoformat()}
+                }
+            )
+            
+            if result.modified_count > 0:
+                logger.info(f"Profile picture deleted successfully for user: {user_id}")
+                return {'success': True, 'message': 'Profile picture deleted successfully'}
+            else:
+                return {'success': False, 'error': 'No profile picture to delete or user not found'}
+            
+        except Exception as e:
+            logger.error(f"Error deleting profile picture for user {user_id}: {str(e)}")
             return {'success': False, 'error': str(e)}

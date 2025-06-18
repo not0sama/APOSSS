@@ -1653,12 +1653,22 @@
                 const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
                 const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
                 
+                // Create profile picture element
+                const profilePictureHtml = `
+                    <div class="w-8 h-8 relative">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-0.5">
+                            <img id="userMenuProfilePicture" src="" alt="Profile Picture" class="w-full h-full rounded-full object-cover hidden bg-white">
+                            <div id="userMenuInitials" class="w-full h-full bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                ${initials}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
                 userProfile.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <a href="/dashboard" class="flex items-center space-x-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
-                            <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                ${initials}
-                            </div>
+                            ${profilePictureHtml}
                             <span class="text-sm font-medium text-themed-primary">${fullName}</span>
                         </a>
                         <button onclick="logout()" class="text-xs text-themed-secondary hover:text-themed-primary transition-colors">
@@ -1666,9 +1676,40 @@
                         </button>
                     </div>
                 `;
+                
+                // Load profile picture in user menu
+                loadUserMenuProfilePicture(userData.user_id);
             } catch (error) {
                 console.error('Error in showUserInfo:', error);
                 showLoginButtons();
+            }
+        }
+
+        async function loadUserMenuProfilePicture(userId) {
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.src = imageUrl;
+                        profilePicture.classList.remove('hidden');
+                        initials.classList.add('hidden');
+                    }
+                } else {
+                    // No profile picture, keep showing initials
+                    console.log('No profile picture found for user');
+                }
+            } catch (error) {
+                console.error('Error loading user menu profile picture:', error);
+                // Keep showing initials on error
             }
         }
         

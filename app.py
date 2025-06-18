@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -378,6 +378,129 @@ def update_profile():
             
     except Exception as e:
         logger.error(f"Error updating profile: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile-picture', methods=['POST'])
+def upload_profile_picture():
+    """Upload user profile picture endpoint"""
+    import base64
+    import uuid
+    from datetime import datetime
+    
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data or 'image' not in data:
+            return jsonify({'error': 'No image data provided'}), 400
+        
+        image_data = data['image']
+        
+        # Validate image data format (should be base64)
+        if not image_data.startswith('data:image/'):
+            return jsonify({'error': 'Invalid image format'}), 400
+        
+        # Extract image type and base64 data
+        try:
+            header, encoded = image_data.split(',', 1)
+            image_type = header.split(';')[0].split(':')[1]
+            
+            # Validate image type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+            if image_type not in allowed_types:
+                return jsonify({'error': 'Unsupported image type. Allowed: JPEG, PNG, GIF, WebP'}), 400
+            
+            # Decode base64 data
+            image_binary = base64.b64decode(encoded)
+            
+            # Check file size (limit to 5MB)
+            max_size = 5 * 1024 * 1024  # 5MB
+            if len(image_binary) > max_size:
+                return jsonify({'error': 'Image too large. Maximum size is 5MB'}), 400
+            
+        except Exception as e:
+            return jsonify({'error': 'Invalid image data format'}), 400
+        
+        # Generate unique filename
+        file_extension = image_type.split('/')[-1]
+        filename = f"profile_{current_user['user_id']}_{uuid.uuid4().hex[:8]}.{file_extension}"
+        
+        # Store image in MongoDB
+        user_id = current_user['user_id']
+        result = user_manager.update_profile_picture(user_id, {
+            'filename': filename,
+            'data': image_binary,
+            'content_type': image_type,
+            'size': len(image_binary),
+            'uploaded_at': datetime.now().isoformat()
+        })
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': 'Profile picture uploaded successfully',
+                'profile_picture_id': result.get('profile_picture_id')
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error uploading profile picture: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile-picture/<user_id>', methods=['GET'])
+def get_profile_picture(user_id):
+    """Get user profile picture endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 404
+        
+        # Get profile picture data
+        picture_data = user_manager.get_profile_picture(user_id)
+        
+        if not picture_data:
+            return jsonify({'error': 'Profile picture not found'}), 404
+        
+        # Return the image data
+        return Response(
+            picture_data['data'],
+            mimetype=picture_data['content_type'],
+            headers={
+                'Cache-Control': 'public, max-age=3600',  # Cache for 1 hour
+                'Content-Disposition': f'inline; filename="{picture_data["filename"]}"'
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting profile picture: {str(e)}")
+        return jsonify({'error': str(e)}), 404
+
+@app.route('/api/user/profile-picture', methods=['DELETE'])
+def delete_profile_picture():
+    """Delete user profile picture endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user_id = current_user['user_id']
+        result = user_manager.delete_profile_picture(user_id)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error deleting profile picture: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/search', methods=['POST'])
