@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Libyan Open Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #4a5568;
+            --container-bg: #ffffff;
+            --container-border: #e2e8f0;
+            --input-bg: #ffffff;
+            --input-border: #e2e8f0;
+            --button-bg: rgba(255, 255, 255, 0.9);
+            --button-hover: #f1f3f4;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+            --header-bg: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #F8F9FA;
+            --text-secondary: #a0aec0;
+            --container-bg: #1a1a1a;
+            --container-border: #2d3748;
+            --input-bg: #1a1a1a;
+            --input-border: #2d3748;
+            --button-bg: rgba(18, 18, 18, 0.9);
+            --button-hover: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --card-bg: #1a1a1a;
+            --header-bg: #1a1a1a;
+            --glass-bg: rgba(18, 18, 18, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Card styles */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--container-border);
+            transition: all 0.3s ease;
+        }
+
+        /* Header styles */
+        .header {
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--container-border);
+            transition: all 0.3s ease;
+        }
+
+        /* Text color overrides */
+        .text-themed-primary { color: var(--text-primary) !important; }
+        .text-themed-secondary { color: var(--text-secondary) !important; }
+        .bg-themed-card { background: var(--card-bg) !important; }
+        .bg-themed-header { background: var(--header-bg) !important; }
+
+        /* User Menu Dropdown */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 12rem;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 0;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+
+        .user-menu-item:hover {
+            background: var(--button-hover);
+            color: #3b82f6;
+        }
+
+        .user-menu-separator {
+            height: 1px;
+            background: var(--container-border);
+            margin: 0.5rem 0;
+        }
+
+        .stat-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        .activity-item {
+            transition: all 0.2s ease;
+        }
+
+        .activity-item:hover {
+            background: var(--button-hover);
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="header shadow-md">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-8 h-8 flex items-center justify-center">
+                            <img 
+                                id="headerLogo"
+                                src="/static/images/logo-light.svg" 
+                                alt="Libyan Open Science Logo"
+                                class="w-full h-full object-contain"
+                                onerror="this.onerror=null; this.src='/static/images/logo.png';"
+                            >
+                        </div>
+                        <span class="text-xl font-bold text-themed-primary">Libyan Open Science</span>
+                    </a>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex items-center space-x-6">
+                    <a href="/" class="text-themed-secondary hover:text-blue-600 transition-colors">
+                        Home
+                    </a>
+                    <a href="/dev" class="text-themed-secondary hover:text-blue-600 transition-colors">
+                        Developer Portal
+                    </a>
+                    
+                    <!-- User Info (when authenticated) -->
+                    <div id="userInfo" class="user-menu" style="display: none;">
+                        <div id="userProfile" class="relative">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Login/Signup Buttons (shown when not authenticated) -->
+                    <div id="authButtons" class="flex space-x-3">
+                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors font-medium shadow-lg">
+                            Sign Up
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Welcome Section -->
+        <div class="card rounded-lg shadow-md p-8 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 id="welcomeMessage" class="text-3xl font-bold text-themed-primary mb-2">
+                        Welcome back!
+                    </h1>
+                    <p class="text-themed-secondary">Here's your research activity overview</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        Start Searching
+                    </a>
+                    <a href="/profile" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                        View Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="card stat-card rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl mb-2">🔍</div>
+                <h3 id="totalSearches" class="text-2xl font-bold text-themed-primary">-</h3>
+                <p class="text-themed-secondary">Total Searches</p>
+            </div>
+            
+            <div class="card stat-card rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl mb-2">⭐</div>
+                <h3 id="totalBookmarks" class="text-2xl font-bold text-themed-primary">-</h3>
+                <p class="text-themed-secondary">Bookmarks</p>
+            </div>
+            
+            <div class="card stat-card rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl mb-2">👍</div>
+                <h3 id="positiveFeedback" class="text-2xl font-bold text-themed-primary">-</h3>
+                <p class="text-themed-secondary">Positive Feedback</p>
+            </div>
+            
+            <div class="card stat-card rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl mb-2">📅</div>
+                <h3 id="accountAge" class="text-2xl font-bold text-themed-primary">-</h3>
+                <p class="text-themed-secondary">Days Active</p>
+            </div>
+        </div>
+
+        <!-- Activity Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Activity Chart -->
+            <div class="card rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-themed-primary mb-4">Activity Over Time</h2>
+                <div class="h-64">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Feedback Distribution -->
+            <div class="card rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-themed-primary mb-4">Feedback Distribution</h2>
+                <div class="h-64">
+                    <canvas id="feedbackChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Recent Searches -->
+            <div class="card rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-themed-primary mb-4">Recent Searches</h2>
+                <div id="recentSearches" class="space-y-3">
+                    <!-- Recent searches will be populated by JavaScript -->
+                    <div class="text-center text-themed-secondary py-8">
+                        Loading recent searches...
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="/" class="text-blue-600 hover:text-blue-800 font-medium">View All Searches →</a>
+                </div>
+            </div>
+
+            <!-- Recent Bookmarks -->
+            <div class="card rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-themed-primary mb-4">Recent Bookmarks</h2>
+                <div id="recentBookmarks" class="space-y-3">
+                    <!-- Recent bookmarks will be populated by JavaScript -->
+                    <div class="text-center text-themed-secondary py-8">
+                        Loading recent bookmarks...
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="/profile" class="text-blue-600 hover:text-blue-800 font-medium">Manage Bookmarks →</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentUser = null;
+        let activityChart = null;
+        let feedbackChart = null;
+        
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const headerLogo = document.getElementById('headerLogo');
+            if (headerLogo) {
+                if (theme === 'dark') {
+                    headerLogo.src = '/static/images/logo-dark.svg';
+                } else {
+                    headerLogo.src = '/static/images/logo-light.svg';
+                }
+            }
+
+            // Update chart colors if charts exist
+            if (activityChart || feedbackChart) {
+                updateChartColors();
+            }
+        }
+
+        // Authentication functions
+        function checkAuthenticationStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const userMode = localStorage.getItem('userMode');
+            
+            if (token && userData && userMode === 'authenticated') {
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentUser = JSON.parse(userData);
+                        showUserInfo(currentUser);
+                        loadUserStatistics();
+                    } else {
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying token:', error);
+                    window.location.href = '/login';
+                });
+            } else {
+                window.location.href = '/login';
+            }
+        }
+        
+        function showUserInfo(userData) {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            const userProfile = document.getElementById('userProfile');
+            
+            authButtons.style.display = 'none';
+            userInfo.style.display = 'block';
+            
+            const firstName = userData.profile?.first_name || '';
+            const lastName = userData.profile?.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
+            const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            // Update welcome message
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${firstName || userData.username || 'User'}!`;
+            
+            userProfile.innerHTML = `
+                <button onclick="toggleUserMenu()" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        ${initials}
+                    </div>
+                    <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+                <div class="user-menu-dropdown" id="userMenuDropdown">
+                    <button onclick="goToProfile()" class="user-menu-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                        </svg>
+                        Profile
+                    </button>
+                    <button onclick="goToDashboard()" class="user-menu-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                        </svg>
+                        Dashboard
+                    </button>
+                    <div class="user-menu-separator"></div>
+                    <button onclick="toggleTheme()" class="user-menu-item" id="themeToggleMenuItem">
+                        <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                        </svg>
+                        <span id="themeTextMenu">Dark Mode</span>
+                    </button>
+                    <div class="user-menu-separator"></div>
+                    <button onclick="logout()" class="user-menu-item text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            `;
+            
+            updateThemeMenuItem();
+        }
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userMenuDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateThemeMenuItem();
+        }
+
+        function updateThemeMenuItem() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const themeIcon = document.getElementById('themeIconMenu');
+            const themeText = document.getElementById('themeTextMenu');
+            
+            if (themeIcon && themeText) {
+                if (currentTheme === 'dark') {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
+                    themeText.textContent = 'Dark Mode';
+                }
+            }
+        }
+
+        function goToProfile() {
+            window.location.href = '/profile';
+        }
+
+        function goToDashboard() {
+            // Already on dashboard, just close menu
+            toggleUserMenu();
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
+            showTemporaryMessage('Logged out successfully', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenu && dropdown && !userMenu.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function showTemporaryMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+
+        // Load user statistics
+        async function loadUserStatistics() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/statistics', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStatistics(data.statistics);
+                } else {
+                    throw new Error(data.error || 'Failed to load statistics');
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                showTemporaryMessage('Error loading statistics: ' + error.message, 'error');
+                displayDefaultStatistics();
+            }
+        }
+
+        function displayStatistics(stats) {
+            // Update statistic cards
+            document.getElementById('totalSearches').textContent = stats.total_searches || 0;
+            document.getElementById('totalBookmarks').textContent = stats.total_bookmarks || 0;
+            document.getElementById('positiveFeedback').textContent = stats.positive_feedback || 0;
+            document.getElementById('accountAge').textContent = stats.account_age_days || 0;
+
+            // Display recent searches
+            displayRecentSearches(stats.recent_searches || []);
+
+            // Display recent bookmarks
+            displayRecentBookmarks(stats.recent_bookmarks || []);
+
+            // Create charts
+            createActivityChart(stats.monthly_activity || []);
+            createFeedbackChart(stats);
+        }
+
+        function displayDefaultStatistics() {
+            document.getElementById('totalSearches').textContent = '0';
+            document.getElementById('totalBookmarks').textContent = '0';
+            document.getElementById('positiveFeedback').textContent = '0';
+            document.getElementById('accountAge').textContent = '0';
+            
+            document.getElementById('recentSearches').innerHTML = '<div class="text-center text-themed-secondary py-8">No searches yet</div>';
+            document.getElementById('recentBookmarks').innerHTML = '<div class="text-center text-themed-secondary py-8">No bookmarks yet</div>';
+        }
+
+        function displayRecentSearches(searches) {
+            const container = document.getElementById('recentSearches');
+            
+            if (searches.length === 0) {
+                container.innerHTML = '<div class="text-center text-themed-secondary py-8">No searches yet</div>';
+                return;
+            }
+
+            container.innerHTML = searches.map(search => `
+                <div class="activity-item p-3 rounded-lg cursor-pointer" onclick="searchAgain('${search.query.replace(/'/g, '\\\'')}')" title="Click to search again">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="font-medium text-themed-primary">"${search.query}"</p>
+                            <p class="text-sm text-themed-secondary">${formatDate(search.timestamp)}</p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayRecentBookmarks(bookmarks) {
+            const container = document.getElementById('recentBookmarks');
+            
+            if (bookmarks.length === 0) {
+                container.innerHTML = '<div class="text-center text-themed-secondary py-8">No bookmarks yet</div>';
+                return;
+            }
+
+            container.innerHTML = bookmarks.map(bookmark => `
+                <div class="activity-item p-3 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="font-medium text-themed-primary">${bookmark.title}</p>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                    ${bookmark.type}
+                                </span>
+                                <span class="text-sm text-themed-secondary">${formatDate(bookmark.created_at)}</span>
+                            </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function createActivityChart(monthlyActivity) {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            
+            const labels = monthlyActivity.map(item => {
+                const [year, month] = item[0].split('-');
+                return `${year}-${month}`;
+            });
+            const data = monthlyActivity.map(item => item[1]);
+
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Activity',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createFeedbackChart(stats) {
+            const ctx = document.getElementById('feedbackChart').getContext('2d');
+            
+            const positive = stats.positive_feedback || 0;
+            const negative = stats.negative_feedback || 0;
+            const neutral = (stats.total_feedback || 0) - positive - negative;
+
+            feedbackChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        data: [positive, neutral, negative],
+                        backgroundColor: [
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#F8F9FA' : '#212529';
+            
+            if (activityChart) {
+                activityChart.options.scales.x.ticks.color = textColor;
+                activityChart.options.scales.y.ticks.color = textColor;
+                activityChart.options.scales.x.grid.color = isDark ? '#2d3748' : '#e2e8f0';
+                activityChart.options.scales.y.grid.color = isDark ? '#2d3748' : '#e2e8f0';
+                activityChart.update();
+            }
+            
+            if (feedbackChart) {
+                feedbackChart.options.plugins.legend.labels.color = textColor;
+                feedbackChart.update();
+            }
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function searchAgain(query) {
+            // Store the query and redirect to home page
+            sessionStorage.setItem('autoSearch', query);
+            window.location.href = '/';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                initializeTheme();
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in initialization:', error);
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html> 

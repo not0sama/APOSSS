@@ -252,7 +252,7 @@
             box-shadow: 0 8px 32px var(--shadow-color);
             transform: translateX(-100%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 50;
+            z-index: 30;
             overflow-y: auto;
         }
 
@@ -287,7 +287,7 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            z-index: 51;
+            z-index: 40;
         }
 
         .sidebar-toggle:hover {
@@ -461,6 +461,67 @@
             background: var(--text-secondary);
         }
 
+
+
+        /* User Menu Dropdown */
+        .user-menu {
+            position: relative;
+            z-index: 9999;
+        }
+
+        .user-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 12rem;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 0;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        .user-menu-item:hover {
+            background: var(--button-hover);
+            color: #3b82f6;
+        }
+
+        .user-menu-separator {
+            height: 1px;
+            background: var(--container-border);
+            margin: 0.5rem 0;
+        }
+
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             .sidebar {
@@ -522,9 +583,9 @@
                     </button>
                     
                     <!-- User Info (when authenticated) -->
-                    <div id="userInfo" class="flex items-center space-x-3" style="display: none;">
+                    <div id="userInfo" class="user-menu" style="display: none;">
                         <div id="userProfile">
-                            <!-- This will be populated by JavaScript when user is authenticated -->
+                            <!-- This will be populated by JavaScript -->
                         </div>
                     </div>
                     
@@ -598,7 +659,7 @@
     <!-- Main Content Wrapper -->
     <div class="main-wrapper" id="mainWrapper">
         <!-- Main Content -->
-        <main class="relative z-10 flex-1 flex items-center justify-center px-6 py-12">
+        <main class="relative z-1 flex-1 flex items-center justify-center px-6 py-12">
         <div class="w-full max-w-4xl">
             <!-- Hero Section -->
             <div class="text-center mb-12">
@@ -717,7 +778,7 @@
     <footer class="relative z-10 text-center py-8">
         <div class="container mx-auto px-6">
             <p class="text-themed-secondary text-sm">
-                © 2024 Libyan Open Science • 
+                © 2025 Libyan Open Science • 
                 <a href="/dev" class="hover:text-blue-600 transition-colors">Developer Portal</a>
             </p>
         </div>
@@ -946,7 +1007,15 @@
             const userData = localStorage.getItem('userData');
             const userMode = localStorage.getItem('userMode');
             
+            console.log('Checking auth status:', { 
+                hasToken: !!token, 
+                hasUserData: !!userData, 
+                userMode: userMode,
+                tokenPreview: token ? token.substring(0, 20) + '...' : null
+            });
+            
             if (token && userData && userMode === 'authenticated') {
+                console.log('Auth data found, verifying token...');
                 // Verify token is still valid
                 fetch('/api/auth/verify', {
                     method: 'POST',
@@ -955,12 +1024,18 @@
                         'Content-Type': 'application/json'
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Token verification response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Token verification result:', data);
                     if (data.success) {
+                        console.log('Token valid, showing user info');
                         showUserInfo(JSON.parse(userData));
                         loadUserThemePreference();
                     } else {
+                        console.log('Token invalid, showing login buttons');
                         showLoginButtons();
                     }
                 })
@@ -969,6 +1044,7 @@
                     showLoginButtons();
                 });
             } else {
+                console.log('Missing auth data, showing login buttons');
                 showLoginButtons();
             }
         }
@@ -983,51 +1059,149 @@
             }
         }
         
+        // User Menu Implementation
+        
         function showUserInfo(userData) {
             try {
                 const authButtons = document.getElementById('authButtons');
                 const userInfo = document.getElementById('userInfo');
                 const userProfile = document.getElementById('userProfile');
                 
-                if (!authButtons || !userInfo || !userProfile) {
-                    console.error('Required DOM elements not found for user info');
-                    return;
-                }
+                if (!authButtons || !userInfo || !userProfile) return;
                 
                 authButtons.style.display = 'none';
-                userInfo.style.display = 'flex';
+                userInfo.style.display = 'block';
                 
                 const firstName = userData.profile?.first_name || '';
                 const lastName = userData.profile?.last_name || '';
                 const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
                 const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
                 
+                // Create the user menu HTML
                 userProfile.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <a href="/dashboard" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
-                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                ${initials}
-                            </div>
-                            <span class="text-sm font-medium text-white">${fullName}</span>
-                        </a>
-                        <button onclick="logout()" class="text-xs text-blue-200 hover:text-white transition-colors">
+                    <button onclick="toggleUserMenu(event)" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            ${initials}
+                        </div>
+                        <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="user-menu-dropdown" id="userMenuDropdown">
+                        <button onclick="goToProfile(event)" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                            Profile
+                        </button>
+                        <button onclick="goToDashboard(event)" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                            </svg>
+                            Dashboard
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="toggleTheme(event)" class="user-menu-item" id="themeToggleMenuItem">
+                            <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                            </svg>
+                            <span id="themeTextMenu">Dark Mode</span>
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="logout(event)" class="user-menu-item text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            </svg>
                             Logout
                         </button>
                     </div>
                 `;
+                                
+                // Update theme menu item
+                updateThemeMenuItem();
+                
             } catch (error) {
                 console.error('Error in showUserInfo:', error);
                 showLoginButtons();
             }
         }
         
-        function logout() {
+        function toggleUserMenu(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            
+            const dropdown = document.getElementById('userMenuDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        function toggleTheme(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateThemeMenuItem();
+        }
+
+        function updateThemeMenuItem() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const themeIcon = document.getElementById('themeIconMenu');
+            const themeText = document.getElementById('themeTextMenu');
+            
+            if (themeIcon && themeText) {
+                if (currentTheme === 'dark') {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
+                    themeText.textContent = 'Dark Mode';
+                }
+            }
+        }
+
+        function goToProfile(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            window.location.href = '/profile';
+        }
+
+        function goToDashboard(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            window.location.href = '/user-dashboard';
+        }
+
+        function logout(event) {
+            if (event) {
+                event.stopPropagation();
+            }
             localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
             localStorage.removeItem('userMode');
             showLoginButtons();
             showTemporaryMessage('Logged out successfully', 'success');
         }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenu && dropdown && dropdown.classList.contains('show')) {
+                // Check if click is outside the user menu
+                if (!userMenu.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }, true); // Use capture phase to handle before other handlers
         
         function getCurrentUser() {
             const token = localStorage.getItem('authToken');

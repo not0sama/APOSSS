@@ -216,6 +216,142 @@ def get_profile():
         logger.error(f"Error getting profile: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/profile')
+def profile():
+    """Serve the profile page"""
+    return render_template('profile.html')
+
+@app.route('/user-dashboard')
+def user_dashboard():
+    """Serve the user dashboard page"""
+    return render_template('user_dashboard.html')
+
+@app.route('/api/user/change-password', methods=['POST'])
+def change_password():
+    """Change user password endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not current_password or not new_password:
+            return jsonify({'error': 'Current password and new password are required'}), 400
+        
+        # Change password through user manager
+        user_id = current_user['user_id']
+        result = user_manager.change_password(user_id, current_password, new_password)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error changing password: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/statistics', methods=['GET'])
+def get_user_statistics():
+    """Get user activity statistics"""
+    try:
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user_id = current_user['user_id']
+        
+        # Get user statistics from database
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        # Get search history count
+        history_collection = aposss_db['user_search_history']
+        search_count = history_collection.count_documents({'user_id': user_id})
+        
+        # Get bookmarks count
+        bookmarks_collection = aposss_db['user_bookmarks']
+        bookmarks_count = bookmarks_collection.count_documents({'user_id': user_id})
+        
+        # Get feedback statistics
+        feedback_collection = aposss_db['user_feedback']
+        positive_feedback = feedback_collection.count_documents({
+            'user_session': {'$regex': user_id},
+            'rating': {'$gte': 4}
+        })
+        negative_feedback = feedback_collection.count_documents({
+            'user_session': {'$regex': user_id},
+            'rating': {'$lte': 2}
+        })
+        total_feedback = feedback_collection.count_documents({
+            'user_session': {'$regex': user_id}
+        })
+        
+        # Get recent activity
+        recent_searches = list(history_collection.find(
+            {'user_id': user_id},
+            {'_id': 0, 'query': 1, 'timestamp': 1}
+        ).sort('timestamp', -1).limit(5))
+        
+        recent_bookmarks = list(bookmarks_collection.find(
+            {'user_id': user_id},
+            {'_id': 0, 'title': 1, 'type': 1, 'created_at': 1}
+        ).sort('created_at', -1).limit(5))
+        
+        # Get user interaction patterns
+        interactions_collection = aposss_db['user_interactions']
+        interactions = list(interactions_collection.find(
+            {'user_id': user_id},
+            {'action': 1, 'timestamp': 1}
+        ).sort('timestamp', -1).limit(100))
+        
+        # Calculate activity by month
+        from collections import defaultdict
+        import datetime
+        
+        monthly_activity = defaultdict(int)
+        for interaction in interactions:
+            try:
+                date = datetime.datetime.fromisoformat(interaction['timestamp'].replace('Z', '+00:00'))
+                month_key = f"{date.year}-{date.month:02d}"
+                monthly_activity[month_key] += 1
+            except:
+                continue
+        
+        # Sort monthly activity
+        sorted_monthly = sorted(monthly_activity.items())[-6:]  # Last 6 months
+        
+        statistics = {
+            'total_searches': search_count,
+            'total_bookmarks': bookmarks_count,
+            'positive_feedback': positive_feedback,
+            'negative_feedback': negative_feedback,
+            'total_feedback': total_feedback,
+            'recent_searches': recent_searches,
+            'recent_bookmarks': recent_bookmarks,
+            'monthly_activity': sorted_monthly,
+            'account_age_days': (datetime.datetime.now() - datetime.datetime.fromisoformat(current_user.get('created_at', datetime.datetime.now().isoformat()).replace('Z', '+00:00'))).days if current_user.get('created_at') else 0
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': statistics
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user statistics: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/user/profile', methods=['PUT'])
 def update_profile():
     """Update user profile endpoint"""

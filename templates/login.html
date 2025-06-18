@@ -341,8 +341,14 @@
                     localStorage.setItem('userData', JSON.stringify(data.user));
                     localStorage.setItem('userMode', 'authenticated');
                     
-                    // Redirect to dashboard
-                    window.location.href = '/dashboard';
+                    console.log('Login successful, stored auth data:', {
+                        token: data.token.substring(0, 20) + '...',
+                        user: data.user,
+                        userMode: 'authenticated'
+                    });
+                    
+                    // Redirect to home page
+                    window.location.href = '/';
                 } else {
                     throw new Error(data.error || 'Login failed');
                 }

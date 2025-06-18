@@ -751,3 +751,46 @@ class UserManager:
         stats['preferred_types'] = type_preferences
         
         return stats 
+    
+    def change_password(self, user_id: str, current_password: str, new_password: str) -> Dict[str, Any]:
+        """Change user password"""
+        try:
+            if self.users_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Get user
+            user = self.users_collection.find_one({'user_id': user_id})
+            if not user:
+                return {'success': False, 'error': 'User not found'}
+            
+            # Verify current password
+            if not bcrypt.checkpw(current_password.encode('utf-8'), user['password_hash']):
+                return {'success': False, 'error': 'Current password is incorrect'}
+            
+            # Validate new password
+            if len(new_password) < 6:
+                return {'success': False, 'error': 'New password must be at least 6 characters long'}
+            
+            # Hash new password
+            new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            
+            # Update password
+            result = self.users_collection.update_one(
+                {'user_id': user_id},
+                {
+                    '$set': {
+                        'password_hash': new_password_hash,
+                        'updated_at': datetime.now().isoformat()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                logger.info(f"Password changed successfully for user: {user_id}")
+                return {'success': True, 'message': 'Password changed successfully'}
+            else:
+                return {'success': False, 'error': 'Failed to update password'}
+            
+        except Exception as e:
+            logger.error(f"Error changing password for user {user_id}: {str(e)}")
+            return {'success': False, 'error': str(e)}
