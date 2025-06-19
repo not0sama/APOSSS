@@ -942,8 +942,8 @@
             try {
                 const searchData = {
                     query: query,
-                    ranking_mode: 'hybrid',
-                    database_filters: selectedDatabases.length > 0 ? selectedDatabases : null
+                    ranking_mode: 'hybrid'
+                    // Note: database_filters removed - frontend now handles all filtering
                 };
                 
                 // Add auth headers if available

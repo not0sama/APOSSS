@@ -658,9 +658,11 @@
             // Populate search input
             document.getElementById('searchInput').value = query;
             
-            // Update search summary
-            document.getElementById('searchSummary').textContent = 
-                `Found ${data.search_results.total_results} results for "${query}"`;
+            // Update search summary with comprehensive information
+            const searchSummary = document.getElementById('searchSummary');
+            const baseText = `Found ${data.search_results.total_results} results for "${query}"`;
+            const filterNote = ` • Use filters to refine results from all databases`;
+            searchSummary.textContent = baseText + filterNote;
             
             // Store data
             allResults = data.search_results.results || [];
@@ -670,17 +672,35 @@
             // Initialize filters
             initializeFilters();
             
-            // Display results
-            displayResults();
-            
-            // Apply original filters if any
+            // Apply filters from home page if any
             if (filters.length > 0) {
+                // Map home page filter names to database names
+                const filterToDatabase = {
+                    'experts': 'experts_system',
+                    'labs': 'laboratories', 
+                    'library': 'academic_library',
+                    'funding': 'funding_system',
+                    'papers': 'research_papers'
+                };
+                
+                // Apply database filters and update active filters
                 filters.forEach(filter => {
-                    const filterBtn = document.querySelector(`[data-filter="${filter}"]`);
-                    if (filterBtn) {
-                        filterBtn.classList.add('active');
+                    const databaseName = filterToDatabase[filter];
+                    if (databaseName) {
+                        // Find the database filter button and activate it
+                        const dbButton = document.querySelector(`[data-database="${databaseName}"]`);
+                        if (dbButton) {
+                            dbButton.classList.add('active');
+                            activeFilters.databases.add(databaseName);
+                        }
                     }
                 });
+                
+                // Apply the filters to show only relevant results
+                applyFilters();
+            } else {
+                // Display all results if no filters
+                displayResults();
             }
         }
         
@@ -1086,7 +1106,9 @@
         function updateSearchSummary(start, end, total) {
             const summaryElement = document.getElementById('searchSummary');
             const query = sessionStorage.getItem('searchQuery') || 'your search';
-            summaryElement.textContent = `Showing ${start}-${end} of ${total} results for "${query}"`;
+            const baseText = `Showing ${start}-${end} of ${total} results for "${query}"`;
+            const filterNote = total < allResults.length ? ` (filtered from ${allResults.length} total)` : ` (from all databases)`;
+            summaryElement.textContent = baseText + filterNote;
         }
         
         function createResultCard(result, index) {

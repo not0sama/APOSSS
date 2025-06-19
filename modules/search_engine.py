@@ -95,32 +95,21 @@ class SearchEngine:
             return self._traditional_search(processed_query, database_filters)
     
     def _traditional_search(self, processed_query: Dict[str, Any], database_filters: List[str] = None) -> Dict[str, Any]:
-        """Traditional MongoDB keyword search"""
+        """Traditional MongoDB keyword search - Always searches all databases for frontend filtering"""
         # Extract search parameters
         search_params = self._extract_search_parameters(processed_query)
         
-        # Search each database (with filtering if specified)
+        # Always search all databases - frontend will handle filtering
         results_dict = {}
         
-        if not database_filters or 'academic_library' in database_filters:
-            results_dict['academic_library'] = self._search_academic_library(search_params)
-        else:
-            results_dict['academic_library'] = []
-            
-        if not database_filters or 'experts_system' in database_filters:
-            results_dict['experts_system'] = self._search_experts_system(search_params)
-        else:
-            results_dict['experts_system'] = []
-            
-        if not database_filters or 'research_papers' in database_filters:
-            results_dict['research_papers'] = self._search_research_papers(search_params)
-        else:
-            results_dict['research_papers'] = []
-            
-        if not database_filters or 'laboratories' in database_filters:
-            results_dict['laboratories'] = self._search_laboratories(search_params)
-        else:
-            results_dict['laboratories'] = []
+        # Search all databases regardless of database_filters
+        results_dict['academic_library'] = self._search_academic_library(search_params)
+        results_dict['experts_system'] = self._search_experts_system(search_params)
+        results_dict['research_papers'] = self._search_research_papers(search_params)
+        results_dict['laboratories'] = self._search_laboratories(search_params)
+        
+        # Note: Add funding_system search if/when that database is implemented
+        # results_dict['funding_system'] = self._search_funding_system(search_params)
         
         # Aggregate results
         aggregated_results = self._aggregate_results(results_dict, processed_query)
