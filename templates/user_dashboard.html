@@ -448,8 +448,11 @@
                             Loading recent searches...
                         </div>
                     </div>
-                    <div class="mt-4 text-center">
+                    <div class="mt-4 flex items-center justify-between">
                         <a href="/" class="text-blue-600 hover:text-blue-800 font-medium">View All Searches →</a>
+                        <button onclick="clearAllSearchHistory()" class="text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors">
+                            Clear All History
+                        </button>
                     </div>
                 </div>
             </div>
@@ -476,8 +479,11 @@
                             Loading recent bookmarks...
                         </div>
                     </div>
-                    <div class="mt-4 text-center">
-                        <a href="/profile" class="text-blue-600 hover:text-blue-800 font-medium">Manage Bookmarks →</a>
+                    <div class="mt-4 flex items-center justify-between">
+                        <a href="/profile" class="text-blue-600 hover:text-blue-800 font-medium">View All Bookmarks →</a>
+                        <button onclick="clearAllBookmarks()" class="text-xs bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition-colors">
+                            Clear All Bookmarks
+                        </button>
                     </div>
                 </div>
             </div>
@@ -787,16 +793,25 @@
                 return;
             }
 
-            container.innerHTML = searches.map(search => `
-                <div class="activity-item p-3 rounded-lg cursor-pointer" onclick="searchAgain('${search.query.replace(/'/g, '\\\'')}')" title="Click to search again">
+            container.innerHTML = searches.map((search, index) => `
+                <div class="activity-item p-3 rounded-lg border border-transparent hover:border-blue-200 transition-all">
                     <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <p class="font-medium text-themed-primary">"${search.query}"</p>
+                        <div class="flex-1 cursor-pointer" onclick="performSearchFromHistory('${search.query.replace(/'/g, '\\\'')}')" title="Click to search again">
+                            <p class="font-medium text-themed-primary hover:text-blue-600 transition-colors">"${search.query}"</p>
                             <p class="text-sm text-themed-secondary">${formatDate(search.timestamp)}</p>
                         </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>
+                        <div class="flex items-center space-x-2 ml-2">
+                            <button onclick="event.stopPropagation(); performSearchFromHistory('${search.query.replace(/'/g, '\\\'')}');" class="p-1 rounded-full hover:bg-blue-100 transition-colors" title="Search again">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-blue-600">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteSearchFromHistory('${search.query.replace(/'/g, '\\\'')}', ${index});" class="p-1 rounded-full hover:bg-red-100 transition-colors" title="Delete search">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-red-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -810,27 +825,42 @@
                 return;
             }
 
-            container.innerHTML = bookmarks.map(bookmark => `
-                <div class="activity-item p-3 rounded-lg">
-                    <div class="flex items-center justify-between">
+            container.innerHTML = bookmarks.map((bookmark, index) => `
+                <div class="activity-item p-3 rounded-lg border border-transparent hover:border-blue-200 transition-all">
+                    <div class="flex items-start justify-between">
                         <div class="flex-1">
                             <p class="font-medium text-themed-primary">${bookmark.title}</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                                    ${bookmark.type}
-                                </span>
-                                <span class="text-sm text-themed-secondary">${formatDate(bookmark.created_at)}</span>
+                            <div class="flex items-center justify-between mt-1">
+                                <div class="flex items-center space-x-2">
+                                    <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                        ${bookmark.type}
+                                    </span>
+                                    <span class="text-sm text-themed-secondary">${formatDate(bookmark.created_at)}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button onclick="readMoreBookmark('${bookmark.id}', '${bookmark.type}')" class="text-xs bg-blue-600 text-white px-2 py-1 rounded-full hover:bg-blue-700 transition-colors">
+                                        Read More
+                                    </button>
+                                    <button onclick="removeBookmark('${bookmark.id}', ${index})" class="p-1 rounded-full hover:bg-red-100 transition-colors" title="Remove bookmark">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-red-500">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-                        </svg>
                     </div>
                 </div>
             `).join('');
         }
 
         function createActivityChart(monthlyActivity) {
+            // Destroy existing chart if it exists
+            if (activityChart) {
+                activityChart.destroy();
+                activityChart = null;
+            }
+            
             const ctx = document.getElementById('activityChart').getContext('2d');
             
             const labels = monthlyActivity.map(item => {
@@ -873,6 +903,12 @@
         }
 
         function createFeedbackChart(stats) {
+            // Destroy existing chart if it exists
+            if (feedbackChart) {
+                feedbackChart.destroy();
+                feedbackChart = null;
+            }
+            
             const ctx = document.getElementById('feedbackChart').getContext('2d');
             
             const positive = stats.positive_feedback || 0;
@@ -938,10 +974,191 @@
             }
         }
 
-        function searchAgain(query) {
-            // Store the query and redirect to home page
-            sessionStorage.setItem('autoSearch', query);
-            window.location.href = '/';
+        async function performSearchFromHistory(query) {
+            if (!query || query.trim() === '') {
+                showTemporaryMessage('Invalid search query', 'error');
+                return;
+            }
+
+            try {
+                showTemporaryMessage('Performing search...', 'info');
+
+                const searchData = {
+                    query: query.trim(),
+                    ranking_mode: 'hybrid'
+                };
+
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(searchData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store search results and redirect to results page
+                    sessionStorage.setItem('searchResults', JSON.stringify(data));
+                    sessionStorage.setItem('searchQuery', query.trim());
+                    sessionStorage.removeItem('selectedFilters');
+                    
+                    window.location.href = '/results';
+                } else {
+                    throw new Error(data.error || 'Search failed');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showTemporaryMessage('Search failed: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteSearchFromHistory(query, index) {
+            if (!confirm('Are you sure you want to delete this search from your history?')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/history', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showTemporaryMessage('Search deleted from history', 'success');
+                    // Reload statistics to update the display
+                    loadUserStatistics();
+                } else {
+                    throw new Error(data.error || 'Failed to delete search');
+                }
+            } catch (error) {
+                console.error('Error deleting search:', error);
+                showTemporaryMessage('Error deleting search: ' + error.message, 'error');
+            }
+        }
+
+        async function clearAllSearchHistory() {
+            if (!confirm('Are you sure you want to clear your entire search history? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/history/clear', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showTemporaryMessage('Search history cleared successfully', 'success');
+                    // Reload statistics to update the display
+                    loadUserStatistics();
+                } else {
+                    throw new Error(data.error || 'Failed to clear search history');
+                }
+            } catch (error) {
+                console.error('Error clearing search history:', error);
+                showTemporaryMessage('Error clearing search history: ' + error.message, 'error');
+            }
+        }
+
+        function readMoreBookmark(bookmarkId, type) {
+            // Map document types to their respective subsystem routes
+            const typeRoutes = {
+                'article': '/results?type=article&id=' + bookmarkId,
+                'book': '/results?type=book&id=' + bookmarkId,
+                'expert': '/results?type=expert&id=' + bookmarkId,
+                'equipment': '/results?type=equipment&id=' + bookmarkId,
+                'material': '/results?type=material&id=' + bookmarkId,
+                'project': '/results?type=project&id=' + bookmarkId,
+                'thesis': '/results?type=thesis&id=' + bookmarkId,
+                'conference': '/results?type=conference&id=' + bookmarkId
+            };
+
+            const route = typeRoutes[type.toLowerCase()] || '/results?id=' + bookmarkId;
+            window.location.href = route;
+        }
+
+        async function removeBookmark(bookmarkId, index) {
+            if (!confirm('Are you sure you want to remove this bookmark?')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(`/api/user/bookmarks/${bookmarkId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showTemporaryMessage('Bookmark removed successfully', 'success');
+                    // Reload statistics to update the display
+                    loadUserStatistics();
+                } else {
+                    throw new Error(data.error || 'Failed to remove bookmark');
+                }
+            } catch (error) {
+                console.error('Error removing bookmark:', error);
+                showTemporaryMessage('Error removing bookmark: ' + error.message, 'error');
+            }
+        }
+
+        async function clearAllBookmarks() {
+            if (!confirm('Are you sure you want to clear all your bookmarks? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks/clear', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showTemporaryMessage('All bookmarks cleared successfully', 'success');
+                    // Reload statistics to update the display
+                    loadUserStatistics();
+                } else {
+                    throw new Error(data.error || 'Failed to clear bookmarks');
+                }
+            } catch (error) {
+                console.error('Error clearing bookmarks:', error);
+                showTemporaryMessage('Error clearing bookmarks: ' + error.message, 'error');
+            }
         }
 
         // Initialize on page load

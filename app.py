@@ -305,8 +305,13 @@ def get_user_statistics():
         
         recent_bookmarks = list(bookmarks_collection.find(
             {'user_id': user_id},
-            {'_id': 0, 'title': 1, 'type': 1, 'created_at': 1}
+            {'_id': 1, 'title': 1, 'type': 1, 'created_at': 1, 'result_id': 1}
         ).sort('created_at', -1).limit(5))
+        
+        # Convert ObjectId to string for JSON serialization
+        for bookmark in recent_bookmarks:
+            bookmark['id'] = str(bookmark['_id'])
+            bookmark.pop('_id', None)
         
         # Get user interaction patterns
         interactions_collection = aposss_db['user_interactions']
@@ -1590,6 +1595,159 @@ def add_to_history():
         
     except Exception as e:
         logger.error(f"Error adding to history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history', methods=['DELETE'])
+def delete_search_from_history():
+    """Remove a specific search query from search history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        query = data.get('query')
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query required'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Remove all history items with this query for this user
+        result = history_collection.delete_many({
+            'user_id': user_id,
+            'query': query
+        })
+        
+        return jsonify({
+            'success': True,
+            'removed_count': result.deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing from history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history/clear', methods=['DELETE'])
+def clear_search_history():
+    """Clear all search history for the current user"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Remove all history items for this user
+        result = history_collection.delete_many({
+            'user_id': user_id
+        })
+        
+        return jsonify({
+            'success': True,
+            'cleared_count': result.deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/<bookmark_id>', methods=['DELETE'])
+def delete_bookmark(bookmark_id):
+    """Delete a specific bookmark"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Remove bookmark - can use either MongoDB ObjectId or result_id
+        try:
+            from bson import ObjectId
+            # Try as MongoDB ObjectId first
+            result = bookmarks_collection.delete_one({
+                '_id': ObjectId(bookmark_id),
+                'user_id': user_id
+            })
+        except:
+            # Fall back to using as result_id
+            result = bookmarks_collection.delete_one({
+                'result_id': bookmark_id,
+                'user_id': user_id
+            })
+        
+        return jsonify({
+            'success': True,
+            'removed': result.deleted_count > 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing bookmark: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/clear', methods=['DELETE'])
+def clear_all_bookmarks():
+    """Clear all bookmarks for the current user"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Remove all bookmarks for this user
+        result = bookmarks_collection.delete_many({
+            'user_id': user_id
+        })
+        
+        return jsonify({
+            'success': True,
+            'cleared_count': result.deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing bookmarks: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/user/history/remove', methods=['POST'])
