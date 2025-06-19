@@ -21,6 +21,8 @@
             --shadow-color: rgba(0, 0, 0, 0.1);
             --card-bg: #ffffff;
             --header-bg: #ffffff;
+            --expanded-bg: #f9fafb;
+            --expanded-text: #374151;
         }
 
         /* Dark theme */
@@ -38,6 +40,8 @@
             --shadow-color: rgba(0, 0, 0, 0.3);
             --card-bg: #1a1a1a;
             --header-bg: #1a1a1a;
+            --expanded-bg: #1f2937;
+            --expanded-text: #d1d5db;
         }
 
         body {
@@ -239,12 +243,56 @@
         }
         
         /* Dark mode adjustments for expanded sections */
-        [data-theme="dark"] .bg-gray-50 {
-            background-color: #1f2937 !important;
+        .expanded-section {
+            background: var(--expanded-bg) !important;
         }
         
-        [data-theme="dark"] .text-gray-700 {
-            color: #d1d5db !important;
+        .expanded-text {
+            color: var(--expanded-text) !important;
+        }
+        
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding: 1rem 0;
+        }
+        
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--container-border);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--button-hover);
+            border-color: #3b82f6;
+        }
+        
+        .pagination-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination-info {
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
         }
         
         /* Hover effects for clickable cards */
@@ -256,22 +304,76 @@
         .result-card.expanded:hover {
             transform: none;
         }
+
+        /* User Menu Dropdown */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 12rem;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 0;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+
+        .user-menu-item:hover {
+            background: var(--button-hover);
+            color: #3b82f6;
+        }
+
+        .user-menu-separator {
+            height: 1px;
+            background: var(--container-border);
+            margin: 0.5rem 0;
+        }
+
+        /* Glass theme variables for proper theme switching */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+        }
+
+        [data-theme="dark"] {
+            --glass-bg: rgba(18, 18, 18, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- Theme Toggle Button -->
-    <div class="fixed top-4 right-4 z-50">
-        <button id="themeToggle" class="theme-toggle p-2 rounded-lg transition-colors">
-            <!-- Sun icon for dark mode -->
-            <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-            </svg>
-            <!-- Moon icon for light mode -->
-            <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-            </svg>
-        </button>
-    </div>
+
 
     <!-- Header -->
     <header class="header shadow-md sticky top-0 z-40">
@@ -303,28 +405,35 @@
                         <button 
                             id="searchBtn"
                             onclick="performNewSearch()"
-                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-lg transition-colors flex items-center"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center"
                         >
-                            <span id="searchText">Search</span>
+                            <svg id="searchIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
                             <span id="searchSpinner" class="loading ml-2 hidden"></span>
                         </button>
                     </div>
                 </div>
                 
-                <!-- Authentication -->
-                <div class="flex items-center space-x-4">
-                    <div id="userInfo" class="flex items-center space-x-3" style="display: none;">
-                        <div id="userProfile"></div>
+                <!-- Navigation -->
+                <nav class="flex items-center space-x-6">
+                    <!-- User Info (when authenticated) -->
+                    <div id="userInfo" class="user-menu" style="display: none;">
+                        <div id="userProfile" class="relative">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
                     </div>
+                    
+                    <!-- Login/Signup Buttons (shown when not authenticated) -->
                     <div id="authButtons" class="flex space-x-3">
-                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-3 py-2">
+                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2">
                             Sign In
                         </a>
-                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
+                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors font-medium shadow-lg">
                             Sign Up
                         </a>
                     </div>
-                </div>
+                </nav>
             </div>
         </div>
     </header>
@@ -485,6 +594,11 @@
         let feedbackSubmitted = new Set();
         let currentQueryId = null;
         
+        // Pagination state
+        let currentPage = 1;
+        let resultsPerPage = 20;
+        let totalResults = 0;
+        
         // Filter states
         let activeFilters = {
             databases: new Set(),
@@ -510,25 +624,21 @@
             const headerLogo = document.getElementById('headerLogo');
             
             if (theme === 'dark') {
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
+                if (sunIcon) sunIcon.classList.remove('hidden');
+                if (moonIcon) moonIcon.classList.add('hidden');
                 if (headerLogo) {
                     headerLogo.src = '/static/images/logo-dark.svg';
                 }
             } else {
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
+                if (sunIcon) sunIcon.classList.add('hidden');
+                if (moonIcon) moonIcon.classList.remove('hidden');
                 if (headerLogo) {
                     headerLogo.src = '/static/images/logo-light.svg';
                 }
             }
         }
 
-        document.getElementById('themeToggle').addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-        });
+
 
         function loadSearchResults() {
             const searchResults = sessionStorage.getItem('searchResults');
@@ -730,6 +840,9 @@
         }
         
         function applyFilters() {
+            // Reset to first page when filters are applied
+            currentPage = 1;
+            
             filteredResults = allResults.filter(result => {
                 // Database filter
                 if (activeFilters.databases.size > 0 && !activeFilters.databases.has(result.database)) {
@@ -762,6 +875,9 @@
         }
         
         function clearAllFilters() {
+            // Reset to first page when filters are cleared
+            currentPage = 1;
+            
             activeFilters.databases.clear();
             activeFilters.types.clear();
             activeFilters.relevance.clear();
@@ -875,13 +991,102 @@
             container.classList.remove('hidden');
             noResults.classList.add('hidden');
             
+            // Calculate pagination
+            totalResults = filteredResults.length;
+            const totalPages = Math.ceil(totalResults / resultsPerPage);
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = Math.min(startIndex + resultsPerPage, totalResults);
+            const paginatedResults = filteredResults.slice(startIndex, endIndex);
+            
             const gridClass = currentView === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6';
             
             container.innerHTML = `
                 <div class="${gridClass}">
-                    ${filteredResults.map((result, index) => createResultCard(result, index)).join('')}
+                    ${paginatedResults.map((result, index) => createResultCard(result, startIndex + index)).join('')}
                 </div>
+                
+                <!-- Pagination -->
+                ${totalPages > 1 ? createPaginationHTML(totalPages) : ''}
             `;
+            
+            // Update search summary with pagination info
+            updateSearchSummary(startIndex + 1, endIndex, totalResults);
+        }
+        
+        function createPaginationHTML(totalPages) {
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            let paginationHTML = '<div class="pagination-container">';
+            
+            // Previous button
+            paginationHTML += `
+                <button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+            `;
+            
+            // First page and ellipsis
+            if (startPage > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += '<span class="pagination-info">...</span>';
+                }
+            }
+            
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // Last page and ellipsis
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += '<span class="pagination-info">...</span>';
+                }
+                paginationHTML += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            `;
+            
+            paginationHTML += '</div>';
+            return paginationHTML;
+        }
+        
+        function goToPage(page) {
+            if (page < 1 || page > Math.ceil(totalResults / resultsPerPage)) return;
+            currentPage = page;
+            displayResults();
+            
+            // Scroll to top of results
+            document.getElementById('resultsContainer').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+        
+        function updateSearchSummary(start, end, total) {
+            const summaryElement = document.getElementById('searchSummary');
+            const query = sessionStorage.getItem('searchQuery') || 'your search';
+            summaryElement.textContent = `Showing ${start}-${end} of ${total} results for "${query}"`;
         }
         
         function createResultCard(result, index) {
@@ -951,9 +1156,9 @@
                         <div class="space-y-4 mb-6">
                             <!-- Author/Creator Information -->
                             ${result.author || result.student_name || result.supervisor || result.name ? `
-                                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                <div class="expanded-section p-3 rounded-lg">
                                     <h4 class="font-semibold text-themed-primary mb-2">Author/Creator</h4>
-                                    <div class="text-themed-secondary">
+                                    <div class="expanded-text">
                                         ${result.author || result.student_name || result.name || 'Unknown'}
                                         ${result.supervisor ? `<br><span class="text-xs">Supervisor: ${result.supervisor}</span>` : ''}
                                     </div>
@@ -961,16 +1166,16 @@
                             ` : ''}
                             
                             <!-- Full Description/Abstract -->
-                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                            <div class="expanded-section p-3 rounded-lg">
                                 <h4 class="font-semibold text-themed-primary mb-2">Description</h4>
-                                <div class="text-themed-secondary">
+                                <div class="expanded-text">
                                     ${result.description || result.abstract || result.snippet || 'No description available'}
                                 </div>
                             </div>
                             
                             <!-- Keywords -->
                             ${result.keywords && result.keywords.length > 0 ? `
-                                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                <div class="expanded-section p-3 rounded-lg">
                                     <h4 class="font-semibold text-themed-primary mb-2">Keywords</h4>
                                     <div class="flex flex-wrap gap-2">
                                         ${result.keywords.map(keyword => `
@@ -981,9 +1186,9 @@
                             ` : ''}
                             
                             <!-- Publication/Creation Details -->
-                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                            <div class="expanded-section p-3 rounded-lg">
                                 <h4 class="font-semibold text-themed-primary mb-2">Details</h4>
-                                <div class="grid grid-cols-2 gap-4 text-sm text-themed-secondary">
+                                <div class="grid grid-cols-2 gap-4 text-sm expanded-text">
                                     <div><strong>Source:</strong> ${formatDatabaseName(result.database)}</div>
                                     <div><strong>Collection:</strong> ${result.collection || 'N/A'}</div>
                                     ${result.publication_date || result.created_at ? `
@@ -1001,17 +1206,17 @@
                             ${displayExpandedMetadata(result)}
                             
                             <!-- Ranking Score Display -->
-                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                            <div class="expanded-section p-3 rounded-lg">
                                 <h4 class="font-semibold text-themed-primary mb-2">Relevance Analysis</h4>
                                 <div class="flex items-center justify-between text-sm mb-2">
-                                    <span class="text-themed-secondary">Relevance Score</span>
+                                    <span class="expanded-text">Relevance Score</span>
                                     <span class="font-medium text-themed-primary">${((result.ranking_score || 0) * 100).toFixed(1)}%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-3">
                                     <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
                                          style="width: ${((result.ranking_score || 0) * 100).toFixed(1)}%"></div>
                                 </div>
-                                <div class="text-xs text-themed-secondary mt-1">
+                                <div class="text-xs expanded-text mt-1">
                                     ${getRelevanceDescription(result.ranking_score || 0)}
                                 </div>
                             </div>
@@ -1023,14 +1228,16 @@
                             <div class="flex-1">
                                 <span class="text-sm text-themed-secondary mb-2 block">Was this result helpful?</span>
                                 <div class="flex space-x-2">
-                                    <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                    <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 5, 'thumbs_up', ${index})" 
+                                            id="helpful-btn-${index}"
                                             class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-lg text-sm flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5.25 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
                                         </svg>
                                         Helpful
                                     </button>
-                                    <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                    <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 1, 'thumbs_down', ${index})" 
+                                            id="not-helpful-btn-${index}"
                                             class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.25-9.75a3 3 0 11-6 0 3 3 0 016 0zM12.75 18a3.75 3.75 0 01-6.364-2.77L8.25 13.5H12a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H5.25a2.25 2.25 0 00-2.25 2.25v.557c0 .357.078.717.22 1.037l.671 1.342c.08.161.187.306.316.423a.75.75 0 01.296.632v.25a.75.75 0 01-.75.75z" />
@@ -1111,9 +1318,9 @@
             if (items.length === 0) return '';
             
             return `
-                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                <div class="expanded-section p-3 rounded-lg">
                     <h4 class="font-semibold text-themed-primary mb-2">Additional Information</h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-themed-secondary">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm expanded-text">
                         ${items.join('')}
                     </div>
                 </div>
@@ -1451,7 +1658,7 @@
             }
         }
         
-        async function submitFeedback(resultId, rating, feedbackType) {
+        async function submitFeedback(resultId, rating, feedbackType, resultIndex) {
             if (!currentQueryId) {
                 showTemporaryMessage('No active query for feedback', 'error');
                 return;
@@ -1489,15 +1696,20 @@
 
                 if (data.success) {
                     feedbackSubmitted.add(resultId);
-                    const buttons = document.querySelectorAll(`[onclick*="${resultId}"]`);
-                    buttons.forEach(btn => {
-                        btn.classList.add('feedback-submitted');
-                        if (btn.textContent.includes('Helpful') && !btn.textContent.includes('Not')) {
-                            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
-                        } else {
-                            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
-                        }
-                    });
+                    
+                    // Only disable the feedback buttons, not bookmark or read more buttons
+                    const helpfulBtn = document.getElementById(`helpful-btn-${resultIndex}`);
+                    const notHelpfulBtn = document.getElementById(`not-helpful-btn-${resultIndex}`);
+                    
+                    if (helpfulBtn) {
+                        helpfulBtn.classList.add('feedback-submitted');
+                        helpfulBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
+                    }
+                    
+                    if (notHelpfulBtn) {
+                        notHelpfulBtn.classList.add('feedback-submitted');
+                        notHelpfulBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
+                    }
                     
                     showTemporaryMessage('Feedback submitted successfully!', 'success');
                 } else {
@@ -1646,7 +1858,7 @@
                 if (!authButtons || !userInfo || !userProfile) return;
                 
                 authButtons.style.display = 'none';
-                userInfo.style.display = 'flex';
+                userInfo.style.display = 'block';
                 
                 const firstName = userData.profile?.first_name || '';
                 const lastName = userData.profile?.last_name || '';
@@ -1666,16 +1878,50 @@
                 `;
                 
                 userProfile.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <a href="/dashboard" class="flex items-center space-x-2 hover:bg-gray-100 px-2 py-1 rounded transition-colors">
-                            ${profilePictureHtml}
-                            <span class="text-sm font-medium text-themed-primary">${fullName}</span>
-                        </a>
-                        <button onclick="logout()" class="text-xs text-themed-secondary hover:text-themed-primary transition-colors">
+                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
+                        ${profilePictureHtml}
+                        <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="user-menu-dropdown" id="userMenuDropdown">
+                        <button onclick="goToProfile()" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                            Profile
+                        </button>
+                        <button onclick="goToDashboard()" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                            </svg>
+                            Dashboard
+                        </button>
+                        <button onclick="goToDeveloperPortal()" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                            </svg>
+                            Developer Portal
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="toggleTheme()" class="user-menu-item" id="themeToggleMenuItem">
+                            <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                            </svg>
+                            <span id="themeTextMenu">Dark Mode</span>
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="logout()" class="user-menu-item text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            </svg>
                             Logout
                         </button>
                     </div>
                 `;
+                
+                updateThemeMenuItem();
                 
                 // Load profile picture in user menu
                 loadUserMenuProfilePicture(userData.user_id);
@@ -1713,6 +1959,48 @@
             }
         }
         
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userMenuDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateThemeMenuItem();
+        }
+
+        function updateThemeMenuItem() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const themeIcon = document.getElementById('themeIconMenu');
+            const themeText = document.getElementById('themeTextMenu');
+            
+            if (themeIcon && themeText) {
+                if (currentTheme === 'dark') {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
+                    themeText.textContent = 'Dark Mode';
+                }
+            }
+        }
+
+        function goToProfile() {
+            window.location.href = '/profile';
+        }
+
+        function goToDashboard() {
+            window.location.href = '/user-dashboard';
+        }
+
+        function goToDeveloperPortal() {
+            window.location.href = '/dev';
+        }
+
         function logout() {
             localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
@@ -1720,6 +2008,16 @@
             showLoginButtons();
             showTemporaryMessage('Logged out successfully', 'success');
         }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenu && dropdown && !userMenu.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
         
         // Handle Enter key in search input
         document.getElementById('searchInput').addEventListener('keypress', function(e) {

@@ -778,8 +778,7 @@
     <footer class="relative z-10 text-center py-8">
         <div class="container mx-auto px-6">
             <p class="text-themed-secondary text-sm">
-                © 2025 Libyan Open Science • 
-                <a href="/dev" class="hover:text-blue-600 transition-colors">Developer Portal</a>
+                © 2025 Libyan Open Science
             </p>
         </div>
     </footer>
@@ -1111,6 +1110,12 @@
                             </svg>
                             Dashboard
                         </button>
+                        <button onclick="goToDeveloperPortal(event)" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                            </svg>
+                            Developer Portal
+                        </button>
                         <div class="user-menu-separator"></div>
                         <button onclick="toggleTheme(event)" class="user-menu-item" id="themeToggleMenuItem">
                             <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -1218,6 +1223,13 @@
                 event.stopPropagation();
             }
             window.location.href = '/user-dashboard';
+        }
+
+        function goToDeveloperPortal(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            window.location.href = '/dev';
         }
 
         function logout(event) {

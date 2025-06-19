@@ -522,16 +522,18 @@ class UserManager:
                 return
             
             action = interaction_data.get('action', '')
-            update_data = {'updated_at': datetime.now().isoformat()}
+            update_doc = {
+                '$set': {'updated_at': datetime.now().isoformat()}
+            }
             
             if action == 'search':
-                update_data['$inc'] = {'statistics.total_searches': 1}
+                update_doc['$inc'] = {'statistics.total_searches': 1}
             elif action == 'feedback':
-                update_data['$inc'] = {'statistics.total_feedback': 1}
+                update_doc['$inc'] = {'statistics.total_feedback': 1}
             
             self.users_collection.update_one(
                 {'user_id': user_id},
-                {'$set': update_data}
+                update_doc
             )
             
         except Exception as e:

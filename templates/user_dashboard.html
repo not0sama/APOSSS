@@ -288,13 +288,6 @@
                 
                 <!-- Navigation -->
                 <nav class="flex items-center space-x-6">
-                    <a href="/" class="text-themed-secondary hover:text-blue-600 transition-colors">
-                        Home
-                    </a>
-                    <a href="/dev" class="text-themed-secondary hover:text-blue-600 transition-colors">
-                        Developer Portal
-                    </a>
-                    
                     <!-- User Info (when authenticated) -->
                     <div id="userInfo" class="user-menu" style="display: none;">
                         <div id="userProfile" class="relative">
@@ -353,25 +346,41 @@
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="card stat-card rounded-lg shadow-md p-6 text-center">
-                <div class="text-3xl mb-2">🔍</div>
+                <div class="mb-2 flex justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-blue-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                </div>
                 <h3 id="totalSearches" class="text-2xl font-bold text-themed-primary">-</h3>
                 <p class="text-themed-secondary">Total Searches</p>
             </div>
             
             <div class="card stat-card rounded-lg shadow-md p-6 text-center">
-                <div class="text-3xl mb-2">⭐</div>
+                <div class="mb-2 flex justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-yellow-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                    </svg>
+                </div>
                 <h3 id="totalBookmarks" class="text-2xl font-bold text-themed-primary">-</h3>
                 <p class="text-themed-secondary">Bookmarks</p>
             </div>
             
             <div class="card stat-card rounded-lg shadow-md p-6 text-center">
-                <div class="text-3xl mb-2">💬</div>
+                <div class="mb-2 flex justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-green-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                    </svg>
+                </div>
                 <h3 id="totalFeedback" class="text-2xl font-bold text-themed-primary">-</h3>
                 <p class="text-themed-secondary">Total Feedback</p>
             </div>
             
             <div class="card stat-card rounded-lg shadow-md p-6 text-center">
-                <div class="text-3xl mb-2">📅</div>
+                <div class="mb-2 flex justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-purple-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zM15 15h.008v.008H15V15zm0 2.25h.008v.008H15v-.008zM16.5 15h.008v.008H16.5V15zm0 2.25h.008v.008H16.5v-.008z" />
+                    </svg>
+                </div>
                 <h3 id="accountAge" class="text-2xl font-bold text-themed-primary">-</h3>
                 <p class="text-themed-secondary">Days Active</p>
             </div>
@@ -603,6 +612,12 @@
                         </svg>
                         Dashboard
                     </button>
+                    <button onclick="goToDeveloperPortal()" class="user-menu-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                        </svg>
+                        Developer Portal
+                    </button>
                     <div class="user-menu-separator"></div>
                     <button onclick="toggleTheme()" class="user-menu-item" id="themeToggleMenuItem">
                         <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
@@ -691,6 +706,10 @@
         function goToDashboard() {
             // Already on dashboard, just close menu
             toggleUserMenu();
+        }
+
+        function goToDeveloperPortal() {
+            window.location.href = '/dev';
         }
 
         function logout() {
