@@ -113,10 +113,13 @@ class UserManager:
                 'email': user_data['email'].lower().strip(),
                 'password_hash': password_hash,
                 'profile': {
-                    'first_name': user_data.get('first_name', ''),
-                    'last_name': user_data.get('last_name', ''),
+                    'first_name': user_data.get('firstName', user_data.get('first_name', '')),
+                    'last_name': user_data.get('lastName', user_data.get('last_name', '')),
                     'academic_fields': user_data.get('academic_fields', []),
-                    'institution': user_data.get('institution', ''),
+                    'organization': user_data.get('organization', ''),
+                    'department': user_data.get('department', ''),
+                    'job_title': user_data.get('jobTitle', user_data.get('job_title', '')),
+                    'institution': user_data.get('institution', user_data.get('organization', '')),  # Backward compatibility
                     'role': user_data.get('role', 'researcher'),
                     'bio': user_data.get('bio', ''),
                     'avatar_url': user_data.get('avatar_url', '')
@@ -432,6 +435,274 @@ class UserManager:
         """Generate anonymous user ID for session tracking"""
         return f"anon_{uuid.uuid4().hex[:12]}"
     
+    def check_email_exists(self, email: str) -> bool:
+        """Check if email is already registered"""
+        if self.users_collection is None:
+            return False
+        
+        user = self.users_collection.find_one({
+            'email': email.lower().strip()
+        })
+        return user is not None
+
+    def check_username_exists(self, username: str) -> bool:
+        """Check if username is already taken"""
+        if self.users_collection is None:
+            logger.warning("Users collection not available for username check")
+            return False
+        
+        username_clean = username.lower().strip()
+        logger.info(f"Checking if username '{username_clean}' exists in database")
+        
+        try:
+            user = self.users_collection.find_one({
+                'username': username_clean
+            })
+            
+            exists = user is not None
+            logger.info(f"Username '{username_clean}' exists: {exists}")
+            
+            if exists:
+                logger.info(f"Found existing user: {user.get('email', 'unknown')}")
+            
+            return exists
+            
+        except Exception as e:
+            logger.error(f"Error checking username '{username_clean}': {str(e)}")
+            return False
+
+    def find_user_by_provider(self, provider: str, provider_id: str) -> Optional[Dict[str, Any]]:
+        """Find user by OAuth provider and provider ID"""
+        if self.users_collection is None:
+            return None
+        
+        try:
+            user = self.users_collection.find_one({
+                f'oauth_providers.{provider}.provider_id': provider_id
+            })
+            
+            if user:
+                user.pop('password_hash', None)  # Remove sensitive data
+                user['_id'] = str(user['_id'])  # Convert ObjectId to string
+            
+            return user
+            
+        except Exception as e:
+            logger.error(f"Error finding user by {provider} provider ID {provider_id}: {str(e)}")
+            return None
+
+    def register_social_user(self, user_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a new user from social login"""
+        try:
+            provider = user_info['provider']
+            provider_id = user_info['provider_id']
+            
+            # Check if user already exists with this provider
+            existing_user = self.find_user_by_provider(provider, provider_id)
+            if existing_user:
+                # User exists, generate token and return
+                token = self._generate_token(existing_user['user_id'])
+                return {
+                    'success': True,
+                    'user': existing_user,
+                    'token': token,
+                    'message': 'User logged in successfully'
+                }
+            
+            # Check if email already exists (for linking accounts)
+            email = user_info.get('email')
+            existing_email_user = None
+            if email:
+                existing_email_user = self.users_collection.find_one({'email': email.lower().strip()})
+            
+            if existing_email_user:
+                # Link social account to existing user
+                return self._link_social_account(existing_email_user, user_info)
+            
+            # Generate unique username
+            base_username = self._generate_username_from_social(user_info)
+            username = self._ensure_unique_username(base_username)
+            
+            # Generate unique user ID
+            user_id = str(uuid.uuid4())
+            
+            # Create user document
+            user_doc = {
+                'user_id': user_id,
+                'username': username,
+                'email': email.lower().strip() if email else '',
+                'password_hash': None,  # No password for social users
+                'profile': {
+                    'first_name': user_info.get('first_name', ''),
+                    'last_name': user_info.get('last_name', ''),
+                    'full_name': user_info.get('full_name', ''),
+                    'academic_fields': [],
+                    'organization': '',
+                    'department': '',
+                    'job_title': '',
+                    'institution': '',
+                    'role': 'researcher',
+                    'bio': '',
+                    'avatar_url': user_info.get('picture', '')
+                },
+                'oauth_providers': {
+                    provider: {
+                        'provider_id': provider_id,
+                        'email': email,
+                        'email_verified': user_info.get('email_verified', False),
+                        'picture': user_info.get('picture'),
+                        'locale': user_info.get('locale'),
+                        'linked_at': datetime.now().isoformat(),
+                        'orcid': user_info.get('orcid') if provider == 'orcid' else None
+                    }
+                },
+                'preferences': {
+                    'search_preferences': {
+                        'preferred_resource_types': ['article', 'book', 'expert'],
+                        'preferred_databases': [],
+                        'language_preference': user_info.get('locale', 'en')[:2] if user_info.get('locale') else 'en',
+                        'results_per_page': 20
+                    },
+                    'notification_preferences': {
+                        'email_notifications': True,
+                        'search_alerts': False,
+                        'feedback_requests': True
+                    },
+                    'privacy_settings': {
+                        'profile_visibility': 'public',
+                        'interaction_tracking': True,
+                        'personalized_recommendations': True
+                    },
+                    'ui_preferences': {
+                        'theme_preference': 'light',
+                        'display_language': user_info.get('locale', 'en')[:2] if user_info.get('locale') else 'en'
+                    }
+                },
+                'statistics': {
+                    'total_searches': 0,
+                    'total_feedback': 0,
+                    'average_rating': 0.0,
+                    'favorite_topics': [],
+                    'most_used_resources': []
+                },
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat(),
+                'last_login': datetime.now().isoformat(),
+                'is_active': True,
+                'email_verified': user_info.get('email_verified', False),
+                'login_count': 1,
+                'registration_method': f'{provider}_oauth'
+            }
+            
+            # Insert user into database
+            if self.users_collection is not None:
+                result = self.users_collection.insert_one(user_doc)
+                user_doc['_id'] = str(result.inserted_id)
+            
+            # Create initial user preferences
+            self._create_user_preferences(user_id)
+            
+            # Remove sensitive data
+            user_doc.pop('password_hash', None)
+            
+            # Generate token
+            token = self._generate_token(user_id)
+            
+            logger.info(f"Social user registered successfully: {username} via {provider}")
+            
+            return {
+                'success': True,
+                'user': user_doc,
+                'token': token,
+                'message': 'User registered successfully via social login'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error registering social user: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    def _link_social_account(self, existing_user: Dict[str, Any], user_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Link social account to existing user"""
+        try:
+            provider = user_info['provider']
+            provider_id = user_info['provider_id']
+            user_id = existing_user['user_id']
+            
+            # Update user with social provider info
+            oauth_update = {
+                f'oauth_providers.{provider}': {
+                    'provider_id': provider_id,
+                    'email': user_info.get('email'),
+                    'email_verified': user_info.get('email_verified', False),
+                    'picture': user_info.get('picture'),
+                    'locale': user_info.get('locale'),
+                    'linked_at': datetime.now().isoformat(),
+                    'orcid': user_info.get('orcid') if provider == 'orcid' else None
+                },
+                'updated_at': datetime.now().isoformat(),
+                'last_login': datetime.now().isoformat()
+            }
+            
+            # Update avatar if not set
+            if user_info.get('picture') and not existing_user.get('profile', {}).get('avatar_url'):
+                oauth_update['profile.avatar_url'] = user_info['picture']
+            
+            # Increment login count
+            oauth_update['$inc'] = {'login_count': 1}
+            
+            self.users_collection.update_one(
+                {'user_id': user_id},
+                {'$set': oauth_update, '$inc': {'login_count': 1}}
+            )
+            
+            # Get updated user
+            updated_user = self.users_collection.find_one({'user_id': user_id})
+            updated_user.pop('password_hash', None)
+            updated_user['_id'] = str(updated_user['_id'])
+            
+            # Generate token
+            token = self._generate_token(user_id)
+            
+            logger.info(f"Social account {provider} linked to existing user: {existing_user['username']}")
+            
+            return {
+                'success': True,
+                'user': updated_user,
+                'token': token,
+                'message': f'{provider.title()} account linked successfully'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error linking social account: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    def _generate_username_from_social(self, user_info: Dict[str, Any]) -> str:
+        """Generate username from social login info"""
+        # Try different combinations
+        first_name = user_info.get('first_name', '').lower().strip()
+        last_name = user_info.get('last_name', '').lower().strip()
+        email = user_info.get('email', '')
+        
+        if first_name and last_name:
+            return f"{first_name}.{last_name}"
+        elif first_name:
+            return first_name
+        elif email:
+            return email.split('@')[0].lower()
+        else:
+            return f"user_{user_info['provider']}_{str(uuid.uuid4())[:8]}"
+
+    def _ensure_unique_username(self, base_username: str) -> str:
+        """Ensure username is unique by appending numbers if needed"""
+        username = base_username
+        counter = 1
+        
+        while self.check_username_exists(username):
+            username = f"{base_username}{counter}"
+            counter += 1
+        
+        return username
+
     def _user_exists(self, email: str, username: str) -> bool:
         """Check if user exists"""
         if self.users_collection is None:

@@ -15,6 +15,7 @@ from modules.search_engine import SearchEngine
 from modules.ranking_engine import RankingEngine
 from modules.feedback_system import FeedbackSystem
 from modules.user_manager import UserManager
+from modules.oauth_manager import OAuthManager
 
 # Load environment variables
 load_dotenv()
@@ -37,6 +38,7 @@ try:
     ranking_engine = RankingEngine(llm_processor=llm_processor, use_embedding=True, use_ltr=True)
     feedback_system = FeedbackSystem(db_manager)
     user_manager = UserManager(db_manager)
+    oauth_manager = OAuthManager()
     logger.info("All components initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize components: {str(e)}")
@@ -47,6 +49,7 @@ except Exception as e:
     ranking_engine = None
     feedback_system = None
     user_manager = None
+    oauth_manager = None
 
 def get_current_user():
     """Get current user from request headers or return anonymous user"""
@@ -130,6 +133,55 @@ def test_history():
     """Test history page for debugging"""
     return render_template('test_history.html')
 
+@app.route('/api/auth/check-email', methods=['POST'])
+def check_email():
+    """Check if email exists endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return jsonify({'error': 'Email required'}), 400
+        
+        email = data['email']
+        exists = user_manager.check_email_exists(email)
+        
+        return jsonify({'exists': exists}), 200
+            
+    except Exception as e:
+        logger.error(f"Error in check email endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/check-username', methods=['POST'])
+def check_username():
+    """Check if username exists endpoint"""
+    try:
+        if not user_manager:
+            logger.error("User manager not available")
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'username' not in data:
+            logger.error("No username provided in request")
+            return jsonify({'error': 'Username required'}), 400
+        
+        username = data['username'].strip()
+        logger.info(f"Checking username availability: '{username}'")
+        
+        if not username:
+            logger.error("Empty username provided")
+            return jsonify({'error': 'Username cannot be empty'}), 400
+        
+        exists = user_manager.check_username_exists(username)
+        logger.info(f"Username '{username}' exists: {exists}")
+        
+        return jsonify({'exists': exists}), 200
+            
+    except Exception as e:
+        logger.error(f"Error in check username endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     """User registration endpoint"""
@@ -145,6 +197,9 @@ def register():
         result = user_manager.register_user(data)
         
         if result['success']:
+            # Generate JWT token for authentication
+            token = user_manager._generate_token(result['user']['user_id'])
+            result['token'] = token
             return jsonify(result), 201
         else:
             return jsonify(result), 400
@@ -152,6 +207,225 @@ def register():
     except Exception as e:
         logger.error(f"Error in registration endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# OAuth endpoints
+@app.route('/api/auth/google', methods=['GET'])
+def google_auth():
+    """Initiate Google OAuth flow"""
+    try:
+        if not oauth_manager or not oauth_manager.is_configured('google'):
+            return jsonify({'error': 'Google OAuth not configured'}), 500
+        
+        result = oauth_manager.get_authorization_url('google')
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in Google OAuth initiation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/google/callback', methods=['GET'])
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        if not oauth_manager or not user_manager:
+            return jsonify({'error': 'OAuth not available'}), 500
+        
+        code = request.args.get('code')
+        state = request.args.get('state')
+        error = request.args.get('error')
+        
+        if error:
+            logger.error(f"Google OAuth error: {error}")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        if not code:
+            return jsonify({'error': 'Authorization code not provided'}), 400
+        
+        # Process OAuth login
+        oauth_result = oauth_manager.process_oauth_login('google', code, state)
+        if not oauth_result['success']:
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{oauth_result.get("error", "OAuth failed")}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        # Register or login user
+        user_result = user_manager.register_social_user(oauth_result['user_info'])
+        if user_result['success']:
+            import json
+            user_json = json.dumps(user_result['user'])
+            token = user_result['token']
+            message = user_result['message']
+            
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_success',
+                            user: {user_json},
+                            token: '{token}',
+                            message: '{message}'
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            '''
+        else:
+            error_msg = user_result.get("error", "User registration failed")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error_msg}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+            
+    except Exception as e:
+        logger.error(f"Error in Google OAuth callback: {str(e)}")
+        return f'''
+            <html>
+                <script>
+                    window.opener.postMessage({{ 
+                        type: 'oauth_error', 
+                        error: 'OAuth processing failed' 
+                    }}, window.location.origin);
+                    window.close();
+                </script>
+            </html>
+        ''', 500
+
+@app.route('/api/auth/orcid', methods=['GET'])
+def orcid_auth():
+    """Initiate ORCID OAuth flow"""
+    try:
+        if not oauth_manager or not oauth_manager.is_configured('orcid'):
+            return jsonify({'error': 'ORCID OAuth not configured'}), 500
+        
+        result = oauth_manager.get_authorization_url('orcid')
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in ORCID OAuth initiation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/orcid/callback', methods=['GET'])
+def orcid_callback():
+    """Handle ORCID OAuth callback"""
+    try:
+        if not oauth_manager or not user_manager:
+            return jsonify({'error': 'OAuth not available'}), 500
+        
+        code = request.args.get('code')
+        state = request.args.get('state')
+        error = request.args.get('error')
+        
+        if error:
+            logger.error(f"ORCID OAuth error: {error}")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        if not code:
+            return jsonify({'error': 'Authorization code not provided'}), 400
+        
+        # Process OAuth login
+        oauth_result = oauth_manager.process_oauth_login('orcid', code, state)
+        if not oauth_result['success']:
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{oauth_result.get("error", "OAuth failed")}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        # Register or login user
+        user_result = user_manager.register_social_user(oauth_result['user_info'])
+        if user_result['success']:
+            import json
+            user_json = json.dumps(user_result['user'])
+            token = user_result['token']
+            message = user_result['message']
+            
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_success',
+                            user: {user_json},
+                            token: '{token}',
+                            message: '{message}'
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            '''
+        else:
+            error_msg = user_result.get("error", "User registration failed")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error_msg}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+            
+    except Exception as e:
+        logger.error(f"Error in ORCID OAuth callback: {str(e)}")
+        return f'''
+            <html>
+                <script>
+                    window.opener.postMessage({{ 
+                        type: 'oauth_error', 
+                        error: 'OAuth processing failed' 
+                    }}, window.location.origin);
+                    window.close();
+                </script>
+            </html>
+        ''', 500
 
 @app.route('/api/auth/login', methods=['POST'])
 def login_api():

@@ -150,6 +150,27 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Step-specific styles */
+        .signup-step {
+            transition: all 0.3s ease;
+        }
+
+        /* Password requirements styles */
+        .requirement-icon {
+            color: #6b7280;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        /* Dark theme adjustments for the OR divider */
+        [data-theme="dark"] .relative .border-t {
+            border-color: var(--input-border);
+        }
+        
+        [data-theme="dark"] .relative span {
+            background: var(--glass-bg);
+        }
     </style>
 </head>
 <body class="min-h-screen gradient-bg relative">
@@ -205,115 +226,340 @@
         <div class="w-full max-w-md">
             <!-- Signup Container -->
             <div class="signup-container rounded-2xl p-8 shadow-2xl">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-themed-primary mb-2" data-translate="create-account">Create Account</h2>
-                    <p class="text-themed-secondary" data-translate="join-community">Join our research community</p>
+                <!-- Step Progress Indicator -->
+                <div id="stepIndicator" class="mb-8 hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 text-center">
+                            <div id="step1Circle" class="w-8 h-8 mx-auto rounded-full bg-blue-600 text-white text-sm flex items-center justify-center">1</div>
+                            <div class="text-xs mt-1 text-themed-secondary" data-translate="step-personal">Personal</div>
+                        </div>
+                        <div class="flex-1 h-1 bg-gray-200 mx-2">
+                            <div id="progress1" class="h-full bg-blue-600 w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <div id="step2Circle" class="w-8 h-8 mx-auto rounded-full bg-gray-200 text-gray-500 text-sm flex items-center justify-center">2</div>
+                            <div class="text-xs mt-1 text-themed-secondary" data-translate="step-password">Password</div>
+                        </div>
+                        <div class="flex-1 h-1 bg-gray-200 mx-2">
+                            <div id="progress2" class="h-full bg-blue-600 w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <div id="step3Circle" class="w-8 h-8 mx-auto rounded-full bg-gray-200 text-gray-500 text-sm flex items-center justify-center">3</div>
+                            <div class="text-xs mt-1 text-themed-secondary" data-translate="step-academic">Academic</div>
+                        </div>
+                        <div class="flex-1 h-1 bg-gray-200 mx-2">
+                            <div id="progress3" class="h-full bg-blue-600 w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex-1 text-center">
+                            <div id="step4Circle" class="w-8 h-8 mx-auto rounded-full bg-gray-200 text-gray-500 text-sm flex items-center justify-center">4</div>
+                            <div class="text-xs mt-1 text-themed-secondary" data-translate="step-terms">Terms</div>
+                        </div>
+                    </div>
                 </div>
 
-                <form id="signupForm" class="space-y-6">
-                    <div class="grid grid-cols-2 gap-4">
+                <!-- Initial Email Step -->
+                <div id="emailStep" class="signup-step">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-themed-primary mb-2" data-translate="create-account">Create Account</h2>
+                        <p class="text-themed-secondary" data-translate="join-community">Join our research community</p>
+                    </div>
+                    
+                    <div class="space-y-6">
                         <div>
-                            <label for="firstName" class="block text-sm font-medium text-themed-primary mb-2" data-translate="first-name-label">First Name</label>
+                            <label for="emailInput" class="block text-sm font-medium text-themed-primary mb-2" data-translate="email-label">Email Address</label>
+                            <div id="emailError" class="text-red-500 text-sm mb-2 hidden"></div>
                             <input 
-                                type="text" 
-                                id="firstName"
-                                name="firstName"
-                                required
+                                type="email" 
+                                id="emailInput"
                                 class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                placeholder="Enter first name"
-                                data-translate="first-name-placeholder"
+                                placeholder="Enter your email"
+                                data-translate="email-placeholder"
                             >
                         </div>
+                        
+                        <button 
+                            id="emailSignupBtn"
+                            class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                        >
+                            <span data-translate="signup-with-email">Sign up with Email</span>
+                            <span id="emailSpinner" class="loading ml-2 hidden"></span>
+                        </button>
+                        
+                        <div class="relative">
+                            <div class="absolute inset-0 flex items-center">
+                                <div class="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div class="relative flex justify-center text-sm">
+                                <span class="px-2 bg-white text-themed-secondary" data-translate="or">OR</span>
+                            </div>
+                        </div>
+                        
+                        <button 
+                            id="googleSignupBtn"
+                            class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <svg class="w-5 h-5" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            <span data-translate="signup-with-google">Sign up with Google</span>
+                        </button>
+                        
+                        <button 
+                            id="orcidSignupBtn"
+                            class="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947 0 .525-.422.947-.947.947-.525 0-.946-.422-.946-.947 0-.516.421-.947.946-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c2.359 0 3.781-1.444 3.781-3.722 0-2.016-1.3-3.722-3.781-3.722h-2.297z"/>
+                            </svg>
+                            <span data-translate="signup-with-orcid">Sign up with ORCID</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 1: Personal Information -->
+                <div id="step1" class="signup-step hidden">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-themed-primary mb-2" data-translate="personal-info">Personal Information</h2>
+                        <p class="text-themed-secondary" data-translate="personal-info-desc">Tell us about yourself</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div id="step1Error" class="text-red-500 text-sm mb-4 hidden"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="firstName" class="block text-sm font-medium text-themed-primary mb-2" data-translate="first-name-label">First Name</label>
+                                <input 
+                                    type="text" 
+                                    id="firstName"
+                                    required
+                                    class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                    placeholder="Enter first name"
+                                    data-translate="first-name-placeholder"
+                                >
+                            </div>
+                            <div>
+                                <label for="lastName" class="block text-sm font-medium text-themed-primary mb-2" data-translate="last-name-label">Last Name</label>
+                                <input 
+                                    type="text" 
+                                    id="lastName"
+                                    required
+                                    class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                    placeholder="Enter last name"
+                                    data-translate="last-name-placeholder"
+                                >
+                            </div>
+                        </div>
+
                         <div>
-                            <label for="lastName" class="block text-sm font-medium text-themed-primary mb-2" data-translate="last-name-label">Last Name</label>
+                            <label for="username" class="block text-sm font-medium text-themed-primary mb-2" data-translate="username-label">Username</label>
+                            <div id="usernameError" class="text-red-500 text-sm mb-2 hidden"></div>
                             <input 
                                 type="text" 
-                                id="lastName"
-                                name="lastName"
+                                id="username"
                                 required
                                 class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                                placeholder="Enter last name"
-                                data-translate="last-name-placeholder"
+                                placeholder="Choose a username"
+                                data-translate="username-placeholder"
                             >
                         </div>
                     </div>
+                </div>
 
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-themed-primary mb-2" data-translate="email-label">Email Address</label>
-                        <input 
-                            type="email" 
-                            id="email"
-                            name="email"
-                            required
-                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            placeholder="Enter your email"
-                            data-translate="email-placeholder"
-                        >
+                <!-- Step 2: Password Setup -->
+                <div id="step2" class="signup-step hidden">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-themed-primary mb-2" data-translate="password-setup">Password Setup</h2>
+                        <p class="text-themed-secondary" data-translate="password-setup-desc">Create a secure password</p>
                     </div>
+                    
+                    <div class="space-y-6">
+                        <div id="step2Error" class="text-red-500 text-sm mb-4 hidden"></div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-themed-primary mb-2" data-translate="password-label">Password</label>
+                            <div class="relative">
+                                <input 
+                                    type="password" 
+                                    id="password"
+                                    required
+                                    class="w-full px-4 py-3 pr-12 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                    placeholder="Create a password"
+                                    data-translate="password-placeholder"
+                                >
+                                <button 
+                                    type="button"
+                                    id="togglePassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-themed-secondary hover:text-themed-primary transition-colors"
+                                    title="Toggle password visibility"
+                                >
+                                    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <svg id="eyeSlashIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 hidden">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 11-4.243-4.243m4.243 4.243L9.88 9.88" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Password Requirements -->
+                            <div class="mt-3 space-y-2">
+                                <div id="length-req" class="flex items-center text-sm">
+                                    <span class="requirement-icon w-4 h-4 mr-2">✗</span>
+                                    <span data-translate="password-length">At least 8 characters</span>
+                                </div>
+                                <div id="capital-req" class="flex items-center text-sm">
+                                    <span class="requirement-icon w-4 h-4 mr-2">✗</span>
+                                    <span data-translate="password-capital">At least 1 capital letter</span>
+                                </div>
+                                <div id="number-req" class="flex items-center text-sm">
+                                    <span class="requirement-icon w-4 h-4 mr-2">✗</span>
+                                    <span data-translate="password-number">At least 1 number</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Password Strength -->
+                            <div class="mt-3">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span data-translate="password-strength">Password Strength</span>
+                                    <span id="strengthText" data-translate="weak">Weak</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="strengthBar" class="h-2 rounded-full transition-all duration-300 w-0"></div>
+                                </div>
+                            </div>
+                        </div>
 
-                    <div>
-                        <label for="username" class="block text-sm font-medium text-themed-primary mb-2" data-translate="username-label">Username</label>
-                        <input 
-                            type="text" 
-                            id="username"
-                            name="username"
-                            required
-                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            placeholder="Choose a username"
-                            data-translate="username-placeholder"
-                        >
+                        <div>
+                            <label for="confirmPassword" class="block text-sm font-medium text-themed-primary mb-2" data-translate="confirm-password-label">Confirm Password</label>
+                            <div class="relative">
+                                <input 
+                                    type="password" 
+                                    id="confirmPassword"
+                                    required
+                                    class="w-full px-4 py-3 pr-12 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                    placeholder="Confirm your password"
+                                    data-translate="confirm-password-placeholder"
+                                >
+                                <button 
+                                    type="button"
+                                    id="toggleConfirmPassword"
+                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-themed-secondary hover:text-themed-primary transition-colors"
+                                    title="Toggle password visibility"
+                                >
+                                    <svg id="eyeIcon2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <svg id="eyeSlashIcon2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 hidden">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 11-4.243-4.243m4.243 4.243L9.88 9.88" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
+                </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2" data-translate="password-label">Password</label>
-                        <input 
-                            type="password" 
-                            id="password"
-                            name="password"
-                            required
-                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            placeholder="Create a password"
-                            data-translate="password-placeholder"
-                        >
+                <!-- Step 3: Academic Details -->
+                <div id="step3" class="signup-step hidden">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-themed-primary mb-2" data-translate="academic-details">Academic Details</h2>
+                        <p class="text-themed-secondary" data-translate="academic-details-desc">Share your academic information</p>
                     </div>
+                    
+                    <div class="space-y-6">
+                        <div id="step3Error" class="text-red-500 text-sm mb-4 hidden"></div>
+                        <div>
+                            <label for="organization" class="block text-sm font-medium text-themed-primary mb-2" data-translate="organization-label">Organization</label>
+                            <input 
+                                type="text" 
+                                id="organization"
+                                required
+                                class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                placeholder="Enter your organization"
+                                data-translate="organization-placeholder"
+                            >
+                        </div>
 
-                    <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-themed-primary mb-2" data-translate="confirm-password-label">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            required
-                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            placeholder="Confirm your password"
-                            data-translate="confirm-password-placeholder"
-                        >
+                        <div>
+                            <label for="department" class="block text-sm font-medium text-themed-primary mb-2" data-translate="department-label">Department</label>
+                            <input 
+                                type="text" 
+                                id="department"
+                                required
+                                class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                placeholder="Enter your department"
+                                data-translate="department-placeholder"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="jobTitle" class="block text-sm font-medium text-themed-primary mb-2" data-translate="job-title-label">Role/Job Title</label>
+                            <input 
+                                type="text" 
+                                id="jobTitle"
+                                required
+                                class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                placeholder="Enter your role or job title"
+                                data-translate="job-title-placeholder"
+                            >
+                        </div>
                     </div>
+                </div>
 
-                    <div class="flex items-center">
-                        <input 
-                            type="checkbox" 
-                            id="terms"
-                            name="terms"
-                            required
-                            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        >
-                        <label for="terms" class="ml-2 block text-sm text-themed-secondary">
-                            <span data-translate="terms-agree">I agree to the</span>
-                            <a href="/terms" class="text-blue-600 hover:text-blue-800" data-translate="terms-of-service">Terms of Service</a>
-                            <span data-translate="and">and</span>
-                            <a href="/privacy" class="text-blue-600 hover:text-blue-800" data-translate="privacy-policy">Privacy Policy</a>
-                        </label>
+                <!-- Step 4: Terms and Privacy -->
+                <div id="step4" class="signup-step hidden">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-themed-primary mb-2" data-translate="terms-privacy">Terms & Privacy</h2>
+                        <p class="text-themed-secondary" data-translate="terms-privacy-desc">Please review and accept our policies</p>
                     </div>
+                    
+                    <div class="space-y-6">
+                        <div id="step4Error" class="text-red-500 text-sm mb-4 hidden"></div>
+                        <div class="flex items-start">
+                            <input 
+                                type="checkbox" 
+                                id="terms"
+                                required
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                            >
+                            <label for="terms" class="ml-3 block text-sm text-themed-secondary">
+                                <span data-translate="terms-agree">I agree to the</span>
+                                <a href="/terms" class="text-blue-600 hover:text-blue-800" data-translate="terms-of-service">Terms of Service</a>
+                                <span data-translate="and">and</span>
+                                <a href="/privacy" class="text-blue-600 hover:text-blue-800" data-translate="privacy-policy">Privacy Policy</a>
+                            </label>
+                        </div>
 
+                        <button 
+                            id="createAccountBtn"
+                            class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                        >
+                            <span id="signupText" data-translate="create-account-btn">Create Account</span>
+                            <span id="signupSpinner" class="loading ml-2 hidden"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div id="navigationButtons" class="flex justify-between mt-8 hidden">
                     <button 
-                        type="submit"
-                        class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                        id="prevBtn"
+                        class="px-6 py-2 border border-gray-300 text-themed-primary rounded-xl hover:bg-gray-50 transition-colors"
+                        data-translate="previous"
                     >
-                        <span id="signupText" data-translate="create-account-btn">Create Account</span>
-                        <span id="signupSpinner" class="loading ml-2 hidden"></span>
+                        Previous
                     </button>
-                </form>
+                    <button 
+                        id="nextBtn"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                        data-translate="next"
+                    >
+                        Next
+                    </button>
+                </div>
 
                 <div class="mt-8 text-center">
                     <p class="text-themed-secondary text-sm">
@@ -343,6 +589,22 @@
                 'site-subtitle': 'Advanced Research Search',
                 'create-account': 'Create Account',
                 'join-community': 'Join our research community',
+                'signup-with-email': 'Sign up with Email',
+                'signup-with-google': 'Sign up with Google',
+                'signup-with-orcid': 'Sign up with ORCID',
+                'or': 'OR',
+                'step-personal': 'Personal',
+                'step-password': 'Password',
+                'step-academic': 'Academic',
+                'step-terms': 'Terms',
+                'personal-info': 'Personal Information',
+                'personal-info-desc': 'Tell us about yourself',
+                'password-setup': 'Password Setup',
+                'password-setup-desc': 'Create a secure password',
+                'academic-details': 'Academic Details',
+                'academic-details-desc': 'Share your academic information',
+                'terms-privacy': 'Terms & Privacy',
+                'terms-privacy-desc': 'Please review and accept our policies',
                 'first-name-label': 'First Name',
                 'first-name-placeholder': 'Enter first name',
                 'last-name-label': 'Last Name',
@@ -355,27 +617,67 @@
                 'password-placeholder': 'Create a password',
                 'confirm-password-label': 'Confirm Password',
                 'confirm-password-placeholder': 'Confirm your password',
+                'organization-label': 'Organization',
+                'organization-placeholder': 'Enter your organization',
+                'department-label': 'Department',
+                'department-placeholder': 'Enter your department',
+                'job-title-label': 'Role/Job Title',
+                'job-title-placeholder': 'Enter your role or job title',
+                'password-length': 'At least 8 characters',
+                'password-capital': 'At least 1 capital letter',
+                'password-number': 'At least 1 number',
+                'password-strength': 'Password Strength',
+                'weak': 'Weak',
+                'fair': 'Fair',
+                'good': 'Good',
+                'strong': 'Strong',
                 'terms-agree': 'I agree to the',
                 'terms-of-service': 'Terms of Service',
                 'and': 'and',
                 'privacy-policy': 'Privacy Policy',
                 'create-account-btn': 'Create Account',
                 'creating-account-btn': 'Creating account...',
+                'previous': 'Previous',
+                'next': 'Next',
                 'already-have-account': 'Already have an account?',
                 'sign-in-link': 'Sign in',
                 'copyright': '© 2024 Libyan Open Science •',
                 'developer-portal': 'Developer Portal',
                 'passwords-no-match': 'Passwords do not match',
+                'password-requirements-not-met': 'Password does not meet requirements',
+                'email-required': 'Please enter an email address',
+                'email-invalid': 'Please enter a valid email address',
+                'email-already-exists': 'This email is already registered. Please sign in instead.',
+                'username-unavailable': 'This username is already taken. Please choose another.',
+                'checking-username': 'Checking username...',
                 'registration-failed': 'Registration failed',
                 'user-exists': 'User with this email or username already exists',
                 'network-error': 'Network error. Please try again.',
-                'registration-success': 'Account created successfully! Redirecting...'
+                'registration-success': 'Account created successfully! Redirecting...',
+                'checking-email': 'Checking email...',
+                'fill-all-fields': 'Please fill in all required fields'
             },
             ar: {
                 'site-title': 'العلوم المفتوحة الليبية',
                 'site-subtitle': 'البحث المتقدم في الأبحاث',
                 'create-account': 'إنشاء حساب',
                 'join-community': 'انضم إلى مجتمعنا البحثي',
+                'signup-with-email': 'التسجيل باستخدام البريد الإلكتروني',
+                'signup-with-google': 'التسجيل باستخدام Google',
+                'signup-with-orcid': 'التسجيل باستخدام ORCID',
+                'or': 'أو',
+                'step-personal': 'شخصي',
+                'step-password': 'كلمة المرور',
+                'step-academic': 'أكاديمي',
+                'step-terms': 'الشروط',
+                'personal-info': 'المعلومات الشخصية',
+                'personal-info-desc': 'أخبرنا عن نفسك',
+                'password-setup': 'إعداد كلمة المرور',
+                'password-setup-desc': 'أنشئ كلمة مرور آمنة',
+                'academic-details': 'التفاصيل الأكاديمية',
+                'academic-details-desc': 'شارك معلوماتك الأكاديمية',
+                'terms-privacy': 'الشروط والخصوصية',
+                'terms-privacy-desc': 'يرجى مراجعة وقبول سياساتنا',
                 'first-name-label': 'الاسم الأول',
                 'first-name-placeholder': 'أدخل الاسم الأول',
                 'last-name-label': 'اسم العائلة',
@@ -388,21 +690,45 @@
                 'password-placeholder': 'أنشئ كلمة مرور',
                 'confirm-password-label': 'تأكيد كلمة المرور',
                 'confirm-password-placeholder': 'أكد كلمة المرور',
+                'organization-label': 'المؤسسة',
+                'organization-placeholder': 'أدخل مؤسستك',
+                'department-label': 'القسم',
+                'department-placeholder': 'أدخل قسمك',
+                'job-title-label': 'الدور/المسمى الوظيفي',
+                'job-title-placeholder': 'أدخل دورك أو مسماك الوظيفي',
+                'password-length': 'على الأقل 8 أحرف',
+                'password-capital': 'على الأقل حرف كبير واحد',
+                'password-number': 'على الأقل رقم واحد',
+                'password-strength': 'قوة كلمة المرور',
+                'weak': 'ضعيف',
+                'fair': 'مقبول',
+                'good': 'جيد',
+                'strong': 'قوي',
                 'terms-agree': 'أوافق على',
                 'terms-of-service': 'شروط الخدمة',
                 'and': 'و',
                 'privacy-policy': 'سياسة الخصوصية',
                 'create-account-btn': 'إنشاء حساب',
                 'creating-account-btn': 'جاري إنشاء الحساب...',
+                'previous': 'السابق',
+                'next': 'التالي',
                 'already-have-account': 'هل لديك حساب بالفعل؟',
                 'sign-in-link': 'تسجيل الدخول',
                 'copyright': '© 2024 العلوم المفتوحة الليبية •',
                 'developer-portal': 'بوابة المطور',
                 'passwords-no-match': 'كلمات المرور غير متطابقة',
+                'password-requirements-not-met': 'كلمة المرور لا تلبي المتطلبات',
+                'email-required': 'يرجى إدخال عنوان بريد إلكتروني',
+                'email-invalid': 'يرجى إدخال عنوان بريد إلكتروني صحيح',
+                'email-already-exists': 'هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.',
+                'username-unavailable': 'اسم المستخدم هذا مستخدم بالفعل. يرجى اختيار آخر.',
+                'checking-username': 'جاري فحص اسم المستخدم...',
                 'registration-failed': 'فشل إنشاء الحساب',
                 'user-exists': 'يوجد مستخدم بهذا البريد الإلكتروني أو اسم المستخدم بالفعل',
                 'network-error': 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
-                'registration-success': 'تم إنشاء الحساب بنجاح! جاري التوجيه...'
+                'registration-success': 'تم إنشاء الحساب بنجاح! جاري التوجيه...',
+                'checking-email': 'جاري فحص البريد الإلكتروني...',
+                'fill-all-fields': 'يرجى ملء جميع الحقول المطلوبة'
             }
         };
         
@@ -516,29 +842,456 @@
             setLanguage(newLanguage);
         });
 
-        document.getElementById('signupForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
+        // Multi-step signup functionality
+        let currentStep = 0;
+        let userEmail = '';
+        const totalSteps = 4;
+
+        // Step management
+        function showStep(stepNumber) {
+            // Hide all errors when changing steps
+            hideAllErrors();
             
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            // Hide all steps
+            document.querySelectorAll('.signup-step').forEach(step => {
+                step.classList.add('hidden');
+            });
+
+            // Show current step
+            if (stepNumber === 0) {
+                document.getElementById('emailStep').classList.remove('hidden');
+                document.getElementById('stepIndicator').classList.add('hidden');
+                document.getElementById('navigationButtons').classList.add('hidden');
+            } else {
+                document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+                document.getElementById('stepIndicator').classList.remove('hidden');
+                document.getElementById('navigationButtons').classList.remove('hidden');
+                updateStepIndicator(stepNumber);
+            }
+
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
             
-            if (password !== confirmPassword) {
-                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
-                alert(translations[currentLanguage]['passwords-no-match']);
+            if (stepNumber === 1) {
+                prevBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'block';
+            }
+
+            if (stepNumber === totalSteps) {
+                nextBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'block';
+            }
+        }
+
+        function updateStepIndicator(currentStep) {
+            for (let i = 1; i <= totalSteps; i++) {
+                const circle = document.getElementById(`step${i}Circle`);
+                const progress = document.getElementById(`progress${i}`);
+                
+                if (i < currentStep) {
+                    circle.className = 'w-8 h-8 mx-auto rounded-full bg-green-600 text-white text-sm flex items-center justify-center';
+                    circle.innerHTML = '✓';
+                    if (progress) progress.style.width = '100%';
+                } else if (i === currentStep) {
+                    circle.className = 'w-8 h-8 mx-auto rounded-full bg-blue-600 text-white text-sm flex items-center justify-center';
+                    circle.textContent = i;
+                    if (progress) progress.style.width = '0%';
+                } else {
+                    circle.className = 'w-8 h-8 mx-auto rounded-full bg-gray-200 text-gray-500 text-sm flex items-center justify-center';
+                    circle.textContent = i;
+                    if (progress) progress.style.width = '0%';
+                }
+            }
+        }
+
+        // Error message helper functions
+        function showError(errorId, message) {
+            const errorElement = document.getElementById(errorId);
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+
+        function hideError(errorId) {
+            const errorElement = document.getElementById(errorId);
+            errorElement.classList.add('hidden');
+        }
+
+        function hideAllErrors() {
+            hideError('emailError');
+            hideError('step1Error');
+            hideError('usernameError');
+            hideError('step2Error');
+            hideError('step3Error');
+            hideError('step4Error');
+        }
+
+        // Email validation function
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Username availability checking
+        async function checkUsernameAvailability(username) {
+            try {
+                console.log('Checking username availability for:', username);
+                const response = await fetch('/api/auth/check-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username.trim() })
+                });
+                
+                if (!response.ok) {
+                    console.error('HTTP error:', response.status, response.statusText);
+                    return false;
+                }
+                
+                const data = await response.json();
+                console.log('Username check response:', data);
+                
+                if (data.error) {
+                    console.error('API error:', data.error);
+                    return false;
+                }
+                
+                return !data.exists; // Return true if username is available (doesn't exist)
+            } catch (error) {
+                console.error('Error checking username:', error);
+                return false;
+            }
+        }
+
+        // Email checking and step navigation
+        document.getElementById('emailSignupBtn').addEventListener('click', async function() {
+            const email = document.getElementById('emailInput').value.trim();
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const trans = translations[currentLanguage];
+
+            // Hide previous errors
+            hideError('emailError');
+
+            if (!email) {
+                showError('emailError', trans['email-required']);
                 return;
             }
+
+            // Validate email format
+            if (!isValidEmail(email)) {
+                showError('emailError', trans['email-invalid']);
+                return;
+            }
+
+            // Show loading state
+            const spinner = document.getElementById('emailSpinner');
+            const btnText = this.querySelector('span');
+            const originalText = btnText.textContent;
+            btnText.textContent = trans['checking-email'];
+            spinner.classList.remove('hidden');
+
+            try {
+                // Check if email exists
+                const response = await fetch('/api/auth/check-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.exists) {
+                    showError('emailError', trans['email-already-exists']);
+                } else {
+                    hideError('emailError');
+                    userEmail = email;
+                    currentStep = 1;
+                    showStep(1);
+                }
+            } catch (error) {
+                showError('emailError', trans['network-error']);
+            } finally {
+                btnText.textContent = originalText;
+                spinner.classList.add('hidden');
+            }
+        });
+
+        // OAuth popup handler
+        function handleOAuthPopup(provider) {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const trans = translations[currentLanguage];
             
+            // Open OAuth popup
+            const popup = window.open(
+                `/api/auth/${provider}`,
+                `${provider}OAuth`,
+                'width=500,height=600,scrollbars=yes,resizable=yes'
+            );
+            
+            // Listen for OAuth response
+            const messageHandler = (event) => {
+                if (event.origin !== window.location.origin) return;
+                
+                if (event.data.type === 'oauth_success') {
+                    // Store auth data
+                    localStorage.setItem('authToken', event.data.token);
+                    localStorage.setItem('userData', JSON.stringify(event.data.user));
+                    localStorage.setItem('userMode', 'authenticated');
+                    
+                    // Close popup and redirect
+                    popup.close();
+                    window.removeEventListener('message', messageHandler);
+                    
+                    // Show success message
+                    alert(trans['registration-success']);
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                    
+                } else if (event.data.type === 'oauth_error') {
+                    popup.close();
+                    window.removeEventListener('message', messageHandler);
+                    showError('emailError', event.data.error || trans['network-error']);
+                }
+            };
+            
+            window.addEventListener('message', messageHandler);
+            
+            // Handle popup blocked or closed manually
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                }
+            }, 1000);
+        }
+
+        // Google signup
+        document.getElementById('googleSignupBtn').addEventListener('click', function() {
+            hideError('emailError');
+            handleOAuthPopup('google');
+        });
+
+        // ORCID signup
+        document.getElementById('orcidSignupBtn').addEventListener('click', function() {
+            hideError('emailError');
+            handleOAuthPopup('orcid');
+        });
+
+        // Password strength checking
+        function checkPasswordStrength(password) {
+            const requirements = {
+                length: password.length >= 8,
+                capital: /[A-Z]/.test(password),
+                number: /\d/.test(password)
+            };
+
+            // Update requirement indicators
+            const lengthReq = document.getElementById('length-req');
+            const capitalReq = document.getElementById('capital-req');
+            const numberReq = document.getElementById('number-req');
+
+            updateRequirement(lengthReq, requirements.length);
+            updateRequirement(capitalReq, requirements.capital);
+            updateRequirement(numberReq, requirements.number);
+
+            // Calculate strength
+            const score = Object.values(requirements).filter(Boolean).length;
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const trans = translations[currentLanguage];
+
+            switch (score) {
+                case 0:
+                case 1:
+                    strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-red-500 w-1/4';
+                    strengthText.textContent = trans['weak'];
+                    break;
+                case 2:
+                    strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-yellow-500 w-2/4';
+                    strengthText.textContent = trans['fair'];
+                    break;
+                case 3:
+                    if (password.length >= 12) {
+                        strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-green-500 w-full';
+                        strengthText.textContent = trans['strong'];
+                    } else {
+                        strengthBar.className = 'h-2 rounded-full transition-all duration-300 bg-blue-500 w-3/4';
+                        strengthText.textContent = trans['good'];
+                    }
+                    break;
+            }
+
+            return requirements.length && requirements.capital && requirements.number;
+        }
+
+        function updateRequirement(element, met) {
+            const icon = element.querySelector('.requirement-icon');
+            if (met) {
+                icon.textContent = '✓';
+                icon.style.color = '#10b981';
+                element.style.color = '#10b981';
+            } else {
+                icon.textContent = '✗';
+                icon.style.color = '#ef4444';
+                element.style.color = '#6b7280';
+            }
+        }
+
+        // Password input event listener
+        document.getElementById('password').addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+        });
+
+        // Password visibility toggle functionality
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordField = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            const eyeSlashIcon = document.getElementById('eyeSlashIcon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.add('hidden');
+                eyeSlashIcon.classList.remove('hidden');
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('hidden');
+                eyeSlashIcon.classList.add('hidden');
+            }
+        });
+
+        // Confirm password visibility toggle
+        document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+            const confirmPasswordField = document.getElementById('confirmPassword');
+            const eyeIcon2 = document.getElementById('eyeIcon2');
+            const eyeSlashIcon2 = document.getElementById('eyeSlashIcon2');
+            
+            if (confirmPasswordField.type === 'password') {
+                confirmPasswordField.type = 'text';
+                eyeIcon2.classList.add('hidden');
+                eyeSlashIcon2.classList.remove('hidden');
+            } else {
+                confirmPasswordField.type = 'password';
+                eyeIcon2.classList.remove('hidden');
+                eyeSlashIcon2.classList.add('hidden');
+            }
+        });
+
+        // Form validation for each step
+        async function validateStep(stepNumber) {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const trans = translations[currentLanguage];
+
+            // Hide all errors first
+            hideAllErrors();
+
+            switch (stepNumber) {
+                case 1:
+                    const firstName = document.getElementById('firstName').value.trim();
+                    const lastName = document.getElementById('lastName').value.trim();
+                    const username = document.getElementById('username').value.trim();
+                    
+                    if (!firstName || !lastName || !username) {
+                        showError('step1Error', trans['fill-all-fields']);
+                        return false;
+                    }
+
+                    // Check username availability
+                    const isUsernameAvailable = await checkUsernameAvailability(username);
+                    if (!isUsernameAvailable) {
+                        showError('usernameError', trans['username-unavailable']);
+                        return false;
+                    }
+                    
+                    return true;
+
+                case 2:
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    
+                    if (!checkPasswordStrength(password)) {
+                        showError('step2Error', trans['password-requirements-not-met']);
+                        return false;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showError('step2Error', trans['passwords-no-match']);
+                        return false;
+                    }
+                    return true;
+
+                case 3:
+                    const organization = document.getElementById('organization').value.trim();
+                    const department = document.getElementById('department').value.trim();
+                    const jobTitle = document.getElementById('jobTitle').value.trim();
+                    
+                    if (!organization || !department || !jobTitle) {
+                        showError('step3Error', trans['fill-all-fields']);
+                        return false;
+                    }
+                    return true;
+
+                case 4:
+                    const terms = document.getElementById('terms').checked;
+                    if (!terms) {
+                        showError('step4Error', trans['terms-agree']);
+                        return false;
+                    }
+                    return true;
+
+                default:
+                    return true;
+            }
+        }
+
+        // Navigation button handlers
+        document.getElementById('nextBtn').addEventListener('click', async function() {
+            const isValid = await validateStep(currentStep);
+            if (isValid) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                }
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', function() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        });
+
+        // Final account creation
+        document.getElementById('createAccountBtn').addEventListener('click', async function() {
+            const isValid = await validateStep(4);
+            if (!isValid) return;
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const organization = document.getElementById('organization').value.trim();
+            const department = document.getElementById('department').value.trim();
+            const jobTitle = document.getElementById('jobTitle').value.trim();
+
             // Show loading state
             const signupText = document.getElementById('signupText');
             const signupSpinner = document.getElementById('signupSpinner');
             const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
-            signupText.textContent = translations[currentLanguage]['creating-account-btn'];
-            signupSpinner.classList.remove('hidden');
+            const trans = translations[currentLanguage];
             
+            signupText.textContent = trans['creating-account-btn'];
+            signupSpinner.classList.remove('hidden');
+
             try {
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
@@ -548,31 +1301,36 @@
                     body: JSON.stringify({
                         firstName,
                         lastName,
-                        email,
+                        email: userEmail,
                         username,
-                        password
+                        password,
+                        organization,
+                        department,
+                        jobTitle
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // Store auth token and user data
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('userData', JSON.stringify(data.user));
                     localStorage.setItem('userMode', 'authenticated');
+
+                    signupText.textContent = trans['registration-success'];
                     
                     // Redirect to dashboard
-                    window.location.href = '/dashboard';
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
                 } else {
                     throw new Error(data.error || 'Registration failed');
                 }
             } catch (error) {
                 // Show translated error message
-                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
-                const trans = translations[currentLanguage];
                 let errorMessage = error.message;
-                
+
                 // Translate common error messages
                 if (errorMessage.toLowerCase().includes('already exists') || errorMessage.toLowerCase().includes('duplicate')) {
                     errorMessage = trans['user-exists'];
@@ -581,9 +1339,9 @@
                 } else if (!errorMessage || errorMessage === 'Registration failed') {
                     errorMessage = trans['registration-failed'];
                 }
-                
+
                 alert(errorMessage);
-                
+
                 // Reset loading state
                 signupText.textContent = trans['create-account-btn'];
                 signupSpinner.classList.add('hidden');
@@ -594,6 +1352,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
             initializeLanguage();
+            
+            // Initialize the signup flow
+            showStep(0);
         });
     </script>
 </body>
