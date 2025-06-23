@@ -153,8 +153,14 @@
     </style>
 </head>
 <body class="min-h-screen gradient-bg relative">
-    <!-- Theme Toggle Button -->
-    <div class="fixed top-4 right-4 z-50">
+    <!-- Theme and Language Toggle Buttons -->
+    <div class="fixed top-4 right-4 z-50 flex space-x-2">
+        <!-- Language Toggle Button -->
+        <button id="languageToggle" class="theme-toggle p-2 rounded-lg transition-colors" title="Switch Language">
+            <span id="languageIcon" class="text-sm font-bold">عر</span>
+        </button>
+        
+        <!-- Theme Toggle Button -->
         <button id="themeToggle" class="theme-toggle p-2 rounded-lg transition-colors">
             <!-- Sun icon for dark mode -->
             <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
@@ -186,8 +192,8 @@
                         >
                     </div>
                     <div>
-                        <h1 class="text-themed-primary text-xl font-bold">Libyan Open Science</h1>
-                        <p class="text-themed-secondary text-sm">Advanced Research Search</p>
+                        <h1 class="text-themed-primary text-xl font-bold" data-translate="site-title">Libyan Open Science</h1>
+                        <p class="text-themed-secondary text-sm" data-translate="site-subtitle">Advanced Research Search</p>
                     </div>
                 </a>
             </div>
@@ -200,13 +206,13 @@
             <!-- Login Container -->
             <div class="login-container rounded-2xl p-8 shadow-2xl">
                 <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-themed-primary mb-2">Welcome Back</h2>
-                    <p class="text-themed-secondary">Sign in to your account</p>
+                    <h2 class="text-3xl font-bold text-themed-primary mb-2" data-translate="welcome-back">Welcome Back</h2>
+                    <p class="text-themed-secondary" data-translate="sign-in-subtitle">Sign in to your account</p>
                 </div>
 
                 <form id="loginForm" class="space-y-6">
                     <div>
-                        <label for="identifier" class="block text-sm font-medium text-themed-primary mb-2">Email or Username</label>
+                        <label for="identifier" class="block text-sm font-medium text-themed-primary mb-2" data-translate="email-username-label">Email or Username</label>
                         <input 
                             type="text" 
                             id="identifier"
@@ -214,11 +220,12 @@
                             required
                             class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Enter your email or username"
+                            data-translate="email-username-placeholder"
                         >
                     </div>
 
                     <div>
-                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2">Password</label>
+                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2" data-translate="password-label">Password</label>
                         <input 
                             type="password" 
                             id="password"
@@ -226,6 +233,7 @@
                             required
                             class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Enter your password"
+                            data-translate="password-placeholder"
                         >
                     </div>
 
@@ -237,24 +245,24 @@
                                 name="remember"
                                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             >
-                            <label for="remember" class="ml-2 block text-sm text-themed-secondary">Remember me</label>
+                            <label for="remember" class="ml-2 block text-sm text-themed-secondary" data-translate="remember-me">Remember me</label>
                         </div>
-                        <a href="/forgot-password" class="text-sm text-blue-600 hover:text-blue-800">Forgot password?</a>
+                        <a href="/forgot-password" class="text-sm text-blue-600 hover:text-blue-800" data-translate="forgot-password">Forgot password?</a>
                     </div>
 
                     <button 
                         type="submit"
                         class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
                     >
-                        <span id="loginText">Sign In</span>
+                        <span id="loginText" data-translate="sign-in-btn">Sign In</span>
                         <span id="loginSpinner" class="loading ml-2 hidden"></span>
                     </button>
                 </form>
 
                 <div class="mt-8 text-center">
                     <p class="text-themed-secondary text-sm">
-                        Don't have an account? 
-                        <a href="/signup" class="text-blue-600 hover:text-blue-800 font-medium">Sign up</a>
+                        <span data-translate="no-account">Don't have an account?</span>
+                        <a href="/signup" class="text-blue-600 hover:text-blue-800 font-medium" data-translate="sign-up-link">Sign up</a>
                     </p>
                 </div>
             </div>
@@ -265,13 +273,61 @@
     <footer class="relative z-10 text-center py-8">
         <div class="container mx-auto px-6">
             <p class="text-themed-secondary text-sm">
-                © 2024 Libyan Open Science • 
-                <a href="/dev" class="hover:text-blue-600 transition-colors">Developer Portal</a>
+                <span data-translate="copyright">© 2024 Libyan Open Science •</span>
+                <a href="/dev" class="hover:text-blue-600 transition-colors" data-translate="developer-portal">Developer Portal</a>
             </p>
         </div>
     </footer>
 
     <script>
+        // Translations
+        const translations = {
+            en: {
+                'site-title': 'Libyan Open Science',
+                'site-subtitle': 'Advanced Research Search',
+                'welcome-back': 'Welcome Back',
+                'sign-in-subtitle': 'Sign in to your account',
+                'email-username-label': 'Email or Username',
+                'email-username-placeholder': 'Enter your email or username',
+                'password-label': 'Password',
+                'password-placeholder': 'Enter your password',
+                'remember-me': 'Remember me',
+                'forgot-password': 'Forgot password?',
+                'sign-in-btn': 'Sign In',
+                'signing-in-btn': 'Signing in...',
+                'no-account': "Don't have an account?",
+                'sign-up-link': 'Sign up',
+                'copyright': '© 2024 Libyan Open Science •',
+                'developer-portal': 'Developer Portal',
+                'login-failed': 'Login failed',
+                'invalid-credentials': 'Invalid email/username or password',
+                'network-error': 'Network error. Please try again.',
+                'login-success': 'Login successful! Redirecting...'
+            },
+            ar: {
+                'site-title': 'العلوم المفتوحة الليبية',
+                'site-subtitle': 'البحث المتقدم في الأبحاث',
+                'welcome-back': 'مرحباً بك مرة أخرى',
+                'sign-in-subtitle': 'قم بتسجيل الدخول إلى حسابك',
+                'email-username-label': 'البريد الإلكتروني أو اسم المستخدم',
+                'email-username-placeholder': 'أدخل بريدك الإلكتروني أو اسم المستخدم',
+                'password-label': 'كلمة المرور',
+                'password-placeholder': 'أدخل كلمة المرور',
+                'remember-me': 'تذكرني',
+                'forgot-password': 'نسيت كلمة المرور؟',
+                'sign-in-btn': 'تسجيل الدخول',
+                'signing-in-btn': 'جاري تسجيل الدخول...',
+                'no-account': 'ليس لديك حساب؟',
+                'sign-up-link': 'إنشاء حساب',
+                'copyright': '© 2024 العلوم المفتوحة الليبية •',
+                'developer-portal': 'بوابة المطور',
+                'login-failed': 'فشل تسجيل الدخول',
+                'invalid-credentials': 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة',
+                'network-error': 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
+                'login-success': 'تم تسجيل الدخول بنجاح! جاري التوجيه...'
+            }
+        };
+        
         // Theme management
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -307,6 +363,81 @@
             setTheme(newTheme);
         });
 
+        // Language management
+        function initializeLanguage() {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+        }
+
+        function setLanguage(language) {
+            document.documentElement.setAttribute('lang', language);
+            localStorage.setItem('language', language);
+            
+            const languageIcon = document.getElementById('languageIcon');
+            if (language === 'ar') {
+                languageIcon.textContent = 'EN';
+                languageIcon.title = 'Switch to English';
+            } else {
+                languageIcon.textContent = 'عر';
+                languageIcon.title = 'التبديل إلى العربية';
+            }
+            
+            // Apply translations
+            applyTranslations(language);
+            
+            // Save to database if user is authenticated
+            saveLanguagePreference(language);
+        }
+
+        function applyTranslations(language) {
+            const trans = translations[language];
+            
+            // Apply translations to all elements with data-translate attribute
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (trans[key]) {
+                    if (element.tagName === 'INPUT' && element.type !== 'submit') {
+                        element.placeholder = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                    
+                    // Apply minimal RTL styling only for longer text content in Arabic
+                    if (language === 'ar' && trans[key].length > 10) {
+                        element.style.direction = 'rtl';
+                    } else {
+                        element.style.direction = '';
+                    }
+                }
+            });
+        }
+
+        async function saveLanguagePreference(language) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            display_language: language
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving language preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const newLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            setLanguage(newLanguage);
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -317,7 +448,8 @@
             // Show loading state
             const loginText = document.getElementById('loginText');
             const loginSpinner = document.getElementById('loginSpinner');
-            loginText.textContent = 'Signing in...';
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            loginText.textContent = translations[currentLanguage]['signing-in-btn'];
             loginSpinner.classList.remove('hidden');
             
             try {
@@ -353,18 +485,32 @@
                     throw new Error(data.error || 'Login failed');
                 }
             } catch (error) {
-                // Show error message
-                alert(error.message);
+                // Show translated error message
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                const trans = translations[currentLanguage];
+                let errorMessage = error.message;
+                
+                // Translate common error messages
+                if (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('credentials')) {
+                    errorMessage = trans['invalid-credentials'];
+                } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+                    errorMessage = trans['network-error'];
+                } else if (!errorMessage || errorMessage === 'Login failed') {
+                    errorMessage = trans['login-failed'];
+                }
+                
+                alert(errorMessage);
                 
                 // Reset loading state
-                loginText.textContent = 'Sign In';
+                loginText.textContent = trans['sign-in-btn'];
                 loginSpinner.classList.add('hidden');
             }
         });
 
-        // Initialize theme on page load
+        // Initialize theme and language on page load
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
+            initializeLanguage();
         });
     </script>
 </body>

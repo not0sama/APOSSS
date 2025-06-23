@@ -137,6 +137,10 @@ class UserManager:
                         'profile_visibility': 'public',
                         'interaction_tracking': True,
                         'personalized_recommendations': True
+                    },
+                    'ui_preferences': {
+                        'theme_preference': 'light',
+                        'display_language': 'en'
                     }
                 },
                 'statistics': {
@@ -483,6 +487,10 @@ class UserManager:
                     'weight_authority': 0.2,
                     'weight_user_feedback': 0.2
                 },
+                'ui_preferences': {
+                    'theme_preference': 'light',
+                    'display_language': 'en'
+                },
                 'created_at': datetime.now().isoformat(),
                 'updated_at': datetime.now().isoformat()
             }
@@ -512,6 +520,10 @@ class UserManager:
                 'weight_relevance': 0.4,
                 'weight_authority': 0.2,
                 'weight_user_feedback': 0.2
+            },
+            'ui_preferences': {
+                'theme_preference': 'light',
+                'display_language': 'en'
             }
         }
     

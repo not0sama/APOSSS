@@ -153,8 +153,14 @@
     </style>
 </head>
 <body class="min-h-screen gradient-bg relative">
-    <!-- Theme Toggle Button -->
-    <div class="fixed top-4 right-4 z-50">
+    <!-- Theme and Language Toggle Buttons -->
+    <div class="fixed top-4 right-4 z-50 flex space-x-2">
+        <!-- Language Toggle Button -->
+        <button id="languageToggle" class="theme-toggle p-2 rounded-lg transition-colors" title="Switch Language">
+            <span id="languageIcon" class="text-sm font-bold">عر</span>
+        </button>
+        
+        <!-- Theme Toggle Button -->
         <button id="themeToggle" class="theme-toggle p-2 rounded-lg transition-colors">
             <!-- Sun icon for dark mode -->
             <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
@@ -186,8 +192,8 @@
                         >
                     </div>
                     <div>
-                        <h1 class="text-themed-primary text-xl font-bold">Libyan Open Science</h1>
-                        <p class="text-themed-secondary text-sm">Advanced Research Search</p>
+                        <h1 class="text-themed-primary text-xl font-bold" data-translate="site-title">Libyan Open Science</h1>
+                        <p class="text-themed-secondary text-sm" data-translate="site-subtitle">Advanced Research Search</p>
                     </div>
                 </a>
             </div>
@@ -200,14 +206,14 @@
             <!-- Signup Container -->
             <div class="signup-container rounded-2xl p-8 shadow-2xl">
                 <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-themed-primary mb-2">Create Account</h2>
-                    <p class="text-themed-secondary">Join our research community</p>
+                    <h2 class="text-3xl font-bold text-themed-primary mb-2" data-translate="create-account">Create Account</h2>
+                    <p class="text-themed-secondary" data-translate="join-community">Join our research community</p>
                 </div>
 
                 <form id="signupForm" class="space-y-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="firstName" class="block text-sm font-medium text-themed-primary mb-2">First Name</label>
+                            <label for="firstName" class="block text-sm font-medium text-themed-primary mb-2" data-translate="first-name-label">First Name</label>
                             <input 
                                 type="text" 
                                 id="firstName"
@@ -215,10 +221,11 @@
                                 required
                                 class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                 placeholder="Enter first name"
+                                data-translate="first-name-placeholder"
                             >
                         </div>
                         <div>
-                            <label for="lastName" class="block text-sm font-medium text-themed-primary mb-2">Last Name</label>
+                            <label for="lastName" class="block text-sm font-medium text-themed-primary mb-2" data-translate="last-name-label">Last Name</label>
                             <input 
                                 type="text" 
                                 id="lastName"
@@ -226,12 +233,13 @@
                                 required
                                 class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                 placeholder="Enter last name"
+                                data-translate="last-name-placeholder"
                             >
                         </div>
                     </div>
 
                     <div>
-                        <label for="email" class="block text-sm font-medium text-themed-primary mb-2">Email Address</label>
+                        <label for="email" class="block text-sm font-medium text-themed-primary mb-2" data-translate="email-label">Email Address</label>
                         <input 
                             type="email" 
                             id="email"
@@ -239,11 +247,12 @@
                             required
                             class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Enter your email"
+                            data-translate="email-placeholder"
                         >
                     </div>
 
                     <div>
-                        <label for="username" class="block text-sm font-medium text-themed-primary mb-2">Username</label>
+                        <label for="username" class="block text-sm font-medium text-themed-primary mb-2" data-translate="username-label">Username</label>
                         <input 
                             type="text" 
                             id="username"
@@ -251,11 +260,12 @@
                             required
                             class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Choose a username"
+                            data-translate="username-placeholder"
                         >
                     </div>
 
                     <div>
-                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2">Password</label>
+                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2" data-translate="password-label">Password</label>
                         <input 
                             type="password" 
                             id="password"
@@ -263,11 +273,12 @@
                             required
                             class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Create a password"
+                            data-translate="password-placeholder"
                         >
                     </div>
 
                     <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-themed-primary mb-2">Confirm Password</label>
+                        <label for="confirmPassword" class="block text-sm font-medium text-themed-primary mb-2" data-translate="confirm-password-label">Confirm Password</label>
                         <input 
                             type="password" 
                             id="confirmPassword"
@@ -275,6 +286,7 @@
                             required
                             class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Confirm your password"
+                            data-translate="confirm-password-placeholder"
                         >
                     </div>
 
@@ -287,10 +299,10 @@
                             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         >
                         <label for="terms" class="ml-2 block text-sm text-themed-secondary">
-                            I agree to the 
-                            <a href="/terms" class="text-blue-600 hover:text-blue-800">Terms of Service</a>
-                            and
-                            <a href="/privacy" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>
+                            <span data-translate="terms-agree">I agree to the</span>
+                            <a href="/terms" class="text-blue-600 hover:text-blue-800" data-translate="terms-of-service">Terms of Service</a>
+                            <span data-translate="and">and</span>
+                            <a href="/privacy" class="text-blue-600 hover:text-blue-800" data-translate="privacy-policy">Privacy Policy</a>
                         </label>
                     </div>
 
@@ -298,15 +310,15 @@
                         type="submit"
                         class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
                     >
-                        <span id="signupText">Create Account</span>
+                        <span id="signupText" data-translate="create-account-btn">Create Account</span>
                         <span id="signupSpinner" class="loading ml-2 hidden"></span>
                     </button>
                 </form>
 
                 <div class="mt-8 text-center">
                     <p class="text-themed-secondary text-sm">
-                        Already have an account? 
-                        <a href="/login" class="text-blue-600 hover:text-blue-800 font-medium">Sign in</a>
+                        <span data-translate="already-have-account">Already have an account?</span>
+                        <a href="/login" class="text-blue-600 hover:text-blue-800 font-medium" data-translate="sign-in-link">Sign in</a>
                     </p>
                 </div>
             </div>
@@ -317,13 +329,83 @@
     <footer class="relative z-10 text-center py-8">
         <div class="container mx-auto px-6">
             <p class="text-themed-secondary text-sm">
-                © 2024 Libyan Open Science • 
-                <a href="/dev" class="hover:text-blue-600 transition-colors">Developer Portal</a>
+                <span data-translate="copyright">© 2024 Libyan Open Science •</span>
+                <a href="/dev" class="hover:text-blue-600 transition-colors" data-translate="developer-portal">Developer Portal</a>
             </p>
         </div>
     </footer>
 
     <script>
+        // Translations
+        const translations = {
+            en: {
+                'site-title': 'Libyan Open Science',
+                'site-subtitle': 'Advanced Research Search',
+                'create-account': 'Create Account',
+                'join-community': 'Join our research community',
+                'first-name-label': 'First Name',
+                'first-name-placeholder': 'Enter first name',
+                'last-name-label': 'Last Name',
+                'last-name-placeholder': 'Enter last name',
+                'email-label': 'Email Address',
+                'email-placeholder': 'Enter your email',
+                'username-label': 'Username',
+                'username-placeholder': 'Choose a username',
+                'password-label': 'Password',
+                'password-placeholder': 'Create a password',
+                'confirm-password-label': 'Confirm Password',
+                'confirm-password-placeholder': 'Confirm your password',
+                'terms-agree': 'I agree to the',
+                'terms-of-service': 'Terms of Service',
+                'and': 'and',
+                'privacy-policy': 'Privacy Policy',
+                'create-account-btn': 'Create Account',
+                'creating-account-btn': 'Creating account...',
+                'already-have-account': 'Already have an account?',
+                'sign-in-link': 'Sign in',
+                'copyright': '© 2024 Libyan Open Science •',
+                'developer-portal': 'Developer Portal',
+                'passwords-no-match': 'Passwords do not match',
+                'registration-failed': 'Registration failed',
+                'user-exists': 'User with this email or username already exists',
+                'network-error': 'Network error. Please try again.',
+                'registration-success': 'Account created successfully! Redirecting...'
+            },
+            ar: {
+                'site-title': 'العلوم المفتوحة الليبية',
+                'site-subtitle': 'البحث المتقدم في الأبحاث',
+                'create-account': 'إنشاء حساب',
+                'join-community': 'انضم إلى مجتمعنا البحثي',
+                'first-name-label': 'الاسم الأول',
+                'first-name-placeholder': 'أدخل الاسم الأول',
+                'last-name-label': 'اسم العائلة',
+                'last-name-placeholder': 'أدخل اسم العائلة',
+                'email-label': 'عنوان البريد الإلكتروني',
+                'email-placeholder': 'أدخل بريدك الإلكتروني',
+                'username-label': 'اسم المستخدم',
+                'username-placeholder': 'اختر اسم مستخدم',
+                'password-label': 'كلمة المرور',
+                'password-placeholder': 'أنشئ كلمة مرور',
+                'confirm-password-label': 'تأكيد كلمة المرور',
+                'confirm-password-placeholder': 'أكد كلمة المرور',
+                'terms-agree': 'أوافق على',
+                'terms-of-service': 'شروط الخدمة',
+                'and': 'و',
+                'privacy-policy': 'سياسة الخصوصية',
+                'create-account-btn': 'إنشاء حساب',
+                'creating-account-btn': 'جاري إنشاء الحساب...',
+                'already-have-account': 'هل لديك حساب بالفعل؟',
+                'sign-in-link': 'تسجيل الدخول',
+                'copyright': '© 2024 العلوم المفتوحة الليبية •',
+                'developer-portal': 'بوابة المطور',
+                'passwords-no-match': 'كلمات المرور غير متطابقة',
+                'registration-failed': 'فشل إنشاء الحساب',
+                'user-exists': 'يوجد مستخدم بهذا البريد الإلكتروني أو اسم المستخدم بالفعل',
+                'network-error': 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
+                'registration-success': 'تم إنشاء الحساب بنجاح! جاري التوجيه...'
+            }
+        };
+        
         // Theme management
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -359,6 +441,81 @@
             setTheme(newTheme);
         });
 
+        // Language management
+        function initializeLanguage() {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+        }
+
+        function setLanguage(language) {
+            document.documentElement.setAttribute('lang', language);
+            localStorage.setItem('language', language);
+            
+            const languageIcon = document.getElementById('languageIcon');
+            if (language === 'ar') {
+                languageIcon.textContent = 'EN';
+                languageIcon.title = 'Switch to English';
+            } else {
+                languageIcon.textContent = 'عر';
+                languageIcon.title = 'التبديل إلى العربية';
+            }
+            
+            // Apply translations
+            applyTranslations(language);
+            
+            // Save to database if user is authenticated
+            saveLanguagePreference(language);
+        }
+
+        function applyTranslations(language) {
+            const trans = translations[language];
+            
+            // Apply translations to all elements with data-translate attribute
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (trans[key]) {
+                    if (element.tagName === 'INPUT' && element.type !== 'submit') {
+                        element.placeholder = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                    
+                    // Apply minimal RTL styling only for longer text content in Arabic
+                    if (language === 'ar' && trans[key].length > 10) {
+                        element.style.direction = 'rtl';
+                    } else {
+                        element.style.direction = '';
+                    }
+                }
+            });
+        }
+
+        async function saveLanguagePreference(language) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            display_language: language
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving language preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const newLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            setLanguage(newLanguage);
+        });
+
         document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -370,14 +527,16 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             
             if (password !== confirmPassword) {
-                alert('Passwords do not match');
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                alert(translations[currentLanguage]['passwords-no-match']);
                 return;
             }
             
             // Show loading state
             const signupText = document.getElementById('signupText');
             const signupSpinner = document.getElementById('signupSpinner');
-            signupText.textContent = 'Creating account...';
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            signupText.textContent = translations[currentLanguage]['creating-account-btn'];
             signupSpinner.classList.remove('hidden');
             
             try {
@@ -409,18 +568,32 @@
                     throw new Error(data.error || 'Registration failed');
                 }
             } catch (error) {
-                // Show error message
-                alert(error.message);
+                // Show translated error message
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                const trans = translations[currentLanguage];
+                let errorMessage = error.message;
+                
+                // Translate common error messages
+                if (errorMessage.toLowerCase().includes('already exists') || errorMessage.toLowerCase().includes('duplicate')) {
+                    errorMessage = trans['user-exists'];
+                } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+                    errorMessage = trans['network-error'];
+                } else if (!errorMessage || errorMessage === 'Registration failed') {
+                    errorMessage = trans['registration-failed'];
+                }
+                
+                alert(errorMessage);
                 
                 // Reset loading state
-                signupText.textContent = 'Create Account';
+                signupText.textContent = trans['create-account-btn'];
                 signupSpinner.classList.add('hidden');
             }
         });
 
-        // Initialize theme on page load
+        // Initialize theme and language on page load
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
+            initializeLanguage();
         });
     </script>
 </body>

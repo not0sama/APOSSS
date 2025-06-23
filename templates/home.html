@@ -563,13 +563,18 @@
                         >
                     </div>
                     <div>
-                        <h1 class="text-themed-primary text-xl font-bold">Libyan Open Science</h1>
-                        <p class="text-themed-secondary text-sm">Advanced Research Search</p>
+                        <h1 class="text-themed-primary text-xl font-bold" data-translate="site-title">Libyan Open Science</h1>
+                        <p class="text-themed-secondary text-sm" data-translate="site-subtitle">Advanced Research Search</p>
                     </div>
                 </div>
                 
                 <!-- Authentication Buttons -->
                 <div class="flex items-center space-x-4">
+                    <!-- Language Toggle Button -->
+                    <button id="languageToggle" class="theme-toggle p-2 rounded-lg transition-colors" title="Switch Language">
+                        <span id="languageIcon" class="text-sm font-bold">عر</span>
+                    </button>
+                    
                     <!-- Theme Toggle Button -->
                     <button id="themeToggle" class="theme-toggle p-2 rounded-lg transition-colors">
                         <!-- Sun icon for dark mode -->
@@ -591,10 +596,10 @@
                     
                     <!-- Login/Signup Buttons (shown when not authenticated) -->
                     <div id="authButtons" class="flex space-x-3">
-                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2">
+                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2" data-translate="sign-in">
                             Sign In
                         </a>
-                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors font-medium shadow-lg">
+                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors font-medium shadow-lg" data-translate="sign-up">
                             Sign Up
                         </a>
                     </div>
@@ -612,10 +617,10 @@
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-content">
+                    <div class="sidebar-content">
             <!-- Sidebar Header -->
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-bold text-themed-primary">Quick Access</h2>
+                <h2 class="text-xl font-bold text-themed-primary" data-translate="quick-access">Quick Access</h2>
                 <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-themed-primary">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -629,13 +634,13 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 inline mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    History
+                    <span data-translate="history">History</span>
                 </div>
                 <div class="sidebar-tab" onclick="switchSidebarTab('bookmarks')" id="bookmarksTab">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 inline mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
                     </svg>
-                    Bookmarks
+                    <span data-translate="bookmarks">Bookmarks</span>
                 </div>
             </div>
 
@@ -664,10 +669,10 @@
             <!-- Hero Section -->
             <div class="text-center mb-12">
                 <h1 class="text-5xl md:text-6xl font-bold text-themed-primary mb-6 leading-tight">
-                    A free, open-source<br>
-                    <span class="text-blue-600">research repository</span>
+                    <span data-translate="main-title">A free, open-source</span><br>
+                    <span class="text-blue-600" data-translate="main-subtitle">research repository</span>
                 </h1>
-                <p class="text-xl text-themed-secondary mb-8 max-w-2xl mx-auto">
+                <p class="text-xl text-themed-secondary mb-8 max-w-2xl mx-auto" data-translate="main-description">
                     AI-Powered Search • Powered by Experts
                 </p>
             </div>
@@ -681,6 +686,7 @@
                             type="text" 
                             id="searchInput"
                             placeholder="Search for researches, experts, and more"
+                            data-translate="search-placeholder"
                             class="w-full px-6 py-4 pr-16 text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         >
                         <button 
@@ -688,7 +694,7 @@
                             onclick="performSearch()"
                             class="search-btn absolute right-2 top-2 bottom-2 px-6 text-white rounded-lg font-medium flex items-center"
                         >
-                            <span id="searchText">Explore</span>
+                            <span id="searchText" data-translate="explore-btn">Explore</span>
                             <span id="searchSpinner" class="loading ml-2 hidden"></span>
                         </button>
                     </div>
@@ -704,7 +710,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                         </svg>
-                        <span>Experts</span>
+                        <span data-translate="experts">Experts</span>
                     </button>
                     
                     <button 
@@ -715,7 +721,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
-                        <span>Labs</span>
+                        <span data-translate="labs">Labs</span>
                     </button>
                     
                     <button 
@@ -726,7 +732,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                         </svg>
-                        <span>Library</span>
+                        <span data-translate="library">Library</span>
                     </button>
                     
                     <button 
@@ -737,7 +743,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                         </svg>
-                        <span>Funding</span>
+                        <span data-translate="funding">Funding</span>
                     </button>
                     
                     <button 
@@ -748,24 +754,24 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
-                        <span>Papers</span>
+                        <span data-translate="papers">Papers</span>
                     </button>
                 </div>
 
                 <!-- Quick Search Examples -->
                 <div class="mt-8 text-center">
-                    <p class="text-themed-secondary text-sm mb-3">Try searching for:</p>
+                    <p class="text-themed-secondary text-sm mb-3" data-translate="try-searching">Try searching for:</p>
                     <div class="flex flex-wrap justify-center gap-2">
-                        <button onclick="setSearchQuery('machine learning')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors">
+                        <button onclick="setSearchQuery('machine learning')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="machine-learning">
                             machine learning
                         </button>
-                        <button onclick="setSearchQuery('renewable energy')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors">
+                        <button onclick="setSearchQuery('renewable energy')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="renewable-energy">
                             renewable energy
                         </button>
-                        <button onclick="setSearchQuery('medical research')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors">
+                        <button onclick="setSearchQuery('medical research')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="medical-research">
                             medical research
                         </button>
-                        <button onclick="setSearchQuery('climate change')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors">
+                        <button onclick="setSearchQuery('climate change')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="climate-change">
                             climate change
                         </button>
                     </div>
@@ -777,7 +783,7 @@
     <!-- Footer -->
     <footer class="relative z-10 text-center py-8">
         <div class="container mx-auto px-6">
-            <p class="text-themed-secondary text-sm">
+            <p class="text-themed-secondary text-sm" data-translate="copyright">
                 © 2025 Libyan Open Science
             </p>
         </div>
@@ -786,6 +792,106 @@
 
     <script>
         let selectedFilters = new Set();
+        
+        // Translations
+        const translations = {
+            en: {
+                // Header
+                'site-title': 'Libyan Open Science',
+                'site-subtitle': 'Advanced Research Search',
+                'sign-in': 'Sign In',
+                'sign-up': 'Sign Up',
+                
+                // Main content
+                'main-title': 'A free, open-source',
+                'main-subtitle': 'research repository',
+                'main-description': 'AI-Powered Search • Powered by Experts',
+                'search-placeholder': 'Search for researches, experts, and more',
+                'explore-btn': 'Explore',
+                'searching-btn': 'Searching...',
+                
+                // Filter buttons
+                'experts': 'Experts',
+                'labs': 'Labs',
+                'library': 'Library',
+                'funding': 'Funding',
+                'papers': 'Papers',
+                
+                // Quick search
+                'try-searching': 'Try searching for:',
+                'machine-learning': 'machine learning',
+                'renewable-energy': 'renewable energy',
+                'medical-research': 'medical research',
+                'climate-change': 'climate change',
+                
+                // Sidebar
+                'quick-access': 'Quick Access',
+                'history': 'History',
+                'bookmarks': 'Bookmarks',
+                'no-history': 'No search history yet',
+                'no-bookmarks': 'No bookmarks yet',
+                'sign-in-bookmarks': 'Sign in to view bookmarks',
+                
+                // User menu
+                'profile': 'Profile',
+                'dashboard': 'Dashboard',
+                'developer-portal': 'Developer Portal',
+                'dark-mode': 'Dark Mode',
+                'light-mode': 'Light Mode',
+                'logout': 'Logout',
+                
+                // Footer
+                'copyright': '© 2025 Libyan Open Science'
+            },
+            ar: {
+                // Header
+                'site-title': 'منصة العلم المفتوح الليبية',
+                'site-subtitle': 'بحث علمي متقدم',
+                'sign-in': 'تسجيل الدخول',
+                'sign-up': 'إنشاء حساب',
+                
+                // Main content
+                'main-title': 'مستودع أبحاث مجاني',
+                'main-subtitle': 'ومفتوح المصدر',
+                'main-description': 'بحث مدعوم بالذكاء الاصطناعي • مدعوم بالخبراء',
+                'search-placeholder': 'ابحث عن الأبحاث والخبراء والمزيد',
+                'explore-btn': 'استكشف',
+                'searching-btn': 'جاري البحث...',
+                
+                // Filter buttons
+                'experts': 'الخبراء',
+                'labs': 'المختبرات',
+                'library': 'المكتبة',
+                'funding': 'التمويل',
+                'papers': 'الأوراق البحثية',
+                
+                // Quick search
+                'try-searching': 'جرب البحث عن:',
+                'machine-learning': 'تعلم الآلة',
+                'renewable-energy': 'الطاقة المتجددة',
+                'medical-research': 'البحوث الطبية',
+                'climate-change': 'تغير المناخ',
+                
+                // Sidebar
+                'quick-access': 'الوصول السريع',
+                'history': 'التاريخ',
+                'bookmarks': 'المفضلة',
+                'no-history': 'لا يوجد تاريخ بحث بعد',
+                'no-bookmarks': 'لا توجد مفضلة بعد',
+                'sign-in-bookmarks': 'قم بتسجيل الدخول لعرض المفضلة',
+                
+                // User menu
+                'profile': 'الملف الشخصي',
+                'dashboard': 'لوحة التحكم',
+                'developer-portal': 'بوابة المطور',
+                'dark-mode': 'الوضع المظلم',
+                'light-mode': 'الوضع المضيء',
+                'logout': 'تسجيل الخروج',
+                
+                // Footer
+                'copyright': '© 2025 العلوم المفتوحة الليبية'
+            }
+        };
         
         // Theme management
         function initializeTheme() {
@@ -866,6 +972,103 @@
             setTheme(newTheme);
         });
         
+        // Language management
+        function initializeLanguage() {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+            loadUserLanguagePreference();
+        }
+
+        function setLanguage(language) {
+            document.documentElement.setAttribute('lang', language);
+            localStorage.setItem('language', language);
+            
+            const languageIcon = document.getElementById('languageIcon');
+            if (language === 'ar') {
+                languageIcon.textContent = 'EN';
+                languageIcon.title = 'Switch to English';
+            } else {
+                languageIcon.textContent = 'عر';
+                languageIcon.title = 'التبديل إلى العربية';
+            }
+            
+            // Apply translations
+            applyTranslations(language);
+            
+            // Save to database if user is authenticated
+            saveLanguagePreference(language);
+        }
+
+        function applyTranslations(language) {
+            const trans = translations[language];
+            
+            // Apply translations to all elements with data-translate attribute
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (trans[key]) {
+                    if (element.tagName === 'INPUT' && element.type !== 'submit') {
+                        element.placeholder = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                    
+                    // Apply minimal RTL styling only for longer text content in Arabic
+                    if (language === 'ar' && trans[key].length > 10) {
+                        element.style.direction = 'rtl';
+                    } else {
+                        element.style.direction = '';
+                    }
+                }
+            });
+        }
+
+        async function saveLanguagePreference(language) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            display_language: language
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving language preference:', error);
+                }
+            }
+        }
+
+        async function loadUserLanguagePreference() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('/api/user/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success && data.preferences.ui_preferences && data.preferences.ui_preferences.display_language) {
+                        setLanguage(data.preferences.ui_preferences.display_language);
+                    }
+                } catch (error) {
+                    console.error('Error loading language preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const newLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            setLanguage(newLanguage);
+        });
+        
         function toggleFilter(button) {
             const filter = button.dataset.filter;
             
@@ -890,12 +1093,14 @@
             if (show) {
                 btn.disabled = true;
                 btn.classList.add('opacity-75');
-                text.textContent = 'Searching...';
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                text.textContent = translations[currentLanguage]['searching-btn'];
                 spinner.classList.remove('hidden');
             } else {
                 btn.disabled = false;
                 btn.classList.remove('opacity-75');
-                text.textContent = 'Explore';
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                text.textContent = translations[currentLanguage]['explore-btn'];
                 spinner.classList.add('hidden');
             }
         }
@@ -1102,19 +1307,19 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                             </svg>
-                            Profile
+                            <span data-translate="profile">Profile</span>
                         </button>
                         <button onclick="goToDashboard(event)" class="user-menu-item">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                             </svg>
-                            Dashboard
+                            <span data-translate="dashboard">Dashboard</span>
                         </button>
                         <button onclick="goToDeveloperPortal(event)" class="user-menu-item">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
                             </svg>
-                            Developer Portal
+                            <span data-translate="developer-portal">Developer Portal</span>
                         </button>
                         <div class="user-menu-separator"></div>
                         <button onclick="toggleTheme(event)" class="user-menu-item" id="themeToggleMenuItem">
@@ -1128,7 +1333,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                             </svg>
-                            Logout
+                            <span data-translate="logout">Logout</span>
                         </button>
                     </div>
                 `;
@@ -1791,7 +1996,8 @@
                         </div>
                     `).join('');
                 } else {
-                    historyContainer.innerHTML = '<div class="sidebar-empty">No search history yet</div>';
+                    const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                    historyContainer.innerHTML = `<div class="sidebar-empty">${translations[currentLanguage]['no-history']}</div>`;
                 }
             } catch (error) {
                 console.error('Error loading sidebar history:', error);
@@ -1804,7 +2010,8 @@
             const currentUser = getCurrentUser();
             
             if (!currentUser) {
-                bookmarksContainer.innerHTML = '<div class="sidebar-empty">Sign in to view bookmarks</div>';
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                bookmarksContainer.innerHTML = `<div class="sidebar-empty">${translations[currentLanguage]['sign-in-bookmarks']}</div>`;
                 return;
             }
             
@@ -1841,7 +2048,8 @@
                         </div>
                     `).join('');
                 } else {
-                    bookmarksContainer.innerHTML = '<div class="sidebar-empty">No bookmarks yet</div>';
+                    const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                    bookmarksContainer.innerHTML = `<div class="sidebar-empty">${translations[currentLanguage]['no-bookmarks']}</div>`;
                 }
             } catch (error) {
                 console.error('Error loading sidebar bookmarks:', error);
@@ -1946,6 +2154,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 initializeTheme();
+                initializeLanguage();
                 initializeSidebar();
                 checkAuthenticationStatus();
             } catch (error) {

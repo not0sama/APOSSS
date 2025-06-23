@@ -1091,7 +1091,10 @@ def get_user_preferences():
         if not user_prefs:
             # Return default preferences
             default_prefs = {
-                'theme_preference': 'light',
+                'ui_preferences': {
+                    'theme_preference': 'light',
+                    'display_language': 'en'
+                },
                 'search_preferences': {
                     'preferred_resource_types': [],
                     'preferred_databases': [],
@@ -1114,7 +1117,10 @@ def get_user_preferences():
         return jsonify({
             'success': True,
             'preferences': {
-                'theme_preference': user_prefs.get('theme_preference', 'light'),
+                'ui_preferences': user_prefs.get('ui_preferences', {
+                    'theme_preference': 'light',
+                    'display_language': 'en'
+                }),
                 'search_preferences': user_prefs.get('search_preferences', {}),
                 'ranking_preferences': user_prefs.get('ranking_preferences', {})
             }
@@ -1149,7 +1155,16 @@ def update_user_preferences():
         if 'theme_preference' in data:
             if data['theme_preference'] not in ['light', 'dark']:
                 return jsonify({'error': 'Invalid theme preference. Must be "light" or "dark"'}), 400
-            update_data['theme_preference'] = data['theme_preference']
+            if 'ui_preferences' not in update_data:
+                update_data['ui_preferences'] = {}
+            update_data['ui_preferences']['theme_preference'] = data['theme_preference']
+        
+        if 'display_language' in data:
+            if data['display_language'] not in ['en', 'ar']:
+                return jsonify({'error': 'Invalid language preference. Must be "en" or "ar"'}), 400
+            if 'ui_preferences' not in update_data:
+                update_data['ui_preferences'] = {}
+            update_data['ui_preferences']['display_language'] = data['display_language']
         
         if 'search_preferences' in data:
             update_data['search_preferences'] = data['search_preferences']
