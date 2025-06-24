@@ -61,7 +61,12 @@ def get_current_user():
             if user_manager:
                 verification = user_manager.verify_token(token)
                 if verification['success']:
-                    return verification['user']
+                    user = verification['user']
+                    # Ensure user is not marked as anonymous
+                    user['is_anonymous'] = False
+                    return user
+                else:
+                    logger.warning(f"Token verification failed: {verification.get('error', 'Unknown error')}")
         
         # Check for user_id in request data (for anonymous users)
         if request.is_json:
@@ -780,6 +785,61 @@ def delete_profile_picture():
             
     except Exception as e:
         logger.error(f"Error deleting profile picture: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/send-verification-code', methods=['POST'])
+def send_verification_code():
+    """Send email verification code to user"""
+    try:
+        current_user = get_current_user()
+        logger.info(f"Send verification code - current_user: {current_user}")
+        
+        if not current_user or current_user.get('is_anonymous', True):
+            logger.warning(f"Authentication failed - user: {current_user}")
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        result = user_manager.send_verification_code(current_user['user_id'])
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in send verification code endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/verify-email', methods=['POST'])
+def verify_email():
+    """Verify user email with verification code"""
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user.get('is_anonymous', True):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'verification_code' not in data:
+            return jsonify({'error': 'Verification code required'}), 400
+        
+        verification_code = data['verification_code'].strip()
+        if not verification_code or len(verification_code) != 6:
+            return jsonify({'error': 'Invalid verification code format'}), 400
+        
+        result = user_manager.verify_email_code(current_user['user_id'], verification_code)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in verify email endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/search', methods=['POST'])

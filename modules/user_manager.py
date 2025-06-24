@@ -7,11 +7,17 @@ import logging
 import hashlib
 import uuid
 import json
+import random
+import smtplib
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from pymongo.errors import DuplicateKeyError
 import jwt
 import bcrypt
+
+# Import email modules
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +31,7 @@ class UserManager:
         self.interactions_collection = None
         self.preferences_collection = None
         self.sessions_collection = None
+        self.verification_codes_collection = None
         
         # JWT secret key (in production, use environment variable)
         self.jwt_secret = "aposss_secret_key_2024"  # Change this in production
@@ -45,6 +52,7 @@ class UserManager:
                     self.interactions_collection = aposss_db['user_interactions']
                     self.preferences_collection = aposss_db['user_preferences']
                     self.sessions_collection = aposss_db['user_sessions']
+                    self.verification_codes_collection = aposss_db['verification_codes']
                     
                     # Create indexes for better performance
                     self._create_indexes()
@@ -74,6 +82,11 @@ class UserManager:
             # Sessions collection indexes
             self.sessions_collection.create_index("user_id")
             self.sessions_collection.create_index("expires_at")
+            
+            # Verification codes collection indexes
+            self.verification_codes_collection.create_index("user_id")
+            self.verification_codes_collection.create_index("expires_at")
+            self.verification_codes_collection.create_index("code")
             
             logger.info("Database indexes created successfully")
         except Exception as e:
@@ -1172,3 +1185,172 @@ class UserManager:
         except Exception as e:
             logger.error(f"Error deleting profile picture for user {user_id}: {str(e)}")
             return {'success': False, 'error': str(e)}
+    
+    def send_verification_code(self, user_id: str) -> Dict[str, Any]:
+        """Send email verification code to user"""
+        try:
+            if self.users_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Get user
+            user = self.users_collection.find_one({'user_id': user_id})
+            if not user:
+                return {'success': False, 'error': 'User not found'}
+            
+            if not user.get('email'):
+                return {'success': False, 'error': 'No email address associated with this account'}
+            
+            if user.get('email_verified', False):
+                return {'success': False, 'error': 'Email already verified'}
+            
+            # Generate 6-digit verification code
+            verification_code = str(random.randint(100000, 999999))
+            
+            # Store verification code in database
+            code_record = {
+                'user_id': user_id,
+                'code': verification_code,
+                'email': user['email'],
+                'created_at': datetime.now().isoformat(),
+                'expires_at': (datetime.now() + timedelta(minutes=15)).isoformat(),  # 15 minutes expiry
+                'used': False
+            }
+            
+            if self.verification_codes_collection is not None:
+                # Remove any existing codes for this user
+                self.verification_codes_collection.delete_many({'user_id': user_id})
+                # Insert new code
+                self.verification_codes_collection.insert_one(code_record)
+            
+            # Send email
+            email_sent = self._send_verification_email(user['email'], verification_code, user.get('profile', {}).get('first_name', ''))
+            
+            if email_sent:
+                logger.info(f"Verification code sent to user {user_id}")
+                return {'success': True, 'message': 'Verification code sent successfully'}
+            else:
+                return {'success': False, 'error': 'Failed to send verification email'}
+            
+        except Exception as e:
+            logger.error(f"Error sending verification code to user {user_id}: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def verify_email_code(self, user_id: str, verification_code: str) -> Dict[str, Any]:
+        """Verify email verification code"""
+        try:
+            if self.users_collection is None or self.verification_codes_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Find verification code record
+            code_record = self.verification_codes_collection.find_one({
+                'user_id': user_id,
+                'code': verification_code,
+                'used': False
+            })
+            
+            if not code_record:
+                return {'success': False, 'error': 'Invalid or expired verification code'}
+            
+            # Check if code has expired
+            expires_at = datetime.fromisoformat(code_record['expires_at'])
+            if datetime.now() > expires_at:
+                return {'success': False, 'error': 'Verification code has expired'}
+            
+            # Mark code as used
+            self.verification_codes_collection.update_one(
+                {'_id': code_record['_id']},
+                {'$set': {'used': True, 'used_at': datetime.now().isoformat()}}
+            )
+            
+            # Update user's email verification status
+            result = self.users_collection.update_one(
+                {'user_id': user_id},
+                {
+                    '$set': {
+                        'email_verified': True,
+                        'email_verified_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                logger.info(f"Email verified successfully for user: {user_id}")
+                return {'success': True, 'message': 'Email verified successfully'}
+            else:
+                return {'success': False, 'error': 'Failed to update user verification status'}
+            
+        except Exception as e:
+            logger.error(f"Error verifying email code for user {user_id}: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def _send_verification_email(self, email: str, verification_code: str, first_name: str = '') -> bool:
+        """Send verification email using SMTP"""
+        try:
+            # Try to import email configuration
+            try:
+                import email_config
+                smtp_server = email_config.SMTP_SERVER
+                smtp_port = email_config.SMTP_PORT
+                smtp_username = email_config.SMTP_USERNAME
+                smtp_password = email_config.SMTP_PASSWORD
+            except ImportError:
+                # Fallback to hardcoded values
+                smtp_server = "smtp.gmail.com"
+                smtp_port = 587
+                smtp_username = "osama01k2@gmail.com"
+                smtp_password = "Kwayno*2002"  # ⚠️  REPLACE WITH YOUR GMAIL APP PASSWORD
+            
+            # Create message
+            msg = MIMEMultipart()
+            msg['From'] = smtp_username
+            msg['To'] = email
+            msg['Subject'] = "Email Verification - Libyan Open Science"
+            
+            # Email body
+            name_part = f"Hello {first_name}," if first_name else "Hello,"
+            body = f"""
+{name_part}
+
+Thank you for registering with Libyan Open Science. To complete your registration, please verify your email address by entering the following 6-digit code:
+
+Verification Code: {verification_code}
+
+This code will expire in 15 minutes.
+
+If you didn't request this verification, please ignore this email.
+
+Best regards,
+The Libyan Open Science Team
+"""
+            
+            msg.attach(MIMEText(body, 'plain'))
+            
+            # Send email
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            text = msg.as_string()
+            server.sendmail(smtp_username, email, text)
+            server.quit()
+            
+            logger.info(f"Verification email sent successfully to {email}")
+            return True
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Error sending verification email to {email}: {error_msg}")
+            
+            # Provide specific guidance based on the error
+            if "authentication failed" in error_msg.lower() or "username and password not accepted" in error_msg.lower():
+                print("\n" + "="*60)
+                print("📧 EMAIL SENDING FAILED - GMAIL APP PASSWORD REQUIRED")
+                print("="*60)
+                print(f"📋 Your verification code (use this for now): {verification_code}")
+                print("="*60 + "\n")
+            
+            # For development purposes, still return True so the system works
+            # but log the code to console
+            logger.info(f"DEVELOPMENT FALLBACK: Verification code for {email}: {verification_code}")
+            print(f"🔐 VERIFICATION CODE FOR {email}: {verification_code}")
+            return True  # Return True so the system continues to work

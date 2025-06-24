@@ -732,6 +732,77 @@
         </div>
     </header>
 
+    <!-- Email Verification Notification -->
+    <div id="emailVerificationBanner" class="bg-yellow-500 text-white px-6 py-3 text-center" style="display: none;">
+        <div class="container mx-auto flex items-center justify-center space-x-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span data-translate="email-not-verified">Your email address is not verified.</span>
+            <button onclick="showEmailVerificationPopup()" class="bg-white text-yellow-600 px-4 py-1 rounded-lg font-medium hover:bg-yellow-50 transition-colors" data-translate="verify-now">
+                Verify Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Email Verification Popup -->
+    <div id="emailVerificationPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display: none;">
+        <div class="bg-themed-card rounded-lg max-w-md w-full overflow-hidden">
+            <div class="p-6 border-b" style="border-color: var(--container-border);">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-themed-primary" data-translate="verify-email">Verify Your Email</h3>
+                    <button onclick="closeEmailVerificationPopup()" class="text-themed-secondary hover:text-themed-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-blue-600">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                    </div>
+                    <p class="text-themed-secondary mb-4" data-translate="verification-sent">
+                        We've sent a 6-digit verification code to your email address.
+                    </p>
+                    <p class="text-sm text-themed-secondary" id="verificationEmailAddress"></p>
+                </div>
+                
+                <form id="emailVerificationForm" class="space-y-4">
+                    <div class="form-group">
+                        <label class="form-label text-center block mb-4" data-translate="enter-verification-code">
+                            Enter the 6-digit verification code
+                        </label>
+                        <div class="flex justify-center space-x-2 mb-4">
+                            <input type="text" id="digit1" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit2')" onkeydown="moveToPrev(this, null)">
+                            <input type="text" id="digit2" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit3')" onkeydown="moveToPrev(this, 'digit1')">
+                            <input type="text" id="digit3" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit4')" onkeydown="moveToPrev(this, 'digit2')">
+                            <input type="text" id="digit4" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit5')" onkeydown="moveToPrev(this, 'digit3')">
+                            <input type="text" id="digit5" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit6')" onkeydown="moveToPrev(this, 'digit4')">
+                            <input type="text" id="digit6" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, null)" onkeydown="moveToPrev(this, 'digit5')">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary w-full" id="verifyCodeBtn">
+                        <span data-translate="verify-email-button">Verify Email</span>
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <button onclick="resendVerificationCode()" class="text-blue-600 hover:text-blue-800 text-sm" id="resendBtn" data-translate="resend-code">
+                        Resend Code
+                    </button>
+                    <div id="resendTimer" class="text-sm text-themed-secondary mt-2" style="display: none;">
+                        <span data-translate="resend-timer">Resend available in</span> <span id="timerSeconds">60</span> <span data-translate="seconds">seconds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main class="container mx-auto px-6 py-8 max-w-7xl">
         <!-- Profile Header -->
         <div class="profile-section mb-8">
@@ -1063,7 +1134,18 @@
                 'export-data': 'Export My Data',
                 'remove-profile-picture': 'Remove Profile Picture',
                 'delete-account': 'Delete Account',
-                'account-status': 'Account Status'
+                'account-status': 'Account Status',
+                
+                // Email verification
+                'email-not-verified': 'Your email address is not verified.',
+                'verify-now': 'Verify Now',
+                'verify-email': 'Verify Your Email',
+                'verification-sent': 'We\'ve sent a 6-digit verification code to your email address.',
+                'enter-verification-code': 'Enter the 6-digit verification code',
+                'verify-email-button': 'Verify Email',
+                'resend-code': 'Resend Code',
+                'resend-timer': 'Resend available in',
+                'seconds': 'seconds'
             },
             ar: {
                 // Header
@@ -1129,7 +1211,18 @@
                 'export-data': 'تصدير بياناتي',
                 'remove-profile-picture': 'إزالة صورة الملف الشخصي',
                 'delete-account': 'حذف الحساب',
-                'account-status': 'حالة الحساب'
+                'account-status': 'حالة الحساب',
+                
+                // Email verification
+                'email-not-verified': 'عنوان بريدك الإلكتروني غير مؤكد.',
+                'verify-now': 'تأكيد الآن',
+                'verify-email': 'تأكيد بريدك الإلكتروني',
+                'verification-sent': 'لقد أرسلنا رمز تحقق مكون من 6 أرقام إلى عنوان بريدك الإلكتروني.',
+                'enter-verification-code': 'أدخل رمز التحقق المكون من 6 أرقام',
+                'verify-email-button': 'تأكيد البريد الإلكتروني',
+                'resend-code': 'إعادة إرسال الرمز',
+                'resend-timer': 'إعادة الإرسال متاحة خلال',
+                'seconds': 'ثانية'
             }
         };
         
@@ -1311,6 +1404,12 @@
             const userData = localStorage.getItem('userData');
             const userMode = localStorage.getItem('userMode');
             
+            console.log('Authentication check:', {
+                hasToken: !!token,
+                hasUserData: !!userData,
+                userMode: userMode
+            });
+            
             if (token && userData && userMode === 'authenticated') {
                 // Verify token is still valid
                 fetch('/api/auth/verify', {
@@ -1322,12 +1421,15 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Token verification result:', data);
                     if (data.success) {
                         currentUser = JSON.parse(userData);
+                        console.log('Current user loaded:', currentUser.email);
                         showUserInfo(currentUser);
                         loadUserProfile();
                         loadUserThemePreference();
                     } else {
+                        console.error('Token verification failed:', data.error);
                         showLoginButtons();
                         window.location.href = '/login';
                     }
@@ -1338,6 +1440,7 @@
                     window.location.href = '/login';
                 });
             } else {
+                console.log('Missing authentication data, redirecting to login');
                 showLoginButtons();
                 window.location.href = '/login';
             }
@@ -1727,6 +1830,9 @@
 
                 // Load account status
                 loadAccountStatus();
+                
+                // Check email verification status
+                checkEmailVerificationStatus();
 
             } catch (error) {
                 console.error('Error loading profile:', error);
@@ -2040,6 +2146,205 @@
                 showTemporaryMessage('Account deletion functionality coming soon', 'info');
             }
         }
+
+        // Email verification functionality
+        let resendTimer = null;
+        
+        function checkEmailVerificationStatus() {
+            if (currentUser && !currentUser.email_verified) {
+                document.getElementById('emailVerificationBanner').style.display = 'block';
+            }
+        }
+        
+        function showEmailVerificationPopup() {
+            if (!currentUser || !currentUser.email) {
+                showTemporaryMessage('No email address found', 'error');
+                return;
+            }
+            
+            // Set email address in popup
+            document.getElementById('verificationEmailAddress').textContent = currentUser.email;
+            
+            // Clear previous input
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`digit${i}`).value = '';
+            }
+            
+            // Show popup
+            document.getElementById('emailVerificationPopup').style.display = 'flex';
+            
+            // Focus first input
+            document.getElementById('digit1').focus();
+            
+            // Send verification code
+            sendVerificationCode();
+        }
+        
+        function closeEmailVerificationPopup() {
+            document.getElementById('emailVerificationPopup').style.display = 'none';
+            // Clear any timers
+            if (resendTimer) {
+                clearInterval(resendTimer);
+                resendTimer = null;
+            }
+        }
+        
+        async function sendVerificationCode() {
+            try {
+                const token = localStorage.getItem('authToken');
+                console.log('Auth token check:', token ? 'Token exists' : 'No token found');
+                
+                if (!token) {
+                    showTemporaryMessage('Please login first to verify your email', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                    return;
+                }
+                
+                const response = await fetch('/api/user/send-verification-code', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    showTemporaryMessage('Verification code sent to your email', 'success');
+                    startResendTimer();
+                } else {
+                    throw new Error(data.error || 'Failed to send verification code');
+                }
+            } catch (error) {
+                console.error('Error sending verification code:', error);
+                showTemporaryMessage('Error sending verification code: ' + error.message, 'error');
+            }
+        }
+        
+        function startResendTimer() {
+            const resendBtn = document.getElementById('resendBtn');
+            const resendTimerDiv = document.getElementById('resendTimer');
+            const timerSeconds = document.getElementById('timerSeconds');
+            
+            resendBtn.style.display = 'none';
+            resendTimerDiv.style.display = 'block';
+            
+            let seconds = 60;
+            timerSeconds.textContent = seconds;
+            
+            resendTimer = setInterval(() => {
+                seconds--;
+                timerSeconds.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(resendTimer);
+                    resendTimer = null;
+                    resendBtn.style.display = 'inline-block';
+                    resendTimerDiv.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
+        function resendVerificationCode() {
+            sendVerificationCode();
+        }
+        
+        function moveToNext(current, nextId) {
+            if (current.value.length === 1) {
+                // Only allow digits
+                if (!/^[0-9]$/.test(current.value)) {
+                    current.value = '';
+                    return;
+                }
+                
+                if (nextId) {
+                    document.getElementById(nextId).focus();
+                } else {
+                    // All digits entered, try to submit
+                    submitVerificationCode();
+                }
+            }
+        }
+        
+        function moveToPrev(current, prevId) {
+            if (event.key === 'Backspace' && current.value === '' && prevId) {
+                document.getElementById(prevId).focus();
+            }
+        }
+        
+        async function submitVerificationCode() {
+            const digits = [];
+            for (let i = 1; i <= 6; i++) {
+                const digit = document.getElementById(`digit${i}`).value;
+                if (!digit) {
+                    showTemporaryMessage('Please enter all 6 digits', 'error');
+                    return;
+                }
+                digits.push(digit);
+            }
+            
+            const code = digits.join('');
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/verify-email', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        verification_code: code
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Email verified successfully!', 'success');
+                    
+                    // Update current user data
+                    currentUser.email_verified = true;
+                    localStorage.setItem('userData', JSON.stringify(currentUser));
+                    
+                    // Hide banner and popup
+                    document.getElementById('emailVerificationBanner').style.display = 'none';
+                    closeEmailVerificationPopup();
+                    
+                    // Reload account status
+                    loadAccountStatus();
+                } else {
+                    showTemporaryMessage(data.error || 'Invalid verification code', 'error');
+                    
+                    // Clear inputs and focus first one
+                    for (let i = 1; i <= 6; i++) {
+                        document.getElementById(`digit${i}`).value = '';
+                    }
+                    document.getElementById('digit1').focus();
+                }
+            } catch (error) {
+                console.error('Error verifying email:', error);
+                showTemporaryMessage('Error verifying email: ' + error.message, 'error');
+            }
+        }
+        
+        // Email verification form submission
+        document.getElementById('emailVerificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitVerificationCode();
+        });
+        
+        // Close popup when clicking outside
+        document.getElementById('emailVerificationPopup').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEmailVerificationPopup();
+            }
+        });
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
