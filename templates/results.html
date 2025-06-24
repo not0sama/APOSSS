@@ -400,79 +400,256 @@
             min-height: 200px;
         }
         
-        /* Quarters layout for sections mode */
-        .sections-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 1rem;
-            height: calc(100vh - 200px);
-            min-height: 800px;
+        /* Gallery layout with sidebar squares */
+        .sections-container {
+            display: flex;
+            gap: 1.5rem;
+            max-width: 100%;
+            min-height: 70vh;
         }
         
-        .quarter-section {
+        /* Main content area (left side) */
+        .main-section-area {
+            flex: 1;
+            min-width: 0; /* Allow flex item to shrink */
+        }
+        
+        /* Right sidebar for minimized sections */
+        .sections-sidebar {
+            width: 200px;
             display: flex;
             flex-direction: column;
+            gap: 1rem;
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+        
+        /* Expanded section styling */
+        .database-section.expanded {
+            background: var(--card-bg);
+            border: 2px solid #3b82f6;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            position: relative;
+            width: 100%;
+        }
+        
+        /* Minimized sections as squares */
+        .database-section.minimized {
+            width: 100%;
+            height: 120px;
+            background: var(--card-bg);
+            border: 1px solid var(--container-border);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .database-section.minimized:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 16px var(--shadow-color);
+            border-color: #3b82f6;
+        }
+        
+        /* Expanded section header */
+        .database-section.expanded .section-header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--card-bg));
+            border-bottom: 1px solid var(--container-border);
+            padding: 1rem 1.5rem;
+            margin-bottom: 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        /* Minimized section header (square format) */
+        .database-section.minimized .section-header {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+            padding: 0.75rem;
+            border-bottom: none;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
             overflow: hidden;
         }
         
-        .quarter-section .section-header {
-            border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
+        /* Expanded section title row */
+        .database-section.expanded .section-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .database-section.expanded .section-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .database-section.expanded .section-indicator {
+            width: 4px;
+            height: 2.5rem;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 2px;
             flex-shrink: 0;
         }
         
-        [data-theme="dark"] .quarter-section .section-header {
-            border-bottom-color: #374151;
+        .database-section.expanded .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
         }
         
-        .quarter-section .section-filters {
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            flex-shrink: 0;
+        /* Minimized section content (square format) */
+        .database-section.minimized .section-title-row {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
         
-        /* Header filters styling */
-        .header-filters {
+        .database-section.minimized .section-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .database-section.minimized .section-indicator {
+            display: none; /* Hide in minimized squares */
+        }
+        
+        .database-section.minimized .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .database-section.expanded .section-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .database-section.expanded .section-count {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            min-width: 2rem;
+            text-align: center;
+        }
+        
+        /* Minimized section meta (for squares) */
+        .database-section.minimized .section-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .database-section.minimized .section-count {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Remove toggle icons for new layout */
+        
+        /* Header filters styling - only for expanded sections */
+        .database-section.expanded .header-filters {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.25rem;
+            gap: 0.5rem;
             align-items: center;
         }
         
-        .header-filters .filter-toggle {
-            font-size: 0.625rem;
-            padding: 0.25rem 0.5rem;
-            white-space: nowrap;
-        }
-        
-        .quarter-section .section-results {
-            flex: 1;
-            overflow-y: auto;
-            min-height: 0;
-        }
-        
-        .quarter-section h2 {
-            font-size: 1.25rem;
-            line-height: 1.75rem;
-        }
-        
-        .quarter-section .filter-toggle {
+        .database-section.expanded .header-filters .filter-toggle {
             font-size: 0.75rem;
             padding: 0.375rem 0.75rem;
+            white-space: nowrap;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
         }
         
-        /* Compact result cards for sections mode */
+        .database-section.expanded .header-filters .filter-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Hide filters completely in minimized state */
+        .database-section.minimized .header-filters {
+            display: none;
+        }
+        
+        /* Results area - only for expanded sections */
+        .database-section.expanded .section-results {
+            padding: 1.5rem;
+            min-height: auto;
+        }
+        
+        /* Hide results in minimized state */
+        .database-section.minimized .section-results {
+            display: none;
+        }
+        
+        /* Database icons for minimized squares */
+        .database-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+            opacity: 0.9;
+        }
+        
+        /* Enhanced result cards for sections mode */
         .result-card.compact {
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .result-card.compact:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px var(--shadow-color);
         }
         
         .result-card.compact h3 {
-            font-size: 1rem;
-            line-height: 1.25rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+            line-height: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
         }
         
         .result-card.compact .collapsed-view {
@@ -480,12 +657,15 @@
         }
         
         .result-card.compact .score-bar {
-            height: 4px;
+            height: 5px;
+            border-radius: 2.5px;
         }
         
         .result-card.compact .result-type-badge {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
+            font-size: 0.6875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
         }
         
         .result-card.compact .line-clamp-3 {
@@ -493,8 +673,9 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            font-size: 0.875rem;
-            line-height: 1.25rem;
+            font-size: 0.9375rem;
+            line-height: 1.4rem;
+            color: var(--text-secondary);
         }
         
         /* Hide description in compact mode */
@@ -502,29 +683,123 @@
             display: none;
         }
         
-        /* Responsive adjustments for quarters */
+        /* Empty state styling */
+        .section-empty {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .section-empty svg {
+            opacity: 0.5;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Content indicators */
+        .database-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid #10b981;
+            border-top: 15px solid #10b981;
+            border-bottom: 15px solid transparent;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .database-section.has-content::before {
+            opacity: 1;
+        }
+        
+        .database-section.expanded::before {
+            border-right-color: #3b82f6;
+            border-top-color: #3b82f6;
+        }
+        
+        /* Responsive design */
         @media (max-width: 1024px) {
-            .sections-grid {
-                grid-template-columns: 1fr;
-                grid-template-rows: repeat(4, 1fr);
-                gap: 0.75rem;
-                height: auto;
-                min-height: auto;
+            .sections-container {
+                flex-direction: column;
+                gap: 1rem;
             }
             
-            .quarter-section {
-                min-height: 400px;
+            .sections-sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                position: static;
+                order: -1; /* Move sidebar to top on mobile */
+                padding-bottom: 0.5rem;
+            }
+            
+            .database-section.minimized {
+                width: 110px;
+                height: 100px;
+                flex-shrink: 0;
+            }
+            
+            .database-section.minimized .section-title {
+                font-size: 0.75rem;
+            }
+            
+            .main-section-area {
+                width: 100%;
             }
         }
         
-        @media (max-width: 768px) {
-            .sections-grid {
-                gap: 0.5rem;
+                @media (max-width: 768px) {
+            .database-section.minimized {
+                width: 90px;
+                height: 80px;
             }
-            
-            .quarter-section {
-                min-height: 350px;
+
+            .database-section.minimized .section-title {
+                font-size: 0.625rem;
+                line-height: 1.1;
             }
+
+            .database-section.minimized .section-count {
+                font-size: 0.625rem;
+                min-width: 1.25rem;
+                height: 1.25rem;
+            }
+
+            .database-section.expanded .section-results {
+                padding: 1rem;
+            }
+        }
+        
+        /* Animation for section loading */
+        @keyframes sectionFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .database-section {
+            animation: sectionFadeIn 0.3s ease-out;
+        }
+        
+        /* Priority indicators */
+        .section-priority-high {
+            border-left: 4px solid #10b981;
+        }
+        
+        .section-priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .section-priority-low {
+            border-left: 4px solid #6b7280;
         }
     </style>
 </head>
@@ -812,6 +1087,9 @@
             'laboratories': 'top_results',
             'research_papers': 'top_results'
         };
+        
+        // Gallery state management
+        let currentActiveSection = null;
 
         // Section configurations
         const sectionConfigs = {
@@ -1565,18 +1843,55 @@
                 resultsByDatabase[db].sort((a, b) => (b.ranking_score || 0) - (a.ranking_score || 0));
             });
             
-            let sectionsHTML = '';
+            let expandedSectionHTML = '';
+            let minimizedSectionsHTML = '';
+            let firstSectionKey = null;
+            
+            // Prioritize Academic Library as default section
+            let academicLibraryHasResults = false;
             
             Object.keys(sectionConfigs).forEach(dbKey => {
                 const config = sectionConfigs[dbKey];
                 const dbResults = resultsByDatabase[dbKey] || [];
                 
                 if (dbResults.length > 0) {
-                    sectionsHTML += createDatabaseSection(dbKey, config, dbResults);
+                    if (dbKey === 'academic_library') {
+                        academicLibraryHasResults = true;
+                    }
+                    if (!firstSectionKey) {
+                        firstSectionKey = dbKey;
+                    }
+                    minimizedSectionsHTML += createMinimizedSection(dbKey, config, dbResults);
                 }
             });
             
-            container.innerHTML = `<div class="sections-grid">${sectionsHTML}</div>`;
+            // Set default section to Academic Library if it has results, otherwise use first available
+            const defaultSectionKey = academicLibraryHasResults ? 'academic_library' : firstSectionKey;
+            
+            if (defaultSectionKey) {
+                const config = sectionConfigs[defaultSectionKey];
+                const dbResults = resultsByDatabase[defaultSectionKey] || [];
+                expandedSectionHTML = createExpandedSection(defaultSectionKey, config, dbResults);
+            }
+            
+            container.innerHTML = `
+                <div class="sections-container">
+                    <div class="main-section-area">
+                        ${expandedSectionHTML || '<div class="text-center py-12 text-themed-secondary">No results to display</div>'}
+                    </div>
+                    <div class="sections-sidebar">
+                        ${minimizedSectionsHTML}
+                    </div>
+                </div>
+            `;
+            
+            // Set the current active section
+            currentActiveSection = defaultSectionKey;
+            
+            // Update minimized sections to show the correct highlighting
+            setTimeout(() => {
+                updateMinimizedSections();
+            }, 100);
         }
         
         function displayAllResults() {
@@ -1614,7 +1929,7 @@
             updateSearchSummary(startIndex + 1, endIndex, totalResults);
         }
         
-        function createDatabaseSection(dbKey, config, dbResults) {
+        function createExpandedSection(dbKey, config, dbResults) {
             const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
             const trans = translations[currentLanguage];
             
@@ -1635,7 +1950,7 @@
             // Create filter buttons
             let filterButtonsHTML = `
                 <button onclick="setSectionFilter('${dbKey}', 'top_results')" 
-                        class="filter-toggle ${sectionFilter === 'top_results' ? 'active' : ''} px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                        class="filter-toggle ${sectionFilter === 'top_results' ? 'active' : ''}">
                     <span data-translate="top-results">${trans['top-results']}</span>
                 </button>
             `;
@@ -1646,7 +1961,7 @@
                 if (hasResults) {
                     filterButtonsHTML += `
                         <button onclick="setSectionFilter('${dbKey}', '${collection}')" 
-                                class="filter-toggle ${sectionFilter === collection ? 'active' : ''} px-3 py-2 rounded-lg text-sm font-medium transition-colors">
+                                class="filter-toggle ${sectionFilter === collection ? 'active' : ''}">
                             <span data-translate="${collection}">${formatTypeName(collection)}</span>
                         </button>
                     `;
@@ -1654,36 +1969,37 @@
             });
             
             return `
-                <div class="quarter-section card rounded-lg p-4">
-                    <!-- Section Header with Filters -->
+                <div class="database-section expanded" data-section="${dbKey}" id="expanded-section">
+                    <!-- Enhanced Section Header -->
                     <div class="section-header">
-                        <div class="flex items-center">
-                            <div class="section-indicator mr-3"></div>
-                            <h2 class="font-bold text-themed-primary mr-3" data-translate="${config.nameKey}">
-                                ${trans[config.nameKey] || config.name}
-                            </h2>
-                            <!-- Filters in same row -->
-                            <div class="flex-1 header-filters">
-                                ${filterButtonsHTML}
+                        <div class="section-title-row">
+                            <div class="section-info">
+                                <div class="section-indicator"></div>
+                                <h2 class="section-title" data-translate="${config.nameKey}">
+                                    ${trans[config.nameKey] || config.name}
+                                </h2>
                             </div>
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium ml-2">
-                                ${filteredDbResults.length}
-                            </span>
+                            
+                            <div class="section-meta">
+                                <div class="header-filters">
+                                    ${filterButtonsHTML}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Section Results -->
-                    <div class="section-results space-y-2">
+                    <div class="section-results">
                         ${filteredDbResults.length > 0 ? 
-                            filteredDbResults.map((result, index) => createCompactResultCard(result, index, dbKey)).join('') :
-                            `<div class="text-center py-6 text-themed-secondary">
-                                <div class="mb-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mx-auto text-gray-400">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                    </svg>
-                                </div>
-                                <p class="text-xs font-medium">No results</p>
-                                <p class="text-xs">Try different filter</p>
+                            `<div class="space-y-3">
+                                ${filteredDbResults.map((result, index) => createCompactResultCard(result, index, dbKey)).join('')}
+                            </div>` :
+                            `<div class="section-empty">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mx-auto text-gray-400">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                                <p class="text-sm font-medium mb-1">No results found</p>
+                                <p class="text-xs">Try different filter or search terms</p>
                             </div>`
                         }
                     </div>
@@ -1691,9 +2007,155 @@
             `;
         }
         
+        function createMinimizedSection(dbKey, config, dbResults) {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const trans = translations[currentLanguage];
+            
+            // Get filtered results count
+            const sectionFilter = sectionFilters[dbKey];
+            let filteredCount = 0;
+            
+            if (sectionFilter === 'top_results') {
+                filteredCount = Math.min(dbResults.length, 3);
+            } else {
+                filteredCount = Math.min(dbResults.filter(result => result.type === sectionFilter).length, 3);
+            }
+            
+            return `
+                <div class="database-section minimized" data-section="${dbKey}" onclick="switchToSection('${dbKey}')">
+                    <div class="section-header">
+                        <div class="section-title-row">
+                            <div class="section-info">
+                                <div class="database-icon">${getDatabaseIcon(dbKey)}</div>
+                                <h2 class="section-title" data-translate="${config.nameKey}">
+                                    ${trans[config.nameKey] || config.name}
+                                </h2>
+                            </div>
+                            <div class="section-meta">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
         function setSectionFilter(dbKey, filterType) {
             sectionFilters[dbKey] = filterType;
-            displaySectionResults();
+            
+            // Only update the expanded section if it's currently the active one
+            if (currentActiveSection === dbKey) {
+                // Update just the expanded section content without regenerating everything
+                const mainArea = document.querySelector('.main-section-area');
+                if (mainArea) {
+                    // Find the database results for this section
+                    const resultsByDatabase = {};
+                    allResults.forEach(result => {
+                        if (!resultsByDatabase[result.database]) {
+                            resultsByDatabase[result.database] = [];
+                        }
+                        resultsByDatabase[result.database].push(result);
+                    });
+                    
+                    // Sort results by relevance
+                    Object.keys(resultsByDatabase).forEach(db => {
+                        resultsByDatabase[db].sort((a, b) => (b.ranking_score || 0) - (a.ranking_score || 0));
+                    });
+                    
+                    const config = sectionConfigs[dbKey];
+                    const dbResults = resultsByDatabase[dbKey] || [];
+                    
+                    if (dbResults.length > 0) {
+                        mainArea.innerHTML = createExpandedSection(dbKey, config, dbResults);
+                    }
+                }
+            }
+        }
+        
+        // New gallery functionality for sidebar layout
+        function switchToSection(sectionKey) {
+            if (sectionKey === currentActiveSection) {
+                return; // Do nothing if clicking the already active section
+            }
+            
+            // Update the main content area with the new expanded section
+            const mainArea = document.querySelector('.main-section-area');
+            if (!mainArea) return;
+            
+            // Find the database results for this section
+            const resultsByDatabase = {};
+            allResults.forEach(result => {
+                if (!resultsByDatabase[result.database]) {
+                    resultsByDatabase[result.database] = [];
+                }
+                resultsByDatabase[result.database].push(result);
+            });
+            
+            // Sort results by relevance
+            Object.keys(resultsByDatabase).forEach(db => {
+                resultsByDatabase[db].sort((a, b) => (b.ranking_score || 0) - (a.ranking_score || 0));
+            });
+            
+            const config = sectionConfigs[sectionKey];
+            const dbResults = resultsByDatabase[sectionKey] || [];
+            
+            if (dbResults.length > 0) {
+                mainArea.innerHTML = createExpandedSection(sectionKey, config, dbResults);
+                currentActiveSection = sectionKey;
+                
+                // Update minimized sections to reflect the new active state
+                updateMinimizedSections();
+            }
+        }
+        
+        function updateMinimizedSections() {
+            // Update the visual state of minimized sections if needed
+            // This highlights only the active section in blue
+            const minimizedSections = document.querySelectorAll('.sections-sidebar .database-section');
+            minimizedSections.forEach(section => {
+                const sectionKey = section.getAttribute('data-section');
+                const sectionHeader = section.querySelector('.section-header');
+                if (sectionKey === currentActiveSection) {
+                    // Highlight active section with blue background
+                    if (sectionHeader) {
+                        sectionHeader.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+                        sectionHeader.style.color = 'white';
+                    }
+                    section.style.transform = 'scale(0.95)';
+                    section.style.borderColor = '#3b82f6';
+                } else {
+                    // Reset inactive sections to default gray styling
+                    if (sectionHeader) {
+                        sectionHeader.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+                        sectionHeader.style.color = 'white';
+                    }
+                    section.style.transform = 'scale(1)';
+                    section.style.borderColor = 'var(--container-border)';
+                }
+            });
+        }
+        
+        // Helper function to get database icons
+        function getDatabaseIcon(dbKey) {
+            const icons = {
+                'experts_system': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>`,
+                'laboratories': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>`,
+                'academic_library': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>`,
+                'funding_system': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                </svg>`,
+                'research_papers': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>`
+            };
+            return icons[dbKey] || `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+            </svg>`;
         }
         
         function toggleDisplayMode() {
