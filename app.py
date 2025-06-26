@@ -2141,6 +2141,164 @@ def remove_from_history():
         logger.error(f"Error removing from history: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/funding/institution/<institution_id>', methods=['GET'])
+def get_institution_details(institution_id):
+    """Get detailed information about a funding institution and its projects"""
+    try:
+        if not db_manager:
+            return jsonify({'error': 'Database manager not available'}), 500
+        
+        # Get funding database
+        funding_db = db_manager.get_database('funding')
+        if funding_db is None:
+            return jsonify({'error': 'Funding database not available'}), 500
+        
+        from bson import ObjectId
+        try:
+            institution_oid = ObjectId(institution_id)
+        except:
+            return jsonify({'error': 'Invalid institution ID format'}), 400
+        
+        # Get institution details
+        institutions_collection = funding_db['institutions']
+        institution = institutions_collection.find_one({'_id': institution_oid})
+        
+        if not institution:
+            return jsonify({'error': 'Institution not found'}), 404
+        
+        # Convert ObjectId to string for JSON serialization
+        institution['_id'] = str(institution['_id'])
+        
+        # Get all funding records for this institution
+        funding_records_collection = funding_db['funding_records']
+        research_projects_collection = funding_db['research_projects']
+        
+        funding_records = list(funding_records_collection.find({'institution_id': institution_oid}))
+        
+        # Get detailed project information
+        funded_projects = []
+        total_funding = 0
+        
+        for record in funding_records:
+            total_funding += record.get('amount', 0)
+            
+            # Get project details
+            project_id = record.get('research_project_id')
+            if project_id:
+                project = research_projects_collection.find_one({'_id': project_id})
+                if project:
+                    funded_projects.append({
+                        'project_id': str(project['_id']),
+                        'title': project.get('title', ''),
+                        'status': project.get('status', ''),
+                        'field_category': project.get('field_category', ''),
+                        'field_group': project.get('field_group', ''),
+                        'field_area': project.get('field_area', ''),
+                        'background': project.get('background', {}),
+                        'objectives': project.get('objectives', []),
+                        'budget_requested': project.get('budget_requested', 0),
+                        'submission_date': str(project.get('submission_date', '')),
+                        'funding_amount': record.get('amount', 0),
+                        'disbursed_on': str(record.get('disbursed_on', '')),
+                        'funding_notes': record.get('notes', '')
+                    })
+        
+        # Prepare response
+        institution_details = {
+            'institution': institution,
+            'funding_summary': {
+                'total_projects': len(funded_projects),
+                'total_funding_amount': total_funding,
+                'average_funding_per_project': total_funding / len(funded_projects) if funded_projects else 0
+            },
+            'funded_projects': funded_projects
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': institution_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting institution details: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/funding/project/<project_id>', methods=['GET'])
+def get_research_project_details(project_id):
+    """Get detailed information about a research project"""
+    try:
+        if not db_manager:
+            return jsonify({'error': 'Database manager not available'}), 500
+        
+        # Get funding database
+        funding_db = db_manager.get_database('funding')
+        if funding_db is None:
+            return jsonify({'error': 'Funding database not available'}), 500
+        
+        from bson import ObjectId
+        try:
+            project_oid = ObjectId(project_id)
+        except:
+            return jsonify({'error': 'Invalid project ID format'}), 400
+        
+        # Get project details
+        research_projects_collection = funding_db['research_projects']
+        project = research_projects_collection.find_one({'_id': project_oid})
+        
+        if not project:
+            return jsonify({'error': 'Research project not found'}), 404
+        
+        # Convert ObjectId to string for JSON serialization
+        project['_id'] = str(project['_id'])
+        
+        # Get funding information for this project
+        funding_records_collection = funding_db['funding_records']
+        institutions_collection = funding_db['institutions']
+        
+        funding_records = list(funding_records_collection.find({'research_project_id': project_oid}))
+        
+        # Get funding institutions
+        funding_institutions = []
+        total_received_funding = 0
+        
+        for record in funding_records:
+            total_received_funding += record.get('amount', 0)
+            
+            institution_id = record.get('institution_id')
+            if institution_id:
+                institution = institutions_collection.find_one({'_id': institution_id})
+                if institution:
+                    funding_institutions.append({
+                        'institution_id': str(institution['_id']),
+                        'name': institution.get('name', ''),
+                        'type': institution.get('type', ''),
+                        'country': institution.get('country', ''),
+                        'funding_amount': record.get('amount', 0),
+                        'disbursed_on': str(record.get('disbursed_on', '')),
+                        'notes': record.get('notes', '')
+                    })
+        
+        # Prepare response
+        project_details = {
+            'project': project,
+            'funding_summary': {
+                'total_funding_received': total_received_funding,
+                'budget_requested': project.get('budget_requested', 0),
+                'funding_percentage': (total_received_funding / project.get('budget_requested', 1)) * 100 if project.get('budget_requested') else 0,
+                'funding_institutions_count': len(funding_institutions)
+            },
+            'funding_institutions': funding_institutions
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': project_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting research project details: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'

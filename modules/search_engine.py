@@ -107,9 +107,7 @@ class SearchEngine:
         results_dict['experts_system'] = self._search_experts_system(search_params)
         results_dict['research_papers'] = self._search_research_papers(search_params)
         results_dict['laboratories'] = self._search_laboratories(search_params)
-        
-        # Note: Add funding_system search if/when that database is implemented
-        # results_dict['funding_system'] = self._search_funding_system(search_params)
+        results_dict['funding'] = self._search_funding_system(search_params)
         
         # Aggregate results
         aggregated_results = self._aggregate_results(results_dict, processed_query)
@@ -412,6 +410,172 @@ class SearchEngine:
         
         return results
     
+    def _search_funding_system(self, search_params: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Search for funding institutions and research projects that match the query"""
+        results = []
+        
+        try:
+            # Step 1: Search research projects that match the user's query
+            projects_collection = self.db_manager.get_collection('funding', 'research_projects')
+            if projects_collection is None:
+                logger.warning("Research projects collection not available")
+                return results
+            
+            # Build query for research projects
+            query = self._build_mongodb_query(search_params, [
+                'title', 'background.problem', 'background.importance', 'background.hypotheses',
+                'objectives', 'field_category', 'field_group', 'field_area'
+            ])
+            
+            if not query:
+                return results
+            
+            # Find matching research projects
+            matching_projects = list(projects_collection.find(query))
+            logger.info(f"Found {len(matching_projects)} research projects matching query")
+            
+            if not matching_projects:
+                return results
+            
+            # Step 2: Get funding records for these projects to find institution IDs
+            funding_records_collection = self.db_manager.get_collection('funding', 'funding_records')
+            institutions_collection = self.db_manager.get_collection('funding', 'institutions')
+            
+            if funding_records_collection is None or institutions_collection is None:
+                logger.warning("Funding records or institutions collection not available")
+                return results
+            
+            # Collect project IDs
+            project_ids = [project['_id'] for project in matching_projects]
+            
+            # Find funding records for these projects
+            funding_records = list(funding_records_collection.find({
+                'research_project_id': {'$in': project_ids}
+            }))
+            
+            logger.info(f"Found {len(funding_records)} funding records for matching projects")
+            
+            # Step 3: Group by institution and collect institution details
+            institution_funding_map = {}
+            
+            for record in funding_records:
+                institution_id = record.get('institution_id')
+                project_id = record.get('research_project_id')
+                
+                if institution_id and project_id:
+                    if institution_id not in institution_funding_map:
+                        institution_funding_map[institution_id] = {
+                            'funding_records': [],
+                            'related_projects': [],
+                            'total_funding': 0
+                        }
+                    
+                    # Add funding record
+                    institution_funding_map[institution_id]['funding_records'].append(record)
+                    institution_funding_map[institution_id]['total_funding'] += record.get('amount', 0)
+                    
+                    # Find the corresponding project details
+                    matching_project = next((p for p in matching_projects if p['_id'] == project_id), None)
+                    if matching_project:
+                        institution_funding_map[institution_id]['related_projects'].append({
+                            'project_id': str(project_id),
+                            'title': matching_project.get('title', ''),
+                            'field_category': matching_project.get('field_category', ''),
+                            'field_group': matching_project.get('field_group', ''),
+                            'field_area': matching_project.get('field_area', ''),
+                            'status': matching_project.get('status', ''),
+                            'budget_requested': matching_project.get('budget_requested', 0),
+                            'background': matching_project.get('background', {}),
+                            'objectives': matching_project.get('objectives', []),
+                            'funding_amount': record.get('amount', 0),
+                            'disbursed_on': str(record.get('disbursed_on', '')),
+                            'funding_notes': record.get('notes', '')
+                        })
+            
+            # Step 4: Create institution results
+            for institution_id, funding_data in institution_funding_map.items():
+                try:
+                    # Get institution details
+                    institution_doc = institutions_collection.find_one({'_id': institution_id})
+                    if institution_doc is None:
+                        continue
+                    
+                    # Calculate relevance score based on number of related projects and funding amount
+                    related_projects_count = len(funding_data['related_projects'])
+                    total_funding = funding_data['total_funding']
+                    
+                    # Base relevance score (0.3-0.9 range)
+                    relevance_score = min(0.9, 0.3 + (related_projects_count * 0.15) + min(0.3, total_funding / 1000000))
+                    
+                    # Create institution result
+                    institution_result = {
+                        'id': str(institution_id),
+                        'type': 'funding_institution',
+                        'database': 'funding',
+                        'collection': 'institutions',
+                        'title': institution_doc.get('name', 'Unknown Institution'),
+                        'author': '',  # Not applicable for institutions
+                        'ranking_score': relevance_score,
+                        'metadata': {
+                            'type': institution_doc.get('type', ''),
+                            'country': institution_doc.get('country', ''),
+                            'email': institution_doc.get('email', ''),
+                            'tel_no': institution_doc.get('tel_no', ''),
+                            'fax_no': institution_doc.get('fax_no', ''),
+                            'related_projects_count': related_projects_count,
+                            'total_funding_for_query': total_funding
+                        },
+                        'funding_info': {
+                            'related_projects': funding_data['related_projects'],
+                            'total_funding_amount': total_funding,
+                            'funding_count': len(funding_data['funding_records'])
+                        }
+                    }
+                    
+                    # Create engaging description focused on query relevance
+                    description_parts = []
+                    description_parts.append(f"{institution_doc.get('type', 'Institution')} based in {institution_doc.get('country', 'Unknown')}")
+                    description_parts.append(f"Funding {related_projects_count} project{'s' if related_projects_count != 1 else ''} related to your search")
+                    description_parts.append(f"Total relevant funding: ${total_funding:,.0f}")
+                    
+                    # Add field focus if available
+                    field_categories = set()
+                    for project in funding_data['related_projects']:
+                        if project.get('field_category'):
+                            field_categories.add(project['field_category'])
+                    
+                    if field_categories:
+                        description_parts.append(f"Focus areas: {', '.join(list(field_categories)[:2])}")
+                    
+                    institution_result['description'] = ' | '.join(description_parts)
+                    institution_result['snippet'] = institution_result['description']
+                    
+                    results.append(institution_result)
+                    
+                except Exception as e:
+                    logger.warning(f"Error processing institution {institution_id}: {e}")
+                    continue
+            
+            # Sort by relevance score (institutions with more relevant projects first)
+            results.sort(key=lambda x: x.get('ranking_score', 0), reverse=True)
+            
+            logger.info(f"Returning {len(results)} funding institutions as results")
+            
+            # Also add research projects directly as searchable results
+            logger.info("Adding research projects as direct results...")
+            project_results = self._search_collection('funding', 'research_projects', search_params, [
+                'title', 'background.problem', 'background.importance', 'background.hypotheses',
+                'objectives', 'field_category', 'field_group', 'field_area'
+            ], 'research_project')
+            
+            results.extend(project_results)
+            logger.info(f"Added {len(project_results)} research project results")
+            
+        except Exception as e:
+            logger.error(f"Error in funding system search: {str(e)}")
+        
+        return results
+    
     def _search_collection(self, db_name: str, collection_name: str, search_params: Dict[str, Any], 
                           search_fields: List[str], result_type: str) -> List[Dict[str, Any]]:
         """Generic method to search a specific collection"""
@@ -604,6 +768,43 @@ class SearchEngine:
                     'status': doc.get('status', ''),
                     'supplier': doc.get('supplier', {}).get('name', '') if isinstance(doc.get('supplier'), dict) else str(doc.get('supplier', '')),
                     'storage_location': doc.get('storage_location', '')
+                }
+            
+            elif result_type == 'research_project':
+                result['title'] = doc.get('title', '')
+                background = doc.get('background', {})
+                objectives = doc.get('objectives', [])
+                
+                # Create description from background and objectives
+                desc_parts = []
+                if background.get('problem'):
+                    desc_parts.append(f"Problem: {background['problem']}")
+                if background.get('importance'):
+                    desc_parts.append(f"Importance: {background['importance']}")
+                if objectives:
+                    objectives_str = ', '.join(objectives) if isinstance(objectives, list) else str(objectives)
+                    desc_parts.append(f"Objectives: {objectives_str}")
+                
+                result['description'] = ' | '.join(desc_parts)
+                result['metadata'] = {
+                    'status': doc.get('status', ''),
+                    'field_category': doc.get('field_category', ''),
+                    'field_group': doc.get('field_group', ''),
+                    'field_area': doc.get('field_area', ''),
+                    'budget_requested': doc.get('budget_requested', 0),
+                    'submission_date': str(doc.get('submission_date', '')),
+                    'methodology': doc.get('methodology', {})
+                }
+            
+            elif result_type == 'funding_institution':
+                result['title'] = doc.get('name', '')
+                result['description'] = f"{doc.get('type', '')} based in {doc.get('country', '')}"
+                result['metadata'] = {
+                    'type': doc.get('type', ''),
+                    'country': doc.get('country', ''),
+                    'email': doc.get('email', ''),
+                    'tel_no': doc.get('tel_no', ''),
+                    'fax_no': doc.get('fax_no', '')
                 }
             
             # Generate snippet

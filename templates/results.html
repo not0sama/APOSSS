@@ -1090,7 +1090,8 @@
             'academic_library': 'top_results',
             'experts_system': 'top_results', 
             'laboratories': 'top_results',
-            'research_papers': 'top_results'
+            'research_papers': 'top_results',
+            'funding': 'top_results'
         };
         
         // Gallery state management
@@ -1117,6 +1118,11 @@
                 name: 'Research Papers',
                 nameKey: 'research_papers',
                 collections: ['article', 'conference', 'thesis', 'theses']
+            },
+            'funding': {
+                name: 'Funding System',
+                nameKey: 'funding_system',
+                collections: ['research_project', 'funding_institution']
             }
         };
 
@@ -1199,7 +1205,9 @@
                 'equipment': 'Equipment',
                 'equipments': 'Equipment',
                 'material': 'Material',
-                'materials': 'Materials'
+                'materials': 'Materials',
+                'research_project': 'Research Project',
+                'funding_institution': 'Funding Institution'
             },
             ar: {
                 // Header
@@ -1278,7 +1286,9 @@
                 'equipment': 'معدات',
                 'equipments': 'معدات',
                 'material': 'مادة',
-                'materials': 'مواد'
+                'materials': 'مواد',
+                'research_project': 'مشروع بحثي',
+                'funding_institution': 'مؤسسة تمويل'
             }
         };
 
@@ -1556,7 +1566,8 @@
                 ['book', 'journal', 'project'], // Row 1: books, journals, projects
                 ['article', 'conference', 'thesis'], // Row 2: articles, conferences, theses  
                 ['equipment', 'material'], // Row 3: equipments, materials
-                ['expert', 'certificate'] // Row 4: experts, certificates
+                ['expert', 'certificate'], // Row 4: experts, certificates
+                ['research_project', 'funding_institution'] // Row 5: funding types
             ];
             
             // Create rows based on the layout
@@ -1627,7 +1638,9 @@
                 'equipment': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" /></svg>',
                 'equipments': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" /></svg>',
                 'material': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>',
-                'materials': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>'
+                'materials': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>',
+                'research_project': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /></svg>',
+                'funding_institution': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m2.25-18v18m13.5-18v18m2.25-18v18M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3M18 10.5h.008v.008H18V10.5z" /></svg>'
             };
             return icons[type] || '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>';
         }
@@ -2151,7 +2164,7 @@
                 'academic_library': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                 </svg>`,
-                'funding_system': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                'funding': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                 </svg>`,
                 'research_papers': `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -2159,7 +2172,7 @@
                 </svg>`
             };
             return icons[dbKey] || `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l-1-3m1 3l-1-3m-16.5-3h9v-2.25" />
             </svg>`;
         }
         
@@ -2473,8 +2486,13 @@
             const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
             const trans = translations[currentLanguage];
             
+            // Special handling for funding institutions
+            const clickHandler = result.type === 'funding_institution' 
+                ? `handleFundingInstitutionClick('${result.id}', '${result.title.replace(/'/g, "\\'")}')` 
+                : `toggleResultCard('${cardId}', ${index})`;
+            
             return `
-                <div class="result-card rounded-lg p-6 ${relevanceClass} cursor-pointer" id="${cardId}" onclick="toggleResultCard('${cardId}', ${index})">
+                <div class="result-card rounded-lg p-6 ${relevanceClass} cursor-pointer" id="${cardId}" onclick="${clickHandler}">
                     <!-- Collapsed View (Default) -->
                     <div class="collapsed-view">
                         <div class="flex items-start justify-between mb-3">
@@ -2665,7 +2683,10 @@
                 'equipment': 'bg-gray-100 text-gray-800',
                 'equipments': 'bg-gray-100 text-gray-800',
                 'material': 'bg-teal-100 text-teal-800',
-                'materials': 'bg-teal-100 text-teal-800'
+                'funding_institution': 'bg-emerald-100 text-emerald-800',
+                'materials': 'bg-teal-100 text-teal-800',
+                'research_project': 'bg-emerald-100 text-emerald-800',
+                'funding_institution': 'bg-amber-100 text-amber-800'
             };
             return classes[type] || 'bg-gray-100 text-gray-800';
         }
@@ -2768,6 +2789,18 @@
         }
         
         function openInSubsystem(database, resultId, resultType) {
+            // Special handling for funding institutions
+            if (database === 'funding' && resultType === 'funding_institution') {
+                showInstitutionDetails(resultId);
+                return;
+            }
+            
+            // Special handling for research projects
+            if (database === 'funding' && resultType === 'research_project') {
+                showResearchProjectDetails(resultId);
+                return;
+            }
+            
             // Map databases to their respective subsystem URLs
             const subsystemUrls = {
                 'academic_library': '/library',
@@ -3416,6 +3449,260 @@
             }
         });
         
+        // Funding-specific functions
+        async function showInstitutionDetails(institutionId) {
+            try {
+                const response = await fetch(`/api/funding/institution/${institutionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayInstitutionModal(data.data);
+                } else {
+                    showTemporaryMessage('Error loading institution details: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error fetching institution details:', error);
+                showTemporaryMessage('Error loading institution details', 'error');
+            }
+        }
+        
+        async function showResearchProjectDetails(projectId) {
+            try {
+                const response = await fetch(`/api/funding/project/${projectId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResearchProjectModal(data.data);
+                } else {
+                    showTemporaryMessage('Error loading project details: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Error fetching project details:', error);
+                showTemporaryMessage('Error loading project details', 'error');
+            }
+        }
+        
+        function displayInstitutionModal(institutionData) {
+            const institution = institutionData.institution;
+            const summary = institutionData.funding_summary;
+            const projects = institutionData.funded_projects;
+            
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.id = 'institutionDetailsModal';
+            
+            // Create modal content
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-2xl font-bold text-themed-primary">${institution.name}</h2>
+                                <p class="text-themed-secondary mt-1">${institution.type} • ${institution.country}</p>
+                            </div>
+                            <button onclick="closeInstitutionModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Institution Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-themed-primary mb-3">Contact Information</h3>
+                                <div class="space-y-2 text-sm">
+                                    ${institution.email ? `<p><strong>Email:</strong> ${institution.email}</p>` : ''}
+                                    ${institution.tel_no ? `<p><strong>Phone:</strong> ${institution.tel_no}</p>` : ''}
+                                    ${institution.fax_no ? `<p><strong>Fax:</strong> ${institution.fax_no}</p>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-themed-primary mb-3">Funding Summary</h3>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>Total Projects:</strong> ${summary.total_projects}</p>
+                                    <p><strong>Total Funding:</strong> $${summary.total_funding_amount.toLocaleString()}</p>
+                                    <p><strong>Average per Project:</strong> $${summary.average_funding_per_project.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Funded Projects -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-themed-primary mb-4">Funded Research Projects</h3>
+                            ${projects.length > 0 ? `
+                                <div class="space-y-4">
+                                    ${projects.map(project => `
+                                        <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <h4 class="font-medium text-themed-primary">${project.title}</h4>
+                                                <span class="text-sm font-semibold text-green-600">$${project.funding_amount.toLocaleString()}</span>
+                                            </div>
+                                            <div class="text-sm text-themed-secondary space-y-1">
+                                                <p><strong>Field:</strong> ${project.field_category} - ${project.field_group}</p>
+                                                <p><strong>Status:</strong> ${project.status}</p>
+                                                <p><strong>Disbursed:</strong> ${formatDate(project.disbursed_on)}</p>
+                                                ${project.funding_notes ? `<p><strong>Notes:</strong> ${project.funding_notes}</p>` : ''}
+                                            </div>
+                                            <div class="mt-2">
+                                                <button onclick="showResearchProjectDetails('${project.project_id}')" 
+                                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                                    View Project Details →
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-themed-secondary">No funded projects found.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeInstitutionModal();
+                }
+            });
+        }
+        
+        function displayResearchProjectModal(projectData) {
+            const project = projectData.project;
+            const summary = projectData.funding_summary;
+            const institutions = projectData.funding_institutions;
+            
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.id = 'projectDetailsModal';
+            
+            // Create modal content
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-2xl font-bold text-themed-primary">${project.title}</h2>
+                                <p class="text-themed-secondary mt-1">${project.field_category} • ${project.status}</p>
+                            </div>
+                            <button onclick="closeProjectModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Project Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-themed-primary mb-3">Project Details</h3>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>Field Group:</strong> ${project.field_group || 'N/A'}</p>
+                                    <p><strong>Field Area:</strong> ${project.field_area || 'N/A'}</p>
+                                    <p><strong>Status:</strong> ${project.status}</p>
+                                    <p><strong>Submission Date:</strong> ${formatDate(project.submission_date)}</p>
+                                </div>
+                                
+                                ${project.background ? `
+                                    <div class="mt-4">
+                                        <h4 class="font-medium text-themed-primary mb-2">Background</h4>
+                                        <div class="text-sm space-y-1">
+                                            ${project.background.problem ? `<p><strong>Problem:</strong> ${project.background.problem}</p>` : ''}
+                                            ${project.background.importance ? `<p><strong>Importance:</strong> ${project.background.importance}</p>` : ''}
+                                            ${project.background.hypotheses ? `<p><strong>Hypotheses:</strong> ${project.background.hypotheses}</p>` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-themed-primary mb-3">Funding Status</h3>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>Budget Requested:</strong> $${summary.budget_requested.toLocaleString()}</p>
+                                    <p><strong>Funding Received:</strong> $${summary.total_funding_received.toLocaleString()}</p>
+                                    <p><strong>Funding Rate:</strong> ${summary.funding_percentage.toFixed(1)}%</p>
+                                    <p><strong>Funding Institutions:</strong> ${summary.funding_institutions_count}</p>
+                                </div>
+                                
+                                <!-- Funding Progress Bar -->
+                                <div class="mt-4">
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span>Funding Progress</span>
+                                        <span>${summary.funding_percentage.toFixed(1)}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: ${Math.min(100, summary.funding_percentage)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${project.objectives && project.objectives.length > 0 ? `
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold text-themed-primary mb-3">Objectives</h3>
+                                <ul class="list-disc list-inside space-y-1 text-sm">
+                                    ${project.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Funding Institutions -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-themed-primary mb-4">Funding Institutions</h3>
+                            ${institutions.length > 0 ? `
+                                <div class="space-y-4">
+                                    ${institutions.map(inst => `
+                                        <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <h4 class="font-medium text-themed-primary">${inst.name}</h4>
+                                                <span class="text-sm font-semibold text-green-600">$${inst.funding_amount.toLocaleString()}</span>
+                                            </div>
+                                            <div class="text-sm text-themed-secondary space-y-1">
+                                                <p><strong>Type:</strong> ${inst.type}</p>
+                                                <p><strong>Country:</strong> ${inst.country}</p>
+                                                <p><strong>Disbursed:</strong> ${formatDate(inst.disbursed_on)}</p>
+                                                ${inst.notes ? `<p><strong>Notes:</strong> ${inst.notes}</p>` : ''}
+                                            </div>
+                                            <div class="mt-2">
+                                                <button onclick="showInstitutionDetails('${inst.institution_id}')" 
+                                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                                    View Institution Details →
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-themed-secondary">No funding institutions found.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeProjectModal();
+                }
+            });
+        }
+        
+        function closeInstitutionModal() {
+            const modal = document.getElementById('institutionDetailsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function closeProjectModal() {
+            const modal = document.getElementById('projectDetailsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
@@ -3455,6 +3742,201 @@
             
             // Note: Search history is already saved in home.html before redirecting here
         });
+
+        // Handle funding institution card clicks
+        function handleFundingInstitutionClick(institutionId, institutionName) {
+            // Show loading state
+            showResultModal({
+                title: institutionName,
+                content: '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div><p class="mt-2">Loading institution details...</p></div>'
+            });
+            
+            // Fetch institution details
+            fetch(`/api/funding/institution/${institutionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayInstitutionDetails(data.data);
+                    } else {
+                        showResultModal({
+                            title: 'Error',
+                            content: `<div class="alert alert-danger">Failed to load institution details: ${data.error}</div>`
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching institution details:', error);
+                    showResultModal({
+                        title: 'Error',
+                        content: '<div class="alert alert-danger">Failed to load institution details. Please try again.</div>'
+                    });
+                });
+        }
+        
+        // Display institution details in modal
+        function displayInstitutionDetails(institutionData) {
+            const { institution, funding_summary, funded_projects } = institutionData;
+            
+            let content = `
+                <div class="institution-details">
+                    <!-- Institution Information -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-university me-2"></i>
+                                ${institution.name}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Type:</strong> ${institution.type || 'N/A'}</p>
+                                    <p><strong>Country:</strong> ${institution.country || 'N/A'}</p>
+                                    <p><strong>Email:</strong> ${institution.email || 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Phone:</strong> ${institution.tel_no || 'N/A'}</p>
+                                    <p><strong>Fax:</strong> ${institution.fax_no || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Funding Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Funding Summary
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h4 class="text-primary">${funding_summary.total_projects}</h4>
+                                        <p class="text-muted">Total Projects</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h4 class="text-success">$${funding_summary.total_funding_amount.toLocaleString()}</h4>
+                                        <p class="text-muted">Total Funding</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h4 class="text-info">$${Math.round(funding_summary.average_funding_per_project).toLocaleString()}</h4>
+                                        <p class="text-muted">Avg per Project</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Funded Projects -->
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-project-diagram me-2"></i>
+                                Related Funded Projects (${funded_projects.length})
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="projects-list">
+            `;
+            
+            // Add each funded project
+            funded_projects.forEach((project, index) => {
+                content += `
+                    <div class="project-card mb-3 ${index < funded_projects.length - 1 ? 'border-bottom pb-3' : ''}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="project-title text-primary">${project.title}</h6>
+                                <div class="project-meta">
+                                    <span class="badge bg-secondary me-2">${project.field_category || 'General'}</span>
+                                    <span class="badge bg-outline-primary me-2">${project.status || 'Unknown'}</span>
+                                    ${project.field_group ? `<span class="badge bg-light text-dark">${project.field_group}</span>` : ''}
+                                </div>
+                                
+                                ${project.background && project.background.problem ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted"><strong>Problem:</strong> ${project.background.problem.substring(0, 150)}${project.background.problem.length > 150 ? '...' : ''}</small>
+                                    </div>
+                                ` : ''}
+                                
+                                ${project.objectives && project.objectives.length > 0 ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted"><strong>Objectives:</strong> ${project.objectives.slice(0, 2).join('; ')}${project.objectives.length > 2 ? '...' : ''}</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="funding-info text-end ms-3">
+                                <div class="funding-amount text-success fw-bold">
+                                    $${project.funding_amount.toLocaleString()}
+                                </div>
+                                <small class="text-muted">
+                                    ${project.disbursed_on ? `Disbursed: ${new Date(project.disbursed_on).toLocaleDateString()}` : 'Pending'}
+                                </small>
+                                ${project.budget_requested ? `
+                                    <div class="mt-1">
+                                        <small class="text-muted">Requested: $${project.budget_requested.toLocaleString()}</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        ${project.funding_notes ? `
+                            <div class="mt-2">
+                                <small class="text-info"><strong>Notes:</strong> ${project.funding_notes}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            content += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <style>
+                    .institution-details .stat-card {
+                        padding: 1rem;
+                        border-radius: 8px;
+                        background: #f8f9fa;
+                    }
+                    .institution-details .project-card {
+                        transition: all 0.2s ease;
+                    }
+                    .institution-details .project-card:hover {
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 0.75rem;
+                        margin: -0.75rem;
+                        margin-bottom: 0.75rem;
+                    }
+                    .institution-details .project-title {
+                        font-size: 1.1rem;
+                        margin-bottom: 0.5rem;
+                    }
+                    .institution-details .project-meta {
+                        margin-bottom: 0.5rem;
+                    }
+                    .institution-details .funding-amount {
+                        font-size: 1.2rem;
+                    }
+                </style>
+            `;
+            
+            showResultModal({
+                title: `${institution.name} - Funding Details`,
+                content: content,
+                size: 'xl'
+            });
+        }
     </script>
 </body>
 </html> 

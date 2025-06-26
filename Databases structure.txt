@@ -374,3 +374,100 @@ APOSSS database:
         "filters": ["experts", "papers"],
         "timestamp": "2025-06-10T20:37:17.873415"
         }
+
+Funding database:
+    research_projects :
+        {
+            "_id": {
+                "$oid": "665500000000000000000020"
+            },
+            "researcher_id": {
+                "$oid": "665500000000000000000001"
+            },
+            "institution_id": {
+                "$oid": "665500000000000000000010"
+            },
+            "title": "Propagation Model Development for future WIMAX Systems Deployment in Malaysia",
+            "number": "UTM011000",
+            "status": "under_review",
+            "seo_targets": "",
+            "field_category": "Engineering",
+            "field_group": "Environmental Engineering",
+            "field_area": "Water Resource Management",
+            "background": {
+                "problem": "ندرة المياه",
+                "importance": "استدامة الموارد",
+                "hypotheses": "الذكاء الاصطناعي يقلل الهدر 30%",
+                "scope": "مناطق الري"
+            },
+            "methodology": {
+                "problem_handling": "نموذج تنبؤي",
+                "tools": [
+                "Python",
+                "IoT"
+                ],
+                "alternatives": "تحكم يدوي",
+                "justification": "دقة عالية"
+            },
+            "objectives": [
+                "تخفيض الهدر",
+                "رفع الإنتاجية"
+            ],
+            "budget_requested": 50000,
+            "funding_sources": [
+                ""
+            ],
+            "review_comments": [],
+            "submission_date": {
+                "$date": "2025-05-16T00:00:00.000Z"
+            },
+            "created_at": {
+                "$date": "2025-05-16T17:44:04.888Z"
+            },
+            "updated_at": {
+                "$date": "2025-05-16T17:44:04.888Z"
+            }
+        }
+
+    institutions :
+        {
+            "_id": {
+                "$oid": "665500000000000001100000"
+            },
+            "name": "Cooper-Solis Council",
+            "type": "مؤسسة حكومية",
+            "country": "Jordan",
+            "email": "lorifowler@pacheco.net",
+            "tel_no": "(897)865-8021x74255",
+            "fax_no": "+1-617-695-0391",
+            "created_at": {
+                "$date": "2025-05-16T17:44:04.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-05-16T17:44:04.000Z"
+            }
+        }
+
+    funding_records :
+        {
+            "_id": {
+                "$oid": "665500000000000000400220"
+            },
+            "research_project_id": {
+                "$oid": "665500000000000000200220"
+            },
+            "institution_id": {
+                "$oid": "665500000000000000100220"
+            },
+            "amount": 81998,
+            "notes": "Funding installment #3 for project 23",
+            "disbursed_on": {
+                "$date": "2025-01-23T12:00:00.000Z"
+            },
+            "created_at": {
+                "$date": "2025-01-23T12:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-01-23T12:00:00.000Z"
+            }
+        }
