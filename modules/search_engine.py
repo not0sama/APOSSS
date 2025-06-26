@@ -597,6 +597,20 @@ class SearchEngine:
                         # Add context that this is related to the query through research projects
                         institution_result['ranking_score'] = 0.3  # Lower score since it's indirect
                         institution_result['description'] += f" (Related to {len(matching_projects)} research projects in this domain)"
+                        
+                        # Add 1-2 sample related projects for this institution
+                        related_projects = []
+                        for project in matching_projects[:2]:  # Limit to 2 projects
+                            project_info = {
+                                'id': str(project['_id']),
+                                'title': project.get('title', 'Untitled Project'),
+                                'objectives': project.get('objectives', [])[:2] if project.get('objectives') else [],  # First 2 objectives
+                                'field_category': project.get('field_category', ''),
+                                'budget_requested': project.get('budget_requested', 0)
+                            }
+                            related_projects.append(project_info)
+                        
+                        institution_result['related_projects'] = related_projects
                         results.append(institution_result)
             
             # Sort by relevance score (institutions with more relevant projects first)

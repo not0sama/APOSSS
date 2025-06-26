@@ -2148,6 +2148,9 @@ def get_institution_details(institution_id):
         if not db_manager:
             return jsonify({'error': 'Database manager not available'}), 500
         
+        # Get query parameter for filtering relevant projects
+        search_query = request.args.get('query', '').strip()
+        
         # Get funding database
         funding_db = db_manager.get_database('funding')
         if funding_db is None:
@@ -2176,7 +2179,8 @@ def get_institution_details(institution_id):
         funding_records = list(funding_records_collection.find({'institution_id': institution_oid}))
         
         # Get detailed project information
-        funded_projects = []
+        all_funded_projects = []
+        relevant_projects = []
         total_funding = 0
         
         for record in funding_records:
@@ -2187,7 +2191,7 @@ def get_institution_details(institution_id):
             if project_id:
                 project = research_projects_collection.find_one({'_id': project_id})
                 if project:
-                    funded_projects.append({
+                    project_info = {
                         'project_id': str(project['_id']),
                         'title': project.get('title', ''),
                         'status': project.get('status', ''),
@@ -2201,17 +2205,49 @@ def get_institution_details(institution_id):
                         'funding_amount': record.get('amount', 0),
                         'disbursed_on': str(record.get('disbursed_on', '')),
                         'funding_notes': record.get('notes', '')
-                    })
+                    }
+                    
+                    all_funded_projects.append(project_info)
+                    
+                    # If search query provided, check relevance
+                    if search_query:
+                        project_text = f"{project.get('title', '')} {project.get('field_category', '')} {project.get('field_group', '')} {project.get('field_area', '')}"
+                        search_terms = search_query.lower().split()
+                        
+                        # Simple relevance check
+                        is_relevant = any(term in project_text.lower() for term in search_terms)
+                        if is_relevant:
+                            relevant_projects.append(project_info)
+        
+        # If search query provided, limit relevant projects to top 2, otherwise show all
+        if search_query and relevant_projects:
+            funded_projects_to_show = relevant_projects[:2]
+            projects_context = "query-relevant"
+        elif search_query:
+            # If no relevant projects found but query provided, show sample projects
+            funded_projects_to_show = all_funded_projects[:2]
+            projects_context = "sample"
+        else:
+            # No query provided, show all projects
+            funded_projects_to_show = all_funded_projects
+            projects_context = "all"
         
         # Prepare response
         institution_details = {
             'institution': institution,
             'funding_summary': {
-                'total_projects': len(funded_projects),
+                'total_projects': len(all_funded_projects),
                 'total_funding_amount': total_funding,
-                'average_funding_per_project': total_funding / len(funded_projects) if funded_projects else 0
+                'average_funding_per_project': total_funding / len(all_funded_projects) if all_funded_projects else 0,
+                'relevant_projects_count': len(relevant_projects) if search_query else len(all_funded_projects),
+                'projects_context': projects_context
             },
-            'funded_projects': funded_projects
+            'funded_projects': funded_projects_to_show,
+            'search_context': {
+                'query': search_query,
+                'total_relevant_projects': len(relevant_projects) if search_query else None,
+                'showing_count': len(funded_projects_to_show)
+            }
         }
         
         return jsonify({
