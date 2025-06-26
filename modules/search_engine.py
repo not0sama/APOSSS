@@ -576,6 +576,9 @@ class SearchEngine:
                     institution_result['description'] = ' | '.join(description_parts)
                     institution_result['snippet'] = institution_result['description']
                     
+                    # Add related_projects directly to the result for frontend compatibility
+                    institution_result['related_projects'] = funding_data['related_projects']
+                    
                     results.append(institution_result)
                     
                 except Exception as e:
