@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=globe" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@heroicons/v2/24/outline/esm/index.js"></script>
     <style>
@@ -61,6 +62,14 @@
             transition: all 0.3s ease;
         }
 
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+
         /* Theme toggle button */
         .theme-toggle {
             background: var(--button-bg);
@@ -70,6 +79,20 @@
         }
 
         .theme-toggle:hover {
+            background: var(--button-hover);
+        }
+
+        /* Language toggle as icon button */
+        .language-toggle-icon {
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .language-toggle-icon:hover {
+            color: #3b82f6;
             background: var(--button-hover);
         }
 
@@ -240,10 +263,8 @@
 <body class="min-h-screen gradient-bg relative">
     <!-- Theme and Language Toggle Buttons -->
     <div class="fixed top-4 right-4 z-50 flex space-x-2">
-        <!-- Language Toggle Button -->
-        <button id="languageToggle" class="theme-toggle p-2 rounded-lg transition-colors" title="Switch Language">
-            <span id="languageIcon" class="text-sm font-bold">عر</span>
-        </button>
+        <!-- Language Toggle Icon -->
+        <span id="languageToggle" class="material-symbols-outlined language-toggle-icon" title="Switch Language">globe</span>
         
         <!-- Theme Toggle Switch -->
         <label class="switch">
@@ -833,13 +854,11 @@
             document.documentElement.setAttribute('lang', language);
             localStorage.setItem('language', language);
             
-            const languageIcon = document.getElementById('languageIcon');
+            const languageToggle = document.getElementById('languageToggle');
             if (language === 'ar') {
-                languageIcon.textContent = 'EN';
-                languageIcon.title = 'Switch to English';
+                if (languageToggle) languageToggle.title = 'Switch to English';
             } else {
-                languageIcon.textContent = 'عر';
-                languageIcon.title = 'التبديل إلى العربية';
+                if (languageToggle) languageToggle.title = 'التبديل إلى العربية';
             }
             
             // Apply translations
