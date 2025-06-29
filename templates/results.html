@@ -900,6 +900,22 @@
         .section-priority-low {
             border-left: 4px solid #6b7280;
         }
+
+        .search-input-ltr {
+            padding-right: 2.5rem !important;
+        }
+        .search-input-rtl {
+            padding-left: 2.5rem !important;
+            direction: rtl;
+        }
+        .search-btn-ltr {
+            right: 0.5rem;
+            left: auto;
+        }
+        .search-btn-rtl {
+            left: 0.5rem;
+            right: auto;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -925,18 +941,18 @@
                     </a>
                     
                     <!-- Search Bar -->
-                    <div class="flex-1 max-w-2xl relative">
+                    <div class="w-full max-w-xl relative">
                         <input 
                             type="text" 
                             id="searchInput"
                             placeholder="Search for researches, experts, and more"
                             data-translate="search-placeholder"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all search-input-ltr"
                         >
                         <button 
                             id="searchBtn"
                             onclick="performNewSearch()"
-                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center"
+                            class="absolute top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors p-2 search-btn-ltr"
                         >
                             <svg id="searchIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -1468,10 +1484,29 @@
             localStorage.setItem('language', language);
             
             const languageToggle = document.getElementById('languageToggle');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+
             if (language === 'ar') {
                 if (languageToggle) languageToggle.title = 'Switch to English';
+                if (searchInput) {
+                    searchInput.classList.remove('search-input-ltr');
+                    searchInput.classList.add('search-input-rtl');
+                }
+                if (searchBtn) {
+                    searchBtn.classList.remove('search-btn-ltr');
+                    searchBtn.classList.add('search-btn-rtl');
+                }
             } else {
                 if (languageToggle) languageToggle.title = 'التبديل إلى العربية';
+                if (searchInput) {
+                    searchInput.classList.remove('search-input-rtl');
+                    searchInput.classList.add('search-input-ltr');
+                }
+                if (searchBtn) {
+                    searchBtn.classList.remove('search-btn-rtl');
+                    searchBtn.classList.add('search-btn-ltr');
+                }
             }
             
             // Apply translations
@@ -3581,7 +3616,7 @@
         });
         
         // Handle Enter key in search input
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 performNewSearch();
             }

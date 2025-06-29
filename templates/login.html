@@ -242,8 +242,12 @@
             border-color: var(--input-border);
         }
         
-        [data-theme="dark"] .relative span {
+        [data-theme="dark"] .or-divider-text {
             background: var(--glass-bg);
+        }
+
+        .force-ltr {
+            direction: ltr !important;
         }
     </style>
 </head>
@@ -305,7 +309,7 @@
                             id="identifier"
                             name="identifier"
                             required
-                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all force-ltr"
                             placeholder="Enter your email or username"
                             data-translate="email-username-placeholder"
                         >
@@ -318,7 +322,7 @@
                             id="password"
                             name="password"
                             required
-                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all force-ltr"
                             placeholder="Enter your password"
                             data-translate="password-placeholder"
                         >
@@ -351,7 +355,7 @@
                         <div class="w-full border-t border-gray-300"></div>
                     </div>
                     <div class="relative flex justify-center text-sm">
-                        <span class="px-2 bg-white text-themed-secondary" data-translate="or">OR</span>
+                        <span class="px-2 bg-white text-themed-secondary or-divider-text" data-translate="or">OR</span>
                     </div>
                 </div>
 

@@ -1178,17 +1178,17 @@
                 <div class="mt-8 text-center">
                     <p class="text-themed-secondary text-sm mb-3" data-translate="try-searching">Try searching for:</p>
                     <div class="flex flex-wrap justify-center gap-2">
-                        <button onclick="setSearchQuery('machine learning')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="machine-learning">
-                            machine learning
+                        <button onclick="setSearchQuery('reducing carbon emissions in cars')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="Carbon-emissions">
+                            Carbon emissions in cars
                         </button>
-                        <button onclick="setSearchQuery('renewable energy')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="renewable-energy">
-                            renewable energy
+                        <button onclick="setSearchQuery('renewable energy storage solutions')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="renewable-energy">
+                            renewable energy storage
                         </button>
-                        <button onclick="setSearchQuery('medical research')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="medical-research">
-                            medical research
+                        <button onclick="setSearchQuery('machine learning for medical diagnosis')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="medical-diagnosis">
+                            ML for medical diagnosis
                         </button>
-                        <button onclick="setSearchQuery('climate change')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="climate-change">
-                            climate change
+                        <button onclick="setSearchQuery('IoT sensors for agriculture')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="IoT-agriculture">
+                            IoT in agriculture
                         </button>
                     </div>
                 </div>
@@ -1233,10 +1233,10 @@
                 
                 // Quick search
                 'try-searching': 'Try searching for:',
-                'machine-learning': 'machine learning',
-                'renewable-energy': 'renewable energy',
-                'medical-research': 'medical research',
-                'climate-change': 'climate change',
+                'Carbon-emissions': 'Carbon emissions in cars',
+                'renewable-energy': 'renewable energy storage',
+                'medical-diagnosis': 'ML for medical diagnosis',
+                'IoT-agriculture': 'IoT in agriculture',
                 
                 // Sidebar
                 'quick-access': 'Quick Access',
@@ -1279,10 +1279,10 @@
                 
                 // Quick search
                 'try-searching': 'جرب البحث عن:',
-                'machine-learning': 'تعلم الآلة',
-                'renewable-energy': 'الطاقة المتجددة',
-                'medical-research': 'البحوث الطبية',
-                'climate-change': 'تغير المناخ',
+                'Carbon-emissions': 'إنبعاثات الكربون في السيارات',
+                'renewable-energy': 'تخزين الطاقة المتجددة',
+                'medical-diagnosis': 'تعلم الآلة للتشخيص الطبي',
+                'IoT-agriculture': 'الأجهزة الذكية للزراعة',
                 
                 // Sidebar
                 'quick-access': 'الوصول السريع',
@@ -1824,7 +1824,7 @@
         }
         
         // Handle Enter key in search input
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 performSearch();
             }
