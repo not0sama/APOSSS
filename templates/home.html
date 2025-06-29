@@ -338,6 +338,41 @@
             box-shadow: 0 8px 25px var(--shadow-color);
         }
 
+        /* Contract animation classes */
+        .interactive-search-btn.contracting {
+            width: 48px !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn.contracting .search-hover-content {
+            opacity: 0 !important;
+            transform: translateX(12px) !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn.contracting .search-background {
+            width: 0 !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn.loading {
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+
+        .interactive-search-btn.loading > *:not(#searchSpinner) {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .interactive-search-btn.loading #searchSpinner {
+            opacity: 1 !important;
+            z-index: 30;
+            transition: opacity 0.2s ease-in-out 0.1s; /* Fade in slightly after button fades out */
+        }
+
         .interactive-search-btn .search-icon-container {
             color: var(--text-secondary);
             transition: all 0.3s ease-in-out;
@@ -663,15 +698,20 @@
         
         .LDR {
             --uib-size: 40px;
-            --uib-color: #f8f9fa;
+            --uib-color: #3b82f6;
             --uib-speed: 1.5s;
             --uib-dot-size: calc(var(--uib-size) * 0.1);
             position: relative;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
             height: calc(var(--uib-size) * 0.64);
             width: calc(var(--uib-size) * 0.64);
+        }
+
+        /* Theme-specific loader colors */
+        [data-theme="dark"] .LDR {
+            --uib-color: #60a5fa;
         }
 
         @keyframes jump {
@@ -1555,7 +1595,8 @@
             // Loading spinner (hidden by default)
             const spinnerDiv = document.createElement('div');
             spinnerDiv.id = 'searchSpinner';
-            spinnerDiv.className = 'LDR absolute inset-0 flex items-center justify-center hidden';
+            spinnerDiv.className = 'LDR absolute flex items-center justify-center hidden';
+            spinnerDiv.style.zIndex = '25';
             spinnerDiv.innerHTML = `
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -1599,27 +1640,38 @@
         
         function showLoading(show) {
             const btn = document.getElementById('searchBtnElement');
-            const icon = document.getElementById('searchIcon');
             const spinner = document.getElementById('searchSpinner');
             
             if (show) {
                 if (btn) {
                     btn.disabled = true;
-                    btn.classList.add('opacity-75', 'pointer-events-none');
-                    // Disable hover effects during loading
                     btn.classList.remove('hover:w-32');
+                    btn.classList.add('contracting');
+                    
+                    setTimeout(() => {
+                        btn.classList.add('loading');
+                        if (spinner) {
+                            spinner.classList.remove('hidden');
+                            // Explicitly center the spinner
+                            spinner.style.top = '50%';
+                            spinner.style.left = '50%';
+                            spinner.style.transform = 'translate(-50%, -50%)';
+                        }
+                    }, 300);
                 }
-                if (icon) icon.classList.add('hidden');
-                if (spinner) spinner.classList.remove('hidden');
             } else {
                 if (btn) {
                     btn.disabled = false;
-                    btn.classList.remove('opacity-75', 'pointer-events-none');
-                    // Re-enable hover effects
+                    btn.classList.remove('contracting', 'loading');
                     btn.classList.add('hover:w-32');
                 }
-                if (icon) icon.classList.remove('hidden');
-                if (spinner) spinner.classList.add('hidden');
+                if (spinner) {
+                    spinner.classList.add('hidden');
+                    // Reset styles
+                    spinner.style.top = '';
+                    spinner.style.left = '';
+                    spinner.style.transform = '';
+                }
             }
         }
         
