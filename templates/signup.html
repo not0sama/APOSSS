@@ -73,6 +73,65 @@
             background: var(--button-hover);
         }
 
+        /* The switch - the box around the slider */
+        .switch {
+          display: block;
+          --width-of-switch: 3.5em;
+          --height-of-switch: 2em;
+          /* size of sliding icon -- sun and moon */
+          --size-of-icon: 1.4em;
+          /* it is like a inline-padding of switch */
+          --slider-offset: 0.3em;
+          position: relative;
+          width: var(--width-of-switch);
+          height: var(--height-of-switch);
+        }
+
+        /* Hide default HTML checkbox */
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        /* The slider */
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #f4f4f5;
+          transition: .4s;
+          border-radius: 30px;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: var(--size-of-icon,1.4em);
+          width: var(--size-of-icon,1.4em);
+          border-radius: 20px;
+          left: var(--slider-offset,0.3em);
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(40deg,#ff0080,#ff8c00 70%);
+          ;
+         transition: .4s;
+        }
+
+        input:checked + .slider {
+          background-color: #303136;
+        }
+
+        input:checked + .slider:before {
+          left: calc(100% - (var(--size-of-icon,1.4em) + var(--slider-offset,0.3em)));
+          background: #303136;
+          /* change the value of second inset in box-shadow to change the angle and direction of the moon  */
+          box-shadow: inset -3px -2px 5px -2px #8983f7, inset -10px -4px 0 0 #a3dafb;
+        }
+
         /* Input styles */
         input, textarea, select {
             background: var(--input-bg) !important;
@@ -186,17 +245,11 @@
             <span id="languageIcon" class="text-sm font-bold">عر</span>
         </button>
         
-        <!-- Theme Toggle Button -->
-        <button id="themeToggle" class="theme-toggle p-2 rounded-lg transition-colors">
-            <!-- Sun icon for dark mode -->
-            <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-            </svg>
-            <!-- Moon icon for light mode -->
-            <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-            </svg>
-        </button>
+        <!-- Theme Toggle Switch -->
+        <label class="switch">
+            <input type="checkbox" id="themeToggleInput">
+            <span class="slider"></span>
+        </label>
     </div>
 
     <!-- Floating Background Elements -->
@@ -733,7 +786,7 @@
                 'network-error': 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
                 'registration-success': 'تم إنشاء الحساب بنجاح! جاري التوجيه...',
                 'checking-email': 'جاري فحص البريد الإلكتروني...',
-                'fill-all-fields': 'يرجى ملء جميع الحقول المطلوبة'
+                'fill-all-fields': 'يرجى ملء جميع الحقون المطلوبة'
             }
         };
         
@@ -747,28 +800,26 @@
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
             
-            const sunIcon = document.getElementById('sunIcon');
-            const moonIcon = document.getElementById('moonIcon');
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.checked = theme === 'dark';
+            }
+
             const headerLogo = document.getElementById('headerLogo');
             
             if (theme === 'dark') {
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
                 if (headerLogo) {
                     headerLogo.src = '/static/images/logo-dark.svg';
                 }
             } else {
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
                 if (headerLogo) {
                     headerLogo.src = '/static/images/logo-light.svg';
                 }
             }
         }
 
-        document.getElementById('themeToggle').addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.getElementById('themeToggleInput').addEventListener('change', function(e) {
+            const newTheme = e.target.checked ? 'dark' : 'light';
             setTheme(newTheme);
         });
 
