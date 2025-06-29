@@ -36,6 +36,9 @@
             --aurora-blue-400: #60a5fa;
             --aurora-purple-400: #c084fc;
             --aurora-cyan-300: #7dd3fc;
+
+            --search-btn-bg: #f1f3f4;
+            --search-btn-hover-bg: #e9ecef;
         }
 
         /* Dark theme */
@@ -64,6 +67,9 @@
             --aurora-blue-400: #60a5fa;
             --aurora-purple-400: #c084fc;
             --aurora-cyan-300: #7dd3fc;
+
+            --search-btn-bg: #2d3748;
+            --search-btn-hover-bg: #374151;
         }
 
         body {
@@ -173,13 +179,12 @@
         }
         
         .search-btn {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            background: var(--search-btn-bg);
             transition: all 0.3s ease;
         }
         
         .search-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+            background: var(--search-btn-hover-bg);
         }
 
         /* Theme toggle button */
@@ -291,18 +296,6 @@
         .bg-themed-button { background: var(--button-bg) !important; }
         .hover-themed-button:hover { background: var(--button-hover) !important; }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f6;
-            border-radius: 50%;
-            border-top-color: #3b82f6;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
 
         /* Sidebar Styles */
         .sidebar {
@@ -924,10 +917,12 @@
                         <button 
                             id="searchBtn"
                             onclick="performSearch()"
-                            class="search-btn absolute top-2 bottom-2 px-6 text-white rounded-lg font-medium flex items-center search-btn-ltr"
+                            class="search-btn absolute top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center search-btn-ltr"
                         >
-                            <span id="searchText" data-translate="explore-btn">Explore</span>
-                            <div id="searchSpinner" class="LDR ml-1 hidden">
+                            <svg id="searchIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-themed-secondary">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            <div id="searchSpinner" class="LDR hidden">
                                 <div class="dot"></div>
                                 <div class="dot"></div>
                                 <div class="dot"></div>
@@ -1076,8 +1071,6 @@
                 'main-subtitle': 'Research repository',
                 'main-description': 'AI-Powered Search • Powered by Experts',
                 'search-placeholder': 'Search for researches, experts, and more',
-                'explore-btn': 'Explore',
-                'searching-btn': 'Searching   ',
                 
                 // Filter buttons
                 'experts': 'Experts',
@@ -1124,8 +1117,6 @@
                 'main-subtitle': 'ومفتوح المصدر',
                 'main-description': 'بحث مدعوم بالذكاء الاصطناعي • مدعوم بالخبراء',
                 'search-placeholder': 'ابحث عن الأبحاث والخبراء والمزيد',
-                'explore-btn': 'استكشف',
-                'searching-btn': 'جاري البحث    ',
                 
                 // Filter buttons
                 'experts': 'الخبراء',
@@ -1450,20 +1441,18 @@
         
         function showLoading(show) {
             const btn = document.getElementById('searchBtn');
-            const text = document.getElementById('searchText');
+            const icon = document.getElementById('searchIcon');
             const spinner = document.getElementById('searchSpinner');
             
             if (show) {
                 btn.disabled = true;
                 btn.classList.add('opacity-75');
-                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
-                text.textContent = translations[currentLanguage]['searching-btn'];
+                if (icon) icon.classList.add('hidden');
                 spinner.classList.remove('hidden');
             } else {
                 btn.disabled = false;
                 btn.classList.remove('opacity-75');
-                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
-                text.textContent = translations[currentLanguage]['explore-btn'];
+                if (icon) icon.classList.remove('hidden');
                 spinner.classList.add('hidden');
             }
         }
