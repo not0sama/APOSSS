@@ -296,6 +296,66 @@
         .bg-themed-button { background: var(--button-bg) !important; }
         .hover-themed-button:hover { background: var(--button-hover) !important; }
 
+        /* Interactive Search Button Styles */
+        .interactive-search-btn {
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            color: var(--text-primary);
+            transition: all 0.3s ease-in-out;
+            backdrop-filter: blur(10px) saturate(180%);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .interactive-search-btn:hover {
+            background: var(--button-hover);
+            border-color: #3b82f6;
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        .interactive-search-btn .search-icon-container {
+            color: var(--text-secondary);
+            transition: all 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .interactive-search-btn .search-hover-content {
+            color: white !important;
+            z-index: 20;
+        }
+
+        .interactive-search-btn .search-hover-content svg {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn .search-hover-content span {
+            color: white !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn:hover .search-hover-content svg {
+            transform: scale(1.2);
+        }
+
+        .interactive-search-btn:hover .search-hover-content span {
+            transform: scale(1.1);
+            font-weight: 600;
+        }
+
+        .interactive-search-btn .search-background {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #3b82f6 100%);
+        }
+
+        [data-theme="dark"] .interactive-search-btn .search-background {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+
 
         /* Sidebar Styles */
         .sidebar {
@@ -914,33 +974,9 @@
                             data-translate="search-placeholder"
                             class="w-full py-4 text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all search-input-ltr"
                         >
-                        <button 
-                            id="searchBtn"
-                            onclick="performSearch()"
-                            class="search-btn absolute top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center search-btn-ltr"
-                        >
-                            <svg id="searchIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-themed-secondary">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
-                            <div id="searchSpinner" class="LDR hidden">
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                                <div class="dot"></div>
-                            </div>
-                        </button>
+                        <div id="searchBtn" class="absolute top-1/2 -translate-y-1/2 search-btn-ltr">
+                            <!-- Interactive search button will be created here by JavaScript -->
+                        </div>
                     </div>
                 </div>
 
@@ -1275,6 +1311,9 @@
             // Apply translations
             applyTranslations(language);
             
+            // Update interactive search button text
+            updateSearchButtonText(language);
+            
             // Save to database if user is authenticated
             saveLanguagePreference(language);
         }
@@ -1300,6 +1339,17 @@
                     }
                 }
             });
+        }
+
+        function updateSearchButtonText(language) {
+            // Update the interactive search button text
+            const searchButton = document.getElementById('searchBtnElement');
+            if (searchButton) {
+                const hoverText = searchButton.querySelector('.search-hover-content span');
+                if (hoverText) {
+                    hoverText.textContent = language === 'ar' ? 'بحث' : 'Search';
+                }
+            }
         }
 
         async function saveLanguagePreference(language) {
@@ -1439,21 +1489,118 @@
             document.getElementById('searchInput').value = query;
         }
         
+        function createInteractiveSearchButton() {
+            const button = document.createElement('button');
+            button.id = 'searchBtnElement';
+            button.onclick = performSearch;
+            button.className = 'interactive-search-btn group relative w-12 h-12 cursor-pointer overflow-hidden rounded-full p-2 text-center font-semibold hover:w-32 transition-all duration-300 ease-in-out';
+            
+            // Initial search icon
+            const iconSpan = document.createElement('span');
+            iconSpan.id = 'searchIcon';
+            iconSpan.className = 'search-icon-container absolute inset-0 flex items-center justify-center transition-all duration-300 group-hover:translate-x-12 group-hover:opacity-0';
+            iconSpan.innerHTML = `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            `;
+            
+            // Hover content (magnifier + "Search" text)
+            const hoverDiv = document.createElement('div');
+            hoverDiv.className = 'search-hover-content absolute top-0 z-10 flex h-full w-full translate-x-12 items-center justify-center gap-3 opacity-0 transition-all duration-300 group-hover:-translate-x-1 group-hover:opacity-100';
+            
+            const magnifierIcon = document.createElement('div');
+            magnifierIcon.className = 'flex items-center justify-center';
+            magnifierIcon.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            `;
+            magnifierIcon.style.width = '20px';
+            magnifierIcon.style.height = '20px';
+            
+            const hoverText = document.createElement('span');
+            hoverText.className = 'text-sm font-medium';
+            hoverText.style.color = 'white';
+            hoverText.textContent = 'Search';
+            
+            hoverDiv.appendChild(magnifierIcon);
+            hoverDiv.appendChild(hoverText);
+            
+            // Background slide effect
+            const backgroundDiv = document.createElement('div');
+            backgroundDiv.className = 'search-background absolute top-0 left-0 h-full w-0 rounded-full transition-all duration-300 group-hover:w-full';
+            
+            // Loading spinner (hidden by default)
+            const spinnerDiv = document.createElement('div');
+            spinnerDiv.id = 'searchSpinner';
+            spinnerDiv.className = 'LDR absolute inset-0 flex items-center justify-center hidden';
+            spinnerDiv.innerHTML = `
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            `;
+            
+            // Add translation support for the "Search" text
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            if (currentLanguage === 'ar') {
+                hoverText.textContent = 'بحث';
+            }
+            
+            button.appendChild(backgroundDiv);
+            button.appendChild(iconSpan);
+            button.appendChild(hoverDiv);
+            button.appendChild(spinnerDiv);
+            
+            return button;
+        }
+        
+        function initializeSearchButton() {
+            const searchBtnContainer = document.getElementById('searchBtn');
+            if (searchBtnContainer) {
+                const interactiveButton = createInteractiveSearchButton();
+                searchBtnContainer.appendChild(interactiveButton);
+            }
+        }
+        
         function showLoading(show) {
-            const btn = document.getElementById('searchBtn');
+            const btn = document.getElementById('searchBtnElement');
             const icon = document.getElementById('searchIcon');
             const spinner = document.getElementById('searchSpinner');
             
             if (show) {
-                btn.disabled = true;
-                btn.classList.add('opacity-75');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-75', 'pointer-events-none');
+                    // Disable hover effects during loading
+                    btn.classList.remove('hover:w-32');
+                }
                 if (icon) icon.classList.add('hidden');
-                spinner.classList.remove('hidden');
+                if (spinner) spinner.classList.remove('hidden');
             } else {
-                btn.disabled = false;
-                btn.classList.remove('opacity-75');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'pointer-events-none');
+                    // Re-enable hover effects
+                    btn.classList.add('hover:w-32');
+                }
                 if (icon) icon.classList.remove('hidden');
-                spinner.classList.add('hidden');
+                if (spinner) spinner.classList.add('hidden');
             }
         }
         
@@ -2508,6 +2655,7 @@
                 initializeTheme();
                 initializeLanguage();
                 initializeSidebar();
+                initializeSearchButton();
                 checkAuthenticationStatus();
             } catch (error) {
                 console.error('Error in initialization:', error);
