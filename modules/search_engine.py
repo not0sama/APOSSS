@@ -276,6 +276,18 @@ class SearchEngine:
         all_terms.extend(processed_query.get('secondary_terms', []))
         all_terms.extend(processed_query.get('all_terms', []))
         
+        # FALLBACK: If no structured terms found, try to extract from original query
+        if not all_terms:
+            original_query = processed_query.get('_metadata', {}).get('original_query', '') or processed_query.get('original_query', '')
+            if original_query:
+                # Simple word extraction as fallback
+                import re
+                words = re.findall(r'\b\w+\b', original_query.lower())
+                # Filter out common stop words but keep everything else
+                stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'}
+                fallback_terms = [word for word in words if word not in stop_words and len(word) > 2]
+                all_terms.extend(fallback_terms)
+        
         # Handle intent format
         if isinstance(intent, str):
             intent_value = intent
@@ -412,10 +424,10 @@ class SearchEngine:
             )
             results.extend(equipments_results)
             
-            # Search materials
+            # Search materials - expanded fields for better discoverability
             materials_results = self._search_collection(
                 'laboratories', 'materials', search_params,
-                search_fields=['material_name', 'description', 'supplier.name'],
+                search_fields=['material_name', 'description', 'supplier.name', 'safety_notes', 'unit', 'storage_location'],
                 result_type='material'
             )
             results.extend(materials_results)
@@ -677,54 +689,47 @@ class SearchEngine:
         return results
     
     def _build_mongodb_query(self, search_params: Dict[str, Any], search_fields: List[str]) -> Dict[str, Any]:
-        """Build MongoDB query from search parameters"""
-        query_conditions = []
+        """Build MongoDB query from search parameters - More flexible matching"""
+        all_field_conditions = []
         
-        # Primary terms (higher priority)
+        # Collect all terms from different sources
+        all_search_terms = []
+        
+        # Primary terms (highest priority)
         primary_terms = search_params.get('primary_terms', [])
-        if primary_terms:
-            primary_conditions = []
-            for term in primary_terms:
-                field_conditions = []
-                for field in search_fields:
-                    field_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
-                primary_conditions.append({"$or": field_conditions})
-            
-            if primary_conditions:
-                query_conditions.append({"$or": primary_conditions})
+        all_search_terms.extend(primary_terms)
         
         # Secondary terms
         secondary_terms = search_params.get('secondary_terms', [])
-        if secondary_terms:
-            secondary_conditions = []
-            for term in secondary_terms:
-                field_conditions = []
-                for field in search_fields:
-                    field_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
-                secondary_conditions.append({"$or": field_conditions})
-            
-            if secondary_conditions:
-                query_conditions.append({"$or": secondary_conditions})
+        all_search_terms.extend(secondary_terms)
         
-        # If no primary or secondary terms, use all terms
-        if not query_conditions:
+        # All terms (fallback)
+        if not all_search_terms:
             all_terms = search_params.get('all_terms', [])
-            if all_terms:
-                all_conditions = []
-                for term in all_terms[:10]:  # Limit to 10 terms to avoid overly complex queries
-                    field_conditions = []
-                    for field in search_fields:
-                        field_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
-                    all_conditions.append({"$or": field_conditions})
-                
-                if all_conditions:
-                    query_conditions.append({"$or": all_conditions})
+            all_search_terms.extend(all_terms[:10])  # Limit to avoid overly complex queries
         
-        # Combine conditions
-        if len(query_conditions) == 1:
-            return query_conditions[0]
-        elif len(query_conditions) > 1:
-            return {"$or": query_conditions}
+        # Remove duplicates and empty strings
+        all_search_terms = list(set(filter(None, all_search_terms)))
+        
+        if not all_search_terms:
+            return {}
+        
+        # Create field conditions for each term - ANY term matching ANY field
+        for term in all_search_terms:
+            term_conditions = []
+            for field in search_fields:
+                # More flexible regex - matches partial words too
+                term_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
+            
+            # Any field can match this term
+            if term_conditions:
+                all_field_conditions.append({"$or": term_conditions})
+        
+        # Return query that matches ANY of the terms (more flexible)
+        if len(all_field_conditions) == 1:
+            return all_field_conditions[0]
+        elif len(all_field_conditions) > 1:
+            return {"$or": all_field_conditions}
         else:
             return {}
     
@@ -828,13 +833,41 @@ class SearchEngine:
             
             elif result_type == 'material':
                 result['title'] = doc.get('material_name', '')
-                result['description'] = doc.get('description', '')
+                
+                # Enhanced description for materials
+                base_description = doc.get('description', '')
+                description_parts = [base_description] if base_description else []
+                
+                # Add key material information to description for better visibility
+                quantity = doc.get('quantity', '')
+                unit = doc.get('unit', '')
+                if quantity and unit:
+                    description_parts.append(f"Quantity: {quantity} {unit}")
+                
+                status = doc.get('status', '')
+                if status:
+                    description_parts.append(f"Status: {status}")
+                
+                storage_location = doc.get('storage_location', '')
+                if storage_location:
+                    description_parts.append(f"Location: {storage_location}")
+                
+                # Create enhanced description
+                result['description'] = ' | '.join(filter(None, description_parts))
+                
+                # Comprehensive metadata
                 result['metadata'] = {
-                    'quantity': str(doc.get('quantity', '')),
-                    'unit': doc.get('unit', ''),
-                    'status': doc.get('status', ''),
+                    'material_id': doc.get('material_id', ''),
+                    'quantity': str(quantity),
+                    'unit': unit,
+                    'status': status,
                     'supplier': doc.get('supplier', {}).get('name', '') if isinstance(doc.get('supplier'), dict) else str(doc.get('supplier', '')),
-                    'storage_location': doc.get('storage_location', '')
+                    'supplier_contact': doc.get('supplier', {}).get('contact_info', '') if isinstance(doc.get('supplier'), dict) else '',
+                    'storage_location': storage_location,
+                    'safety_notes': doc.get('safety_notes', ''),
+                    'expiration_date': str(doc.get('expiration_date', '')),
+                    'created_at': str(doc.get('created_at', '')),
+                    'updated_at': str(doc.get('updated_at', ''))
                 }
             
             elif result_type == 'research_project':
