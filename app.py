@@ -131,7 +131,7 @@ def signup():
 @app.route('/dashboard')
 def dashboard():
     """Serve the user dashboard page"""
-    return render_template('dashboard.html')
+    return render_template('user_dashboard.html')
 
 @app.route('/test-history')
 def test_history():
@@ -548,6 +548,7 @@ def get_user_statistics():
             return jsonify({'error': 'Authentication required'}), 401
         
         user_id = current_user['user_id']
+        time_period = request.args.get('time_period', 'monthly')  # Default to monthly
         
         # Get user statistics from database
         aposss_db = db_manager.get_database('aposss')
@@ -574,8 +575,6 @@ def get_user_statistics():
             'rating': {'$lte': 2}
         })
         
-
-        
         # Get recent activity
         recent_searches = list(history_collection.find(
             {'user_id': user_id},
@@ -597,24 +596,22 @@ def get_user_statistics():
         interactions = list(interactions_collection.find(
             {'user_id': user_id},
             {'action': 1, 'timestamp': 1}
-        ).sort('timestamp', -1).limit(100))
+        ).sort('timestamp', -1).limit(500))  # Increased limit for better analysis
         
-        # Calculate activity by month
-        from collections import defaultdict
-        import datetime
+        # Calculate activity based on time period
+        activity_data = calculate_activity_by_period(interactions, time_period)
         
-        monthly_activity = defaultdict(int)
-        for interaction in interactions:
+        # Calculate account age
+        account_age_days = 0
+        if current_user.get('created_at'):
             try:
-                date = datetime.datetime.fromisoformat(interaction['timestamp'].replace('Z', '+00:00'))
-                month_key = f"{date.year}-{date.month:02d}"
-                monthly_activity[month_key] += 1
-            except:
-                continue
-        
-        # Sort monthly activity
-        sorted_monthly = sorted(monthly_activity.items())[-6:]  # Last 6 months
-        
+                created_at_str = current_user.get('created_at', datetime.now().isoformat()).replace('Z', '+00:00')
+                created_at = datetime.fromisoformat(created_at_str)
+                account_age_days = (datetime.now() - created_at).days
+            except Exception as e:
+                logger.warning(f"Error calculating account age: {str(e)}")
+                account_age_days = 0
+
         statistics = {
             'total_searches': search_count,
             'total_bookmarks': bookmarks_count,
@@ -623,8 +620,9 @@ def get_user_statistics():
             'total_feedback': total_feedback,
             'recent_searches': recent_searches,
             'recent_bookmarks': recent_bookmarks,
-            'monthly_activity': sorted_monthly,
-            'account_age_days': (datetime.datetime.now() - datetime.datetime.fromisoformat(current_user.get('created_at', datetime.datetime.now().isoformat()).replace('Z', '+00:00'))).days if current_user.get('created_at') else 0
+            'activity_data': activity_data,
+            'monthly_activity': activity_data if time_period == 'monthly' else [],  # Backward compatibility
+            'account_age_days': account_age_days
         }
         
         return jsonify({
@@ -635,6 +633,55 @@ def get_user_statistics():
     except Exception as e:
         logger.error(f"Error getting user statistics: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
+def calculate_activity_by_period(interactions, time_period):
+    """Calculate user activity data based on specified time period"""
+    from collections import defaultdict
+    
+    activity_counts = defaultdict(int)
+    
+    for interaction in interactions:
+        try:
+            # Parse timestamp
+            timestamp_str = interaction['timestamp']
+            if timestamp_str.endswith('Z'):
+                timestamp_str = timestamp_str.replace('Z', '+00:00')
+            
+            date = datetime.fromisoformat(timestamp_str)
+            
+            # Generate key based on time period
+            if time_period == 'daily':
+                # Format: YYYY-MM-DD
+                key = date.strftime('%Y-%m-%d')
+            elif time_period == 'weekly':
+                # Get start of week (Monday)
+                start_of_week = date - timedelta(days=date.weekday())
+                key = start_of_week.strftime('%Y-%m-%d')
+            else:  # monthly
+                # Format: YYYY-MM
+                key = f"{date.year}-{date.month:02d}"
+            
+            activity_counts[key] += 1
+            
+        except Exception as e:
+            logger.warning(f"Error parsing interaction timestamp: {str(e)}")
+            continue
+    
+    # Sort and limit results based on time period
+    sorted_activity = sorted(activity_counts.items())
+    
+    if time_period == 'daily':
+        # Last 30 days
+        result = sorted_activity[-30:]
+    elif time_period == 'weekly':
+        # Last 12 weeks
+        result = sorted_activity[-12:]
+    else:  # monthly
+        # Last 6 months
+        result = sorted_activity[-6:]
+    
+    return result
 
 @app.route('/api/user/profile', methods=['PUT'])
 def update_profile():
@@ -669,7 +716,6 @@ def upload_profile_picture():
     """Upload user profile picture endpoint"""
     import base64
     import uuid
-    from datetime import datetime
     
     try:
         if not user_manager:

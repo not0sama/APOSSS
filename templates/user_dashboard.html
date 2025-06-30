@@ -111,6 +111,40 @@
             background: var(--button-hover);
         }
 
+        /* Time Period Selector */
+        .time-period-container {
+            background-color: #e5e7eb; /* bg-gray-200 */
+        }
+        [data-theme="dark"] .time-period-container {
+            background-color: #1f2937; /* dark:bg-gray-800 */
+        }
+
+        .time-period-btn {
+            background-color: #ffffff; /* bg-white */
+            color: #374151; /* text-gray-700 */
+            transition: all 0.2s ease-in-out;
+        }
+        .time-period-btn:hover {
+            background-color: #dbeafe; /* hover:bg-blue-100 */
+        }
+        [data-theme="dark"] .time-period-btn {
+            background-color: #374151; /* dark:bg-gray-700 */
+            color: #d1d5db; /* dark:text-gray-300 */
+        }
+        [data-theme="dark"] .time-period-btn:hover {
+            background-color: #4b5563; /* dark:hover:bg-gray-600 */
+        }
+        
+        .time-period-btn.active,
+        [data-theme="dark"] .time-period-btn.active {
+            background-color: #2563eb; /* bg-blue-600 */
+            color: #ffffff; /* text-white */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        [data-theme="dark"] .time-period-btn.active {
+            background-color: #3b82f6; /* dark:bg-blue-500 */
+        }
+
         /* The switch - the box around the slider */
         .switch {
           display: block;
@@ -507,7 +541,21 @@
                         <div class="particle"></div>
                     </div>
                     <div class="relative z-10">
-                        <h2 class="text-xl font-bold text-themed-primary mb-2" data-translate="activity-over-time">Activity Over Time</h2>
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-xl font-bold text-themed-primary" data-translate="activity-over-time">Activity Over Time</h2>
+                            <!-- Time Period Selector -->
+                            <div class="time-period-container flex space-x-1 rounded-lg p-1">
+                                <button id="dailyBtn" class="time-period-btn px-3 py-1 rounded-md text-sm font-medium" onclick="changeTimePeriod('daily')" data-translate="daily">
+                                    Daily
+                                </button>
+                                <button id="weeklyBtn" class="time-period-btn px-3 py-1 rounded-md text-sm font-medium" onclick="changeTimePeriod('weekly')" data-translate="weekly">
+                                    Weekly
+                                </button>
+                                <button id="monthlyBtn" class="time-period-btn px-3 py-1 rounded-md text-sm font-medium active" onclick="changeTimePeriod('monthly')" data-translate="monthly">
+                                    Monthly
+                                </button>
+                            </div>
+                        </div>
                         <p class="text-themed-secondary text-sm" data-translate="interaction-patterns">Your search and interaction patterns</p>
                     </div>
                 </div>
@@ -611,6 +659,7 @@
         let currentUser = null;
         let activityChart = null;
         let feedbackChart = null;
+        let currentTimePeriod = 'monthly'; // Default time period
         
         // Translations
         const translations = {
@@ -637,6 +686,11 @@
                 'interaction-patterns': 'Your search and interaction patterns',
                 'feedback-distribution': 'Feedback Distribution',
                 'rating-patterns': 'Your rating and feedback patterns',
+                
+                // Time periods
+                'daily': 'Daily',
+                'weekly': 'Weekly',
+                'monthly': 'Monthly',
                 
                 // Recent sections
                 'recent-searches': 'Recent Searches',
@@ -693,6 +747,11 @@
                 'interaction-patterns': 'أنماط البحث والتفاعل الخاصة بك',
                 'feedback-distribution': 'توزيع الملاحظات',
                 'rating-patterns': 'أنماط التقييم والملاحظات الخاصة بك',
+                
+                // Time periods
+                'daily': 'يومي',
+                'weekly': 'أسبوعي',
+                'monthly': 'شهري',
                 
                 // Recent sections
                 'recent-searches': 'عمليات البحث الأخيرة',
@@ -1105,11 +1164,30 @@
             }, 3000);
         }
 
+        // Change time period for activity chart
+        function changeTimePeriod(period) {
+            currentTimePeriod = period;
+
+            // Remove 'active' class from all buttons
+            document.querySelectorAll('.time-period-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add 'active' class to the clicked button
+            const activeBtn = document.getElementById(period + 'Btn');
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+            
+            // Reload statistics with new time period
+            loadUserStatistics();
+        }
+
         // Load user statistics
         async function loadUserStatistics() {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch('/api/user/statistics', {
+                const response = await fetch(`/api/user/statistics?time_period=${currentTimePeriod}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -1144,8 +1222,9 @@
             // Display recent bookmarks
             displayRecentBookmarks(stats.recent_bookmarks || []);
 
-            // Create charts
-            createActivityChart(stats.monthly_activity || []);
+            // Create charts with the activity data based on current time period
+            const activityData = stats.activity_data || stats.monthly_activity || [];
+            createActivityChart(activityData);
             createFeedbackChart(stats);
         }
 
@@ -1230,7 +1309,7 @@
             `).join('');
         }
 
-        function createActivityChart(monthlyActivity) {
+        function createActivityChart(activityData) {
             // Destroy existing chart if it exists
             if (activityChart) {
                 activityChart.destroy();
@@ -1239,12 +1318,36 @@
             
             const ctx = document.getElementById('activityChart').getContext('2d');
             
-            const labels = monthlyActivity.map(item => {
-                const [year, month] = item[0].split('-');
-                return `${year}-${month}`;
+            // Format labels based on time period
+            const labels = activityData.map(item => {
+                const dateStr = item[0];
+                
+                if (currentTimePeriod === 'daily') {
+                    // Format: YYYY-MM-DD -> Mon 15
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+                } else if (currentTimePeriod === 'weekly') {
+                    // Format: YYYY-WW -> Week 15
+                    if (dateStr.includes('-W')) {
+                        const [year, week] = dateStr.split('-W');
+                        return `Week ${week}`;
+                    } else {
+                        // Fallback for different week format
+                        return dateStr;
+                    }
+                } else {
+                    // Monthly: YYYY-MM -> Jan 2024
+                    if (dateStr.includes('-') && dateStr.length === 7) {
+                        const [year, month] = dateStr.split('-');
+                        const date = new Date(year, month - 1);
+                        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    } else {
+                        return dateStr;
+                    }
+                }
             });
-            const data = monthlyActivity.map(item => item[1]);
-
+            
+            const data = activityData.map(item => item[1]);
             const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
             
             activityChart = new Chart(ctx, {
@@ -1257,7 +1360,12 @@
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
@@ -1266,13 +1374,63 @@
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            displayColors: false,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    const originalDate = activityData[index] ? activityData[index][0] : '';
+                                    
+                                    if (currentTimePeriod === 'daily') {
+                                        const date = new Date(originalDate);
+                                        return date.toLocaleDateString('en-US', { 
+                                            weekday: 'long', 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        });
+                                    } else if (currentTimePeriod === 'weekly') {
+                                        return `Week of ${originalDate}`;
+                                    } else {
+                                        const [year, month] = originalDate.split('-');
+                                        const date = new Date(year, month - 1);
+                                        return date.toLocaleDateString('en-US', { 
+                                            month: 'long', 
+                                            year: 'numeric' 
+                                        });
+                                    }
+                                },
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const unit = currentTimePeriod === 'daily' ? 'day' : 
+                                               currentTimePeriod === 'weekly' ? 'week' : 'month';
+                                    return `${value} interaction${value !== 1 ? 's' : ''} this ${unit}`;
+                                }
+                            }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                stepSize: 1
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return Number.isInteger(value) ? value : '';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
                             }
                         }
                     }
