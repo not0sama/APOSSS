@@ -121,7 +121,7 @@
             font-family: 'Material Symbols Outlined';
             font-weight: normal;
             font-style: normal;
-            font-size: 24px;
+            font-size: 18px;
             line-height: 1;
             letter-spacing: normal;
             text-transform: none;
@@ -192,6 +192,8 @@
         .text-themed-secondary { color: var(--text-secondary) !important; }
         .bg-themed-card { background: var(--card-bg) !important; }
         .bg-themed-header { background: var(--header-bg) !important; }
+        .bg-themed-secondary { background: var(--bg-secondary); }
+        .view-toggle-btn:hover { background: var(--button-hover); }
 
         .result-card {
             transition: all 0.2s ease-in-out;
@@ -252,16 +254,66 @@
             width: 4rem;
         }
         
-        #filterSidebar.collapsed .filter-content {
+        #filterSidebar.collapsed .filter-content,
+        #filterSidebar.collapsed .non-collapsed-item {
             display: none;
+        }
+        
+        #filterSidebar.collapsed .sidebar-toggle {
+            margin: 0 auto;
         }
         
         #filterSidebar.collapsed .sidebar-toggle {
             transform: rotate(180deg);
         }
         
+        /* Collapsible filter sections */
+        .filter-section-toggle {
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .filter-section-toggle:hover {
+            background-color: var(--button-hover);
+        }
+        .filter-section-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-in-out;
+            max-height: 1000px; /* Set to a large enough value */
+            opacity: 1;
+        }
+        .filter-section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        .toggle-icon {
+            transition: transform 0.3s ease-in-out, color 0.2s ease-in-out;
+        }
+        .toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .filter-section-toggle:hover .toggle-icon {
+            color: #3b82f6;
+        }
+
         .sidebar-toggle {
+            transition: background-color 0.3s ease-in-out;
+        }
+        
+        .sidebar-toggle .material-symbols-outlined {
             transition: transform 0.3s ease-in-out;
+        }
+        
+        #filterSidebar.collapsed .sidebar-toggle .material-symbols-outlined {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-toggle:hover {
+            background-color: var(--button-hover) !important;
         }
         
         .filter-content {
@@ -916,6 +968,9 @@
             left: 0.5rem;
             right: auto;
         }
+        .sidebar-toggle:hover {
+            background-color: var(--button-hover) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -997,85 +1052,95 @@
     <main class="flex">
         <!-- Left Sidebar - Filters (hidden in sections mode) -->
         <aside class="w-80 bg-themed-card border-r sticky top-20 h-screen overflow-y-auto p-6" style="border-color: var(--container-border); display: none;" id="filterSidebar">
-            <!-- Sidebar Toggle Button -->
+            <!-- Sidebar Header -->
             <div class="flex items-center justify-between mb-4">
-                <button onclick="toggleSidebar()" class="sidebar-toggle p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Toggle Filters">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-themed-primary">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+                <h3 class="text-lg font-semibold text-themed-primary flex items-center non-collapsed-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
                     </svg>
-                </button>
+                    <span data-translate="filter-results">Filter Results</span>
+                </h3>
+                <div class="flex items-center">
+                    <button onclick="clearAllFilters()" class="filter-toggle text-xs font-medium px-3 py-1 rounded-full flex items-center mr-2 non-collapsed-item transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span data-translate="clear-all">Clear All</span>
+                    </button>
+                    <button onclick="toggleSidebar()" class="sidebar-toggle filter-toggle w-9 h-9 flex items-center justify-center rounded-full" title="Collapse Filters">
+                        <span class="material-symbols-outlined text-themed-primary">chevron_left</span>
+                    </button>
+                </div>
             </div>
             
             <div class="filter-content">
-                <div class="mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-themed-primary flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                            </svg>
-                            <span data-translate="filter-results">Filter Results</span>
-                        </h3>
-                        <button onclick="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            <span data-translate="clear-all">Clear All</span>
-                        </button>
-                    </div>
-                
                 <!-- Database Filters -->
-                <div class="mb-6">
-                    <p class="text-sm font-medium text-themed-primary mb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                        </svg>
-                        <span data-translate="categories">Categories</span>
-                    </p>
-                    <div class="grid grid-cols-2 gap-2" id="databaseFilters">
-                        <!-- Will be populated by JavaScript -->
+                <div class="mb-4 py-2 border-b" style="border-color: var(--container-border);">
+                    <div onclick="toggleFilterSection('category-filters')" class="filter-section-toggle flex items-center justify-between w-full p-2 rounded-lg">
+                        <p class="text-sm font-medium text-themed-primary flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                            </svg>
+                            <span data-translate="categories">Categories</span>
+                        </p>
+                        <span class="material-symbols-outlined toggle-icon">expand_more</span>
+                    </div>
+                    <div id="category-filters" class="filter-section-content pt-3">
+                        <div class="grid grid-cols-2 gap-2" id="databaseFilters">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
                     </div>
                 </div>
                 
-                            <!-- Type Filters -->
-                <div class="mb-6">
-                    <p class="text-sm font-medium text-themed-primary mb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-                        <span data-translate="content-type">Content Type</span>
-                    </p>
-                    <div id="typeFilters">
-                    <!-- Will be populated by JavaScript with custom row layout -->
+                <!-- Type Filters -->
+                <div class="mb-4 py-2 border-b" style="border-color: var(--container-border);">
+                    <div onclick="toggleFilterSection('type-filters')" class="filter-section-toggle flex items-center justify-between w-full p-2 rounded-lg">
+                        <p class="text-sm font-medium text-themed-primary flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <span data-translate="content-type">Content Type</span>
+                        </p>
+                        <span class="material-symbols-outlined toggle-icon">expand_more</span>
+                    </div>
+                    <div id="type-filters" class="filter-section-content pt-3">
+                        <div id="typeFilters">
+                            <!-- Will be populated by JavaScript with custom row layout -->
+                        </div>
+                    </div>
                 </div>
-            </div>
                 
                 <!-- Relevance Filters -->
-                <div class="mb-6">
-                    <p class="text-sm font-medium text-themed-primary mb-3 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                        </svg>
-                        <span data-translate="relevance">Relevance</span>
-                    </p>
-                    <div class="grid grid-cols-3 gap-1">
-                        <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
-                                data-relevance="high" onclick="toggleRelevanceFilter(this)">
-                            <div class="w-3 h-3 bg-green-500 rounded-full mb-1"></div>
-                            <span class="leading-tight" data-translate="high-relevance">High<br/>(70%+)</span>
-                        </button>
-                        <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
-                                data-relevance="medium" onclick="toggleRelevanceFilter(this)">
-                            <div class="w-3 h-3 bg-yellow-500 rounded-full mb-1"></div>
-                            <span class="leading-tight" data-translate="medium-relevance">Medium<br/>(40-70%)</span>
-                        </button>
-                        <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
-                                data-relevance="low" onclick="toggleRelevanceFilter(this)">
-                            <div class="w-3 h-3 bg-red-500 rounded-full mb-1"></div>
-                            <span class="leading-tight" data-translate="low-relevance">Low<br/>(<40%)</span>
-                        </button>
+                <div class="mb-4 py-2">
+                     <div onclick="toggleFilterSection('relevance-filters')" class="filter-section-toggle flex items-center justify-between w-full p-2 rounded-lg">
+                        <p class="text-sm font-medium text-themed-primary flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                            </svg>
+                            <span data-translate="relevance">Relevance</span>
+                        </p>
+                        <span class="material-symbols-outlined toggle-icon">expand_more</span>
+                    </div>
+                    <div id="relevance-filters" class="filter-section-content pt-3">
+                        <div class="grid grid-cols-3 gap-1">
+                            <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
+                                    data-relevance="high" onclick="toggleRelevanceFilter(this)">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mb-1"></div>
+                                <span class="leading-tight" data-translate="high-relevance">High<br/>(70%+)</span>
+                            </button>
+                            <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
+                                    data-relevance="medium" onclick="toggleRelevanceFilter(this)">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mb-1"></div>
+                                <span class="leading-tight" data-translate="medium-relevance">Medium<br/>(40-70%)</span>
+                            </button>
+                            <button class="filter-toggle w-full text-center px-2 py-2 rounded-lg text-xs flex flex-col items-center justify-center" 
+                                    data-relevance="low" onclick="toggleRelevanceFilter(this)">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mb-1"></div>
+                                <span class="leading-tight" data-translate="low-relevance">Low<br/>(<40%)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         </aside>
 
@@ -1102,28 +1167,26 @@
                     <!-- Display Mode Toggle -->
                     <div class="flex items-center space-x-4">
                         <!-- View Toggle (only shown in 'all' mode) -->
-                        <div class="flex bg-gray-200 rounded-lg p-1" id="viewToggle" style="display: none;">
-                            <button onclick="setView('list')" id="listViewBtn" class="px-3 py-1 rounded-md transition-colors flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                        <div class="flex bg-themed-secondary rounded-lg p-1 space-x-1" id="viewToggle" style="display: none;">
+                            <button onclick="toggleDisplayMode()" id="topResultsBtn" class="view-toggle-btn px-3 py-1 rounded-md transition-colors flex flex-col items-start text-xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mb-1">
+                                   <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                                </svg>
+                                <span data-translate="top-results-view">Top Results</span>
+                            </button>
+                            <button onclick="setView('list')" id="listViewBtn" class="view-toggle-btn px-3 py-1 rounded-md transition-colors flex flex-col items-start text-xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mb-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                                 </svg>
                                 <span data-translate="list">List</span>
                             </button>
-                            <button onclick="setView('grid')" id="gridViewBtn" class="px-3 py-1 rounded-md transition-colors flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
+                            <button onclick="setView('grid')" id="gridViewBtn" class="view-toggle-btn px-3 py-1 rounded-md transition-colors flex flex-col items-start text-xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mb-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                                 </svg>
                                 <span data-translate="grid">Grid</span>
                             </button>
                         </div>
-                        
-                        <!-- Top Results Button (only shown in 'all' mode) -->
-                        <button onclick="toggleDisplayMode()" id="topResultsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center" style="display: none;">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l-1-3m1 3l-1-3m-16.5-3h9v-2.25" />
-                            </svg>
-                            <span data-translate="top-results-view">Top Results</span>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1612,8 +1675,8 @@
             
             // Update search summary with comprehensive information
             const searchSummary = document.getElementById('searchSummary');
-            const baseText = `Found ${data.search_results.total_results} results for "${query}"`;
-            const filterNote = ` • Use filters to refine results from all databases`;
+            const baseText = `Found ${data.search_results.total_results} results`; //for "${query}"
+            const filterNote = ``;//notes after the results count
             searchSummary.textContent = baseText + filterNote;
             
             // Store data
@@ -1766,7 +1829,7 @@
                 'research_project': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" /></svg>',
                 'funding_institution': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m2.25-18v18m13.5-18v18m2.25-18v18M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3M18 10.5h.008v.008H18V10.5z" /></svg>'
             };
-            return icons[type] || '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>';
+            return icons[type] || '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c0 .621-.504 1.125-1.125 1.125H11.25a9 9 0 00-9-9v-9.375c0-.621.504-1.125 1.125-1.125z" /></svg>';
         }
         
         function toggleDatabaseFilter(button) {
@@ -1866,30 +1929,41 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('filterSidebar');
             const toggleButton = document.querySelector('.sidebar-toggle');
+            const icon = toggleButton.querySelector('.material-symbols-outlined');
             
             sidebarCollapsed = !sidebarCollapsed;
             
             if (sidebarCollapsed) {
                 sidebar.classList.add('collapsed');
                 toggleButton.title = 'Expand Filters';
+                if (icon) icon.textContent = 'chevron_right';
             } else {
                 sidebar.classList.remove('collapsed');
                 toggleButton.title = 'Collapse Filters';
+                if (icon) icon.textContent = 'chevron_left';
             }
             
             // Save sidebar state to localStorage
             localStorage.setItem('sidebarCollapsed', sidebarCollapsed.toString());
         }
-        
+
         function initializeSidebar() {
+            const sidebar = document.getElementById('filterSidebar');
+            const toggleButton = document.querySelector('.sidebar-toggle');
+            const icon = toggleButton.querySelector('.material-symbols-outlined');
+
             // Restore sidebar state from localStorage
             const savedState = localStorage.getItem('sidebarCollapsed');
             if (savedState === 'true') {
                 sidebarCollapsed = true;
-                const sidebar = document.getElementById('filterSidebar');
-                const toggleButton = document.querySelector('.sidebar-toggle');
                 sidebar.classList.add('collapsed');
                 toggleButton.title = 'Expand Filters';
+                if (icon) icon.textContent = 'chevron_right';
+            } else {
+                sidebarCollapsed = false;
+                sidebar.classList.remove('collapsed');
+                toggleButton.title = 'Collapse Filters';
+                if (icon) icon.textContent = 'chevron_left';
             }
         }
         
@@ -1940,14 +2014,37 @@
         
         function setView(view) {
             currentView = view;
-            
-            // Update button states
-            document.getElementById('listViewBtn').className = 
-                `px-3 py-1 rounded-md transition-colors ${view === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600'}`;
-            document.getElementById('gridViewBtn').className = 
-                `px-3 py-1 rounded-md transition-colors ${view === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600'}`;
-            
+            updateViewToggle();
             displayResults();
+        }
+
+        function updateViewToggle() {
+            const topResultsBtn = document.getElementById('topResultsBtn');
+            const listViewBtn = document.getElementById('listViewBtn');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+
+            // Reset all buttons to inactive state
+            [topResultsBtn, listViewBtn, gridViewBtn].forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-themed-primary');
+            });
+            
+            // Set the active button
+            let activeButton;
+            if (displayMode === 'sections') {
+                activeButton = topResultsBtn;
+            } else { // 'all' mode
+                if (currentView === 'list') {
+                    activeButton = listViewBtn;
+                } else { // 'grid' mode
+                    activeButton = gridViewBtn;
+                }
+            }
+            
+            if (activeButton) {
+                activeButton.classList.add('bg-blue-600', 'text-white');
+                activeButton.classList.remove('text-themed-primary');
+            }
         }
         
         function displayResults() {
@@ -2297,25 +2394,23 @@
         function updateUIVisibility() {
             const sidebar = document.getElementById('filterSidebar');
             const viewToggle = document.getElementById('viewToggle');
-            const topResultsBtn = document.getElementById('topResultsBtn');
             const showAllContainer = document.getElementById('showAllResultsContainer');
             const searchSummarySection = document.getElementById('searchSummarySection');
             
             if (displayMode === 'sections') {
                 // Hide sidebar, view toggle, top results button, and search summary; show "show all" button
                 sidebar.style.display = 'none';
-                viewToggle.style.display = 'none';
-                topResultsBtn.style.display = 'none';
+                viewToggle.style.display = 'flex';
                 searchSummarySection.style.display = 'none';
                 showAllContainer.style.display = 'block';
             } else {
                 // Show sidebar, view toggle, top results button, and search summary; hide "show all" button
                 sidebar.style.display = 'block';
                 viewToggle.style.display = 'flex';
-                topResultsBtn.style.display = 'flex';
                 searchSummarySection.style.display = 'block';
                 showAllContainer.style.display = 'none';
             }
+            updateViewToggle();
         }
         
         function createPaginationHTML(totalPages) {
@@ -2391,7 +2486,7 @@
         function updateSearchSummary(start, end, total) {
             const summaryElement = document.getElementById('searchSummary');
             const query = sessionStorage.getItem('searchQuery') || 'your search';
-            const baseText = `Showing ${start}-${end} of ${total} results for "${query}"`;
+            // const baseText = `Showing ${start}-${end} of ${total} results for "${query}"`;
             const filterNote = total < allResults.length ? ` (filtered from ${allResults.length} total)` : ` (from all databases)`;
             summaryElement.textContent = baseText + filterNote;
         }
@@ -2583,20 +2678,16 @@
                     <div class="flex-1">
                         <span class="text-sm text-themed-secondary mb-2 block">${trans['was-helpful']}</span>
                         <div class="flex space-x-2">
-                            <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 5, 'thumbs_up', ${index})" 
+                            <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 5, 'thumbs_up', ${index},'${sectionKey}')" 
                                     id="helpful-btn-${sectionKey}-${index}"
                                     class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-lg text-sm flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5.25 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
-                                </svg>
+                                <span class="material-symbols-outlined mr-2" style="font-size: 18px;">thumb_up</span>
                                 <span>${trans['helpful']}</span>
                             </button>
-                            <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 1, 'thumbs_down', ${index})" 
+                            <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 1, 'thumbs_down', ${index},'${sectionKey}')" 
                                     id="not-helpful-btn-${sectionKey}-${index}"
                                     class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.25-9.75a3 3 0 11-6 0 3 3 0 016 0zM12.75 18a3.75 3.75 0 01-6.364-2.77L8.25 13.5H12a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H5.25a2.25 2.25 0 00-2.25 2.25v.557c0 .357.078.717.22 1.037l.671 1.342c.08.161.187.306.316.423a.75.75 0 01.296.632v.25a.75.75 0 01-.75.75z" />
-                                </svg>
+                                <span class="material-symbols-outlined mr-2" style="font-size: 18px;">thumb_down</span>
                                 <span>${trans['not-helpful']}</span>
                             </button>
                         </div>
@@ -2801,17 +2892,13 @@
                                     <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 5, 'thumbs_up', ${index})" 
                                             id="helpful-btn-${index}"
                                             class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-lg text-sm flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5.25 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
-                                        </svg>
+                                        <span class="material-symbols-outlined mr-2" style="font-size: 18px;">thumb_up</span>
                                         <span data-translate="helpful">${trans['helpful']}</span>
                                     </button>
                                     <button onclick="event.stopPropagation(); submitFeedback('${result.id}', 1, 'thumbs_down', ${index})" 
                                             id="not-helpful-btn-${index}"
                                             class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 15h2.25m8.25-9.75a3 3 0 11-6 0 3 3 0 016 0zM12.75 18a3.75 3.75 0 01-6.364-2.77L8.25 13.5H12a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H5.25a2.25 2.25 0 00-2.25 2.25v.557c0 .357.078.717.22 1.037l.671 1.342c.08.161.187.306.316.423a.75.75 0 01.296.632v.25a.75.75 0 01-.75.75z" />
-                                        </svg>
+                                        <span class="material-symbols-outlined mr-2" style="font-size: 18px;">thumb_down</span>
                                         <span data-translate="not-helpful">${trans['not-helpful']}</span>
                                     </button>
                                 </div>
@@ -3250,7 +3337,7 @@
             }
         }
         
-        async function submitFeedback(resultId, rating, feedbackType, resultIndex) {
+        async function submitFeedback(resultId, rating, feedbackType, resultIndex, sectionKey = null) {
             if (!currentQueryId) {
                 showTemporaryMessage('No active query for feedback', 'error');
                 return;
@@ -3289,18 +3376,28 @@
                 if (data.success) {
                     feedbackSubmitted.add(resultId);
                     
-                    // Only disable the feedback buttons, not bookmark or read more buttons
-                    const helpfulBtn = document.getElementById(`helpful-btn-${resultIndex}`);
-                    const notHelpfulBtn = document.getElementById(`not-helpful-btn-${resultIndex}`);
-                    
-                    if (helpfulBtn) {
-                        helpfulBtn.classList.add('feedback-submitted');
-                        helpfulBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
-                    }
-                    
-                    if (notHelpfulBtn) {
-                        notHelpfulBtn.classList.add('feedback-submitted');
-                        notHelpfulBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
+                    const helpfulBtnId = sectionKey ? `helpful-btn-${sectionKey}-${resultIndex}` : `helpful-btn-${resultIndex}`;
+                    const notHelpfulBtnId = sectionKey ? `not-helpful-btn-${sectionKey}-${resultIndex}` : `not-helpful-btn-${resultIndex}`;
+
+                    const helpfulBtn = document.getElementById(helpfulBtnId);
+                    const notHelpfulBtn = document.getElementById(notHelpfulBtnId);
+
+                    if (helpfulBtn && notHelpfulBtn) {
+                        helpfulBtn.disabled = true;
+                        notHelpfulBtn.disabled = true;
+
+                        // Update button content to show feedback was submitted
+                        const submittedIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>Submitted';
+                        
+                        if (feedbackType === 'thumbs_up') {
+                            helpfulBtn.innerHTML = submittedIcon;
+                            helpfulBtn.classList.add('bg-green-300', 'feedback-submitted');
+                            notHelpfulBtn.classList.add('opacity-50', 'feedback-submitted');
+                        } else {
+                            notHelpfulBtn.innerHTML = submittedIcon;
+                            notHelpfulBtn.classList.add('bg-red-300', 'feedback-submitted');
+                            helpfulBtn.classList.add('opacity-50', 'feedback-submitted');
+                        }
                     }
                     
                     showTemporaryMessage('Feedback submitted successfully!', 'success');
@@ -3879,6 +3976,70 @@
             }
         }
         
+        function toggleFilterSection(contentId) {
+            const content = document.getElementById(contentId);
+            const icon = content.previousElementSibling.querySelector('.toggle-icon');
+            
+            if (content && icon) {
+                const isCollapsed = content.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    // Expand
+                    content.classList.remove('collapsed');
+                    icon.classList.remove('collapsed');
+                    // Store state
+                    localStorage.setItem(`filter-section-${contentId}`, 'expanded');
+                } else {
+                    // Collapse
+                    content.classList.add('collapsed');
+                    icon.classList.add('collapsed');
+                    // Store state
+                    localStorage.setItem(`filter-section-${contentId}`, 'collapsed');
+                }
+            }
+        }
+
+        function initializeFilterSections() {
+            const sections = ['category-filters', 'type-filters', 'relevance-filters'];
+            sections.forEach(id => {
+                const state = localStorage.getItem(`filter-section-${id}`);
+                const content = document.getElementById(id);
+                const icon = content.previousElementSibling.querySelector('.toggle-icon');
+
+                // Default 'Categories' to expanded, others to collapsed, if no state is saved
+                let shouldBeCollapsed;
+                if (state === null) { // No saved state
+                    shouldBeCollapsed = (id !== 'category-filters');
+                } else { // Use saved state
+                    shouldBeCollapsed = (state === 'collapsed');
+                }
+
+                if (shouldBeCollapsed) {
+                    content.classList.add('collapsed');
+                    icon.classList.add('collapsed');
+                } else {
+                    content.classList.remove('collapsed');
+                    icon.classList.remove('collapsed');
+                }
+            });
+        }
+
+        function openMobileFilters() {
+            const sidebar = document.getElementById('filterSidebar');
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'mobile-overlay';
+            overlay.onclick = closeMobileFilters;
+            document.body.appendChild(overlay);
+            
+            // Show sidebar
+            sidebar.classList.add('mobile-open');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+        
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
@@ -3888,6 +4049,7 @@
             loadSearchResults();
             setView('list'); // Default view
             updateUIVisibility(); // Set up initial UI visibility
+            initializeFilterSections();
             
             // Load user preferences
             loadUserThemePreference();
