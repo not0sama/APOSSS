@@ -23,10 +23,10 @@ class LLMProcessor:
         self.model = genai.GenerativeModel(
             model_name="gemini-2.0-flash-exp",
             generation_config={
-                "temperature": 0.3,
+                "temperature": 0.2,  # Lower temperature for more consistent structured output
                 "top_p": 0.8,
                 "top_k": 40,
-                "max_output_tokens": 2048,
+                "max_output_tokens": 3072,  # Increased for more comprehensive analysis
             },
             safety_settings={
                 HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
@@ -39,245 +39,516 @@ class LLMProcessor:
         logger.info("Gemini-2.0-flash LLM processor initialized successfully")
     
     def create_query_analysis_prompt(self, user_query: str) -> str:
-        """Create a structured prompt for multilingual query analysis with translation"""
+        """Create a comprehensive structured prompt for multilingual query analysis"""
         prompt = f"""
-You are an AI assistant specialized in analyzing academic and scientific research queries in multiple languages. Your task is to analyze the following user query, detect its language, translate it to English if needed, and extract structured information that will be used to search across multiple databases containing academic resources.
+You are an expert AI assistant specialized in analyzing academic, scientific, and research queries across multiple languages. Your task is to perform a comprehensive analysis of the user query through multiple stages.
 
-User Query: "{user_query}"
+USER QUERY: "{user_query}"
 
-Please analyze this query and provide a JSON response with the following structure:
+ANALYSIS REQUIREMENTS:
+1. Language Detection: Identify the language with high accuracy
+2. Query Correction: Fix any spelling errors, typos, or grammatical issues
+3. Translation: Translate to English if the original is not English
+4. Comprehensive Information Extraction: Extract all relevant information for academic search
+
+Please provide a JSON response with the following EXACT structure:
 
 {{
-    "language_detection": {{
-        "detected_language": "ISO 639-1 language code (e.g., 'en', 'fr', 'es', 'ar', 'zh', etc.)",
-        "language_name": "full language name",
-        "confidence": 0.95,
-        "is_english": true/false
+    "language_analysis": {{
+        "detected_language": "ISO 639-1 code (en, fr, es, ar, zh, de, it, pt, ru, ja, ko, hi, etc.)",
+        "language_name": "Full language name in English",
+        "confidence_score": 0.95,
+        "is_english": true/false,
+        "script_type": "latin/arabic/cyrillic/chinese/japanese/korean/devanagari/etc."
     }},
-    "translation": {{
-        "original_query": "exact original query as provided",
-        "translated_query": "English translation if original is not English, otherwise same as original",
-        "needs_translation": true/false
+    "query_processing": {{
+        "original_query": "{user_query}",
+        "corrected_original": "corrected version of original query (fix typos/grammar)",
+        "english_translation": "English translation (same as corrected_original if already English)",
+        "translation_needed": true/false,
+        "correction_made": true/false,
+        "processing_notes": "brief note about corrections or translation approach"
     }},
-    "corrected_query": "spelling-corrected version of the translated query",
-    "intent": {{
-        "primary_intent": "main purpose of the query (e.g., 'find_research', 'find_expert', 'find_equipment', 'find_materials', 'find_literature')",
-        "secondary_intents": ["list of additional intents"],
+    "intent_analysis": {{
+        "primary_intent": "find_research_papers/find_experts/find_equipment/find_materials/find_books/find_funding/comparative_analysis/methodology_search/literature_review/general_search",
+        "secondary_intents": ["array of additional intents"],
+        "search_scope": "narrow/medium/broad/comprehensive",
+        "urgency_level": "low/medium/high",
+        "academic_level": "undergraduate/graduate/postgraduate/professional/general",
         "confidence": 0.95
     }},
-    "entities": {{
-        "technologies": ["list of technologies mentioned"],
-        "concepts": ["list of scientific/academic concepts"],
-        "people": ["list of people mentioned"],
-        "organizations": ["list of organizations/institutions"],
-        "locations": ["list of locations"],
-        "time_periods": ["list of time references"]
+    "entity_extraction": {{
+        "people": ["researchers, authors, scientists, inventors"],
+        "organizations": ["universities, companies, research institutions, labs"],
+        "locations": ["countries, cities, regions relevant to research"],
+        "technologies": ["specific technologies, methods, techniques, tools"],
+        "concepts": ["scientific concepts, theories, phenomena"],
+        "chemicals_materials": ["chemical compounds, materials, substances"],
+        "medical_terms": ["diseases, treatments, medical procedures, anatomy"],
+        "mathematical_terms": ["formulas, mathematical concepts, statistical methods"],
+        "time_periods": ["years, decades, historical periods"],
+        "publications": ["journals, books, conferences, specific papers"],
+        "fields_of_study": ["academic disciplines and subdisciplines"]
     }},
-    "keywords": {{
-        "primary": ["most important 3-5 keywords"],
-        "secondary": ["additional relevant keywords"],
-        "technical_terms": ["specialized technical terms"]
+    "keyword_analysis": {{
+        "primary_keywords": ["3-5 most important keywords from English version"],
+        "secondary_keywords": ["5-8 additional relevant keywords"],
+        "technical_terms": ["specialized technical/scientific terminology"],
+        "original_language_keywords": ["important keywords from original language if not English"],
+        "long_tail_keywords": ["specific phrase-based keywords"],
+        "alternative_spellings": ["different spellings of key terms"]
     }},
-    "synonyms_and_related": {{
-        "synonyms": ["alternative terms with same meaning"],
+    "semantic_expansion": {{
+        "synonyms": ["direct synonyms of key terms"],
         "related_terms": ["conceptually related terms"],
-        "broader_terms": ["more general terms"],
-        "narrower_terms": ["more specific terms"]
+        "broader_terms": ["more general/umbrella terms"],
+        "narrower_terms": ["more specific/detailed terms"],
+        "domain_specific_terms": ["field-specific jargon and terminology"],
+        "cross_linguistic_terms": ["equivalent terms in other languages if relevant"],
+        "acronyms_abbreviations": ["relevant acronyms and their expansions"]
     }},
-    "academic_fields": {{
+    "academic_classification": {{
         "primary_field": "main academic discipline",
-        "related_fields": ["list of related academic fields"],
-        "specializations": ["specific areas of specialization"]
+        "secondary_fields": ["related academic fields"],
+        "specializations": ["specific research areas or subspecialties"],
+        "interdisciplinary_connections": ["fields that might have relevant cross-over"],
+        "research_methodologies": ["applicable research methods"],
+        "publication_types": ["most relevant types of publications for this query"]
     }},
-    "search_context": {{
-        "resource_preferences": ["types of resources most relevant (books, papers, experts, equipment, etc.)"],
-        "urgency": "low/medium/high",
-        "scope": "narrow/broad/comprehensive"
+    "search_strategy": {{
+        "database_priorities": ["academic_library/research_papers/experts_system/laboratories/funding"],
+        "resource_types": ["books/journals/articles/theses/equipment/materials/experts/projects"],
+        "temporal_focus": "historical/current/cutting_edge/all_periods",
+        "geographical_scope": "local/national/international/global",
+        "quality_indicators": ["peer_reviewed/high_impact/recent/authoritative"],
+        "search_complexity": "simple/moderate/complex/expert_level"
+    }},
+    "multilingual_considerations": {{
+        "preserve_original_terms": ["terms that should be kept in original language"],
+        "cultural_context": ["cultural or regional aspects to consider"],
+        "translation_challenges": ["terms that may not translate directly"],
+        "alternative_romanizations": ["different ways to romanize non-Latin scripts"]
+    }},
+    "metadata": {{
+        "processing_timestamp": "{self._get_timestamp()}",
+        "model_version": "gemini-2.0-flash-exp",
+        "analysis_confidence": 0.95,
+        "processing_time_estimate": "estimated processing time in seconds",
+        "query_complexity": "simple/moderate/complex/highly_complex",
+        "success": true
     }}
 }}
 
-Guidelines:
-1. First detect the language of the input query with high accuracy
-2. If the query is not in English, provide a high-quality translation to English
-3. Work with the English version (original or translated) for all subsequent analysis
-4. Correct any spelling errors in the translated/English query
-5. Be comprehensive but precise in keyword extraction
-6. Consider academic and scientific terminology across different languages and cultures
-7. Think about what types of resources would be most helpful
-8. Consider related fields that might have relevant information
-9. For non-English queries, ensure cultural and academic context is preserved in translation
-10. Provide confidence scores where applicable
+CRITICAL INSTRUCTIONS:
+1. ALWAYS detect language first - be highly accurate
+2. Correct spelling/grammar errors in the original language before translation
+3. Provide high-quality translation to English preserving academic meaning
+4. Extract information from BOTH original and English versions when beneficial
+5. Be comprehensive but precise - academic search requires thoroughness
+6. Consider cross-cultural academic terminology differences
+7. Include domain-specific terminology and jargon
+8. Think about what researchers actually need to find
+9. Consider different academic traditions and naming conventions
+10. Provide confidence scores for uncertain elements
 
-IMPORTANT: All analysis (keywords, entities, academic fields, etc.) should be based on the English version of the query to ensure consistent database searching, but preserve the original query information.
-
-Return only the JSON response, no additional text.
+RESPONSE FORMAT: Return ONLY the JSON response, no additional text or formatting.
 """
         return prompt
     
     def process_query(self, user_query: str) -> Optional[Dict[str, Any]]:
-        """Process query with LLM to extract structured information"""
+        """Process query with improved LLM analysis"""
         try:
-            # Create prompt for LLM
+            # Create comprehensive prompt
             prompt = self.create_query_analysis_prompt(user_query)
             
             # Get LLM response
+            logger.info("Sending query to Gemini for comprehensive analysis...")
             response = self.model.generate_content(prompt)
             
             if response and response.text:
-                # Parse LLM response
-                processed_query = json.loads(response.text)
+                # Clean and parse LLM response
+                response_text = response.text.strip()
                 
-                # Add user expertise estimation
-                processed_query['user_expertise'] = self._estimate_user_expertise(user_query, processed_query)
+                # Remove any markdown formatting that might be present
+                if response_text.startswith('```json'):
+                    response_text = response_text[7:]
+                if response_text.endswith('```'):
+                    response_text = response_text[:-3]
                 
+                # Parse JSON response
+                processed_query = json.loads(response_text)
+                
+                # Validate and enhance the response
+                processed_query = self._validate_and_enhance_response(processed_query, user_query)
+                
+                # Add backward compatibility fields for existing code
+                processed_query = self._add_backward_compatibility(processed_query)
+                
+                logger.info("Query processed successfully with comprehensive analysis")
                 return processed_query
-            else:
-                return self._create_fallback_response(user_query, "No response from LLM")
                 
+            else:
+                logger.warning("No response from LLM")
+                return self._create_enhanced_fallback_response(user_query, "No response from LLM")
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error: {str(e)}")
+            logger.error(f"Raw response: {response.text if response else 'No response'}")
+            return self._create_enhanced_fallback_response(user_query, f"JSON parsing error: {str(e)}")
         except Exception as e:
             logger.error(f"Error processing query: {str(e)}")
-            return self._create_fallback_response(user_query, str(e))
+            return self._create_enhanced_fallback_response(user_query, str(e))
     
-    def _estimate_user_expertise(self, query: str, processed_query: Dict[str, Any]) -> float:
-        """Estimate user expertise level based on query and processed information"""
+    def _validate_and_enhance_response(self, processed_query: Dict[str, Any], original_query: str) -> Dict[str, Any]:
+        """Validate and enhance the LLM response"""
         try:
-            # Initialize expertise score
-            expertise_score = 0.5  # Default to medium expertise
+            # Ensure all required sections exist
+            required_sections = [
+                'language_analysis', 'query_processing', 'intent_analysis',
+                'entity_extraction', 'keyword_analysis', 'semantic_expansion',
+                'academic_classification', 'search_strategy', 'metadata'
+            ]
             
-            # Check for technical terms
-            technical_terms = processed_query.get('keywords', {}).get('technical_terms', [])
-            if technical_terms:
-                expertise_score += 0.2  # Technical terms indicate higher expertise
+            for section in required_sections:
+                if section not in processed_query:
+                    logger.warning(f"Missing section {section}, adding default")
+                    processed_query[section] = self._get_default_section(section, original_query)
             
-            # Check for specific entities
-            entities = processed_query.get('entities', {})
-            if entities.get('technologies') or entities.get('concepts'):
-                expertise_score += 0.1  # Technical entities indicate higher expertise
+            # Validate language analysis
+            lang_analysis = processed_query['language_analysis']
+            if not lang_analysis.get('detected_language'):
+                lang_analysis['detected_language'] = 'en'
+                lang_analysis['language_name'] = 'English'
+                lang_analysis['is_english'] = True
             
-            # Check query complexity
-            query_words = len(query.split())
-            if query_words > 10:
-                expertise_score += 0.1  # Longer queries might indicate higher expertise
+            # Ensure query processing has the English version
+            query_proc = processed_query['query_processing']
+            if not query_proc.get('english_translation'):
+                query_proc['english_translation'] = original_query
             
-            # Normalize to [0,1] range
-            return min(1.0, max(0.0, expertise_score))
+            # Set metadata success flag
+            processed_query['metadata']['success'] = True
+            processed_query['metadata']['original_query'] = original_query
+            
+            return processed_query
             
         except Exception as e:
-            logger.warning(f"Error estimating user expertise: {str(e)}")
-            return 0.5  # Return default medium expertise
+            logger.error(f"Error validating response: {str(e)}")
+            return processed_query
     
-    def _create_fallback_response(self, user_query: str, error_msg: str) -> Dict[str, Any]:
-        """Create a fallback response when LLM processing fails"""
-        # Basic keyword extraction (simple approach)
+    def _get_default_section(self, section: str, original_query: str) -> Dict[str, Any]:
+        """Get default values for missing sections"""
+        defaults = {
+            'language_analysis': {
+                'detected_language': 'en',
+                'language_name': 'English',
+                'confidence_score': 0.5,
+                'is_english': True,
+                'script_type': 'latin'
+            },
+            'query_processing': {
+                'original_query': original_query,
+                'corrected_original': original_query,
+                'english_translation': original_query,
+                'translation_needed': False,
+                'correction_made': False,
+                'processing_notes': 'Default processing - no analysis performed'
+            },
+            'intent_analysis': {
+                'primary_intent': 'general_search',
+                'secondary_intents': [],
+                'search_scope': 'broad',
+                'urgency_level': 'medium',
+                'academic_level': 'general',
+                'confidence': 0.5
+            },
+            'entity_extraction': {
+                'people': [], 'organizations': [], 'locations': [],
+                'technologies': [], 'concepts': [], 'chemicals_materials': [],
+                'medical_terms': [], 'mathematical_terms': [], 'time_periods': [],
+                'publications': [], 'fields_of_study': []
+            },
+            'keyword_analysis': {
+                'primary_keywords': original_query.split()[:5],
+                'secondary_keywords': [],
+                'technical_terms': [],
+                'original_language_keywords': [],
+                'long_tail_keywords': [],
+                'alternative_spellings': []
+            },
+            'semantic_expansion': {
+                'synonyms': [], 'related_terms': [], 'broader_terms': [],
+                'narrower_terms': [], 'domain_specific_terms': [],
+                'cross_linguistic_terms': [], 'acronyms_abbreviations': []
+            },
+            'academic_classification': {
+                'primary_field': 'general',
+                'secondary_fields': [],
+                'specializations': [],
+                'interdisciplinary_connections': [],
+                'research_methodologies': [],
+                'publication_types': []
+            },
+            'search_strategy': {
+                'database_priorities': ['academic_library', 'research_papers'],
+                'resource_types': ['all'],
+                'temporal_focus': 'all_periods',
+                'geographical_scope': 'global',
+                'quality_indicators': ['authoritative'],
+                'search_complexity': 'simple'
+            },
+            'metadata': {
+                'processing_timestamp': self._get_timestamp(),
+                'model_version': 'gemini-2.0-flash-exp',
+                'analysis_confidence': 0.5,
+                'query_complexity': 'simple',
+                'success': False
+            }
+        }
+        
+        return defaults.get(section, {})
+    
+    def _add_backward_compatibility(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+        """Add backward compatibility fields for existing code"""
+        try:
+            # Add old format fields for compatibility
+            query_proc = processed_query.get('query_processing', {})
+            keyword_analysis = processed_query.get('keyword_analysis', {})
+            entity_extraction = processed_query.get('entity_extraction', {})
+            academic_class = processed_query.get('academic_classification', {})
+            intent_analysis = processed_query.get('intent_analysis', {})
+            search_strategy = processed_query.get('search_strategy', {})
+            
+            # Old format compatibility
+            processed_query['corrected_query'] = query_proc.get('english_translation', '')
+            
+            processed_query['intent'] = {
+                'primary_intent': intent_analysis.get('primary_intent', 'general_search'),
+                'secondary_intents': intent_analysis.get('secondary_intents', []),
+                'confidence': intent_analysis.get('confidence', 0.5)
+            }
+            
+            processed_query['entities'] = {
+                'technologies': entity_extraction.get('technologies', []),
+                'concepts': entity_extraction.get('concepts', []),
+                'people': entity_extraction.get('people', []),
+                'organizations': entity_extraction.get('organizations', []),
+                'locations': entity_extraction.get('locations', []),
+                'time_periods': entity_extraction.get('time_periods', [])
+            }
+            
+            processed_query['keywords'] = {
+                'primary': keyword_analysis.get('primary_keywords', []),
+                'secondary': keyword_analysis.get('secondary_keywords', []),
+                'technical_terms': keyword_analysis.get('technical_terms', [])
+            }
+            
+            semantic_exp = processed_query.get('semantic_expansion', {})
+            processed_query['synonyms_and_related'] = {
+                'synonyms': semantic_exp.get('synonyms', []),
+                'related_terms': semantic_exp.get('related_terms', []),
+                'broader_terms': semantic_exp.get('broader_terms', []),
+                'narrower_terms': semantic_exp.get('narrower_terms', [])
+            }
+            
+            processed_query['academic_fields'] = {
+                'primary_field': academic_class.get('primary_field', 'general'),
+                'related_fields': academic_class.get('secondary_fields', []),
+                'specializations': academic_class.get('specializations', [])
+            }
+            
+            processed_query['search_context'] = {
+                'resource_preferences': search_strategy.get('resource_types', ['all']),
+                'urgency': intent_analysis.get('urgency_level', 'medium'),
+                'scope': intent_analysis.get('search_scope', 'broad')
+            }
+            
+            # Add metadata for new features
+            processed_query['_metadata'] = {
+                'original_query': query_proc.get('original_query', ''),
+                'processing_timestamp': processed_query.get('metadata', {}).get('processing_timestamp', self._get_timestamp()),
+                'model_used': 'gemini-2.0-flash-exp',
+                'success': processed_query.get('metadata', {}).get('success', True),
+                'enhanced_analysis': True,
+                'language_detected': processed_query.get('language_analysis', {}).get('detected_language', 'en'),
+                'translation_performed': query_proc.get('translation_needed', False)
+            }
+            
+            return processed_query
+            
+        except Exception as e:
+            logger.error(f"Error adding backward compatibility: {str(e)}")
+            return processed_query
+    
+    def _create_enhanced_fallback_response(self, user_query: str, error_msg: str) -> Dict[str, Any]:
+        """Create an enhanced fallback response when LLM processing fails"""
+        # Basic keyword extraction
         words = user_query.lower().split()
         keywords = [word.strip('.,!?;:"()[]{}') for word in words if len(word) > 2]
         
-        return {
-            "language_detection": {
-                "detected_language": "en",  # Assume English as fallback
-                "language_name": "English",
-                "confidence": 0.5,
-                "is_english": True
+        # Basic language detection (simple heuristic)
+        is_likely_english = all(ord(char) < 128 for char in user_query)
+        
+        fallback_response = {
+            "language_analysis": {
+                "detected_language": "en" if is_likely_english else "unknown",
+                "language_name": "English" if is_likely_english else "Unknown",
+                "confidence_score": 0.3,
+                "is_english": is_likely_english,
+                "script_type": "latin" if is_likely_english else "unknown"
             },
-            "translation": {
+            "query_processing": {
                 "original_query": user_query,
-                "translated_query": user_query,  # No translation needed in fallback
-                "needs_translation": False
+                "corrected_original": user_query,
+                "english_translation": user_query,
+                "translation_needed": False,
+                "correction_made": False,
+                "processing_notes": "Fallback processing - limited analysis"
             },
-            "corrected_query": user_query,
-            "intent": {
+            "intent_analysis": {
                 "primary_intent": "general_search",
                 "secondary_intents": [],
-                "confidence": 0.5
+                "search_scope": "broad",
+                "urgency_level": "medium",
+                "academic_level": "general",
+                "confidence": 0.3
             },
-            "entities": {
-                "technologies": [],
-                "concepts": keywords[:3],
-                "people": [],
-                "organizations": [],
-                "locations": [],
-                "time_periods": []
+            "entity_extraction": {
+                "people": [], "organizations": [], "locations": [],
+                "technologies": [], "concepts": keywords[:3],
+                "chemicals_materials": [], "medical_terms": [],
+                "mathematical_terms": [], "time_periods": [],
+                "publications": [], "fields_of_study": []
             },
-            "keywords": {
-                "primary": keywords[:5],
-                "secondary": keywords[5:10] if len(keywords) > 5 else [],
-                "technical_terms": []
+            "keyword_analysis": {
+                "primary_keywords": keywords[:5],
+                "secondary_keywords": keywords[5:10] if len(keywords) > 5 else [],
+                "technical_terms": [],
+                "original_language_keywords": [],
+                "long_tail_keywords": [],
+                "alternative_spellings": []
             },
-            "synonyms_and_related": {
-                "synonyms": [],
-                "related_terms": [],
-                "broader_terms": [],
-                "narrower_terms": []
+            "semantic_expansion": {
+                "synonyms": [], "related_terms": [], "broader_terms": [],
+                "narrower_terms": [], "domain_specific_terms": [],
+                "cross_linguistic_terms": [], "acronyms_abbreviations": []
             },
-            "academic_fields": {
+            "academic_classification": {
                 "primary_field": "general",
-                "related_fields": [],
-                "specializations": []
+                "secondary_fields": [],
+                "specializations": [],
+                "interdisciplinary_connections": [],
+                "research_methodologies": [],
+                "publication_types": []
             },
-            "search_context": {
-                "resource_preferences": ["all"],
-                "urgency": "medium",
-                "scope": "broad"
+            "search_strategy": {
+                "database_priorities": ["academic_library", "research_papers"],
+                "resource_types": ["all"],
+                "temporal_focus": "all_periods",
+                "geographical_scope": "global",
+                "quality_indicators": ["authoritative"],
+                "search_complexity": "simple"
             },
-            "_metadata": {
-                "original_query": user_query,
+            "metadata": {
                 "processing_timestamp": self._get_timestamp(),
-                "model_used": "fallback",
+                "model_version": "fallback",
+                "analysis_confidence": 0.3,
+                "query_complexity": "unknown",
                 "success": False,
                 "error": error_msg
             }
         }
+        
+        # Add backward compatibility
+        return self._add_backward_compatibility(fallback_response)
     
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         from datetime import datetime
         return datetime.now().isoformat()
     
-    def get_query_language_info(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
-        """Extract language information from processed query"""
+    def get_comprehensive_language_info(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract comprehensive language information from processed query"""
         if not processed_query:
             return {"language": "unknown", "is_multilingual": False}
         
-        language_detection = processed_query.get('language_detection', {})
-        translation = processed_query.get('translation', {})
+        language_analysis = processed_query.get('language_analysis', {})
+        query_processing = processed_query.get('query_processing', {})
+        multilingual = processed_query.get('multilingual_considerations', {})
         
         return {
-            "detected_language": language_detection.get('detected_language', 'en'),
-            "language_name": language_detection.get('language_name', 'English'),
-            "is_english": language_detection.get('is_english', True),
-            "needs_translation": translation.get('needs_translation', False),
-            "original_query": translation.get('original_query', ''),
-            "translated_query": translation.get('translated_query', ''),
-            "is_multilingual": not language_detection.get('is_english', True)
+            "detected_language": language_analysis.get('detected_language', 'en'),
+            "language_name": language_analysis.get('language_name', 'English'),
+            "script_type": language_analysis.get('script_type', 'latin'),
+            "confidence_score": language_analysis.get('confidence_score', 0.5),
+            "is_english": language_analysis.get('is_english', True),
+            "translation_needed": query_processing.get('translation_needed', False),
+            "correction_made": query_processing.get('correction_made', False),
+            "original_query": query_processing.get('original_query', ''),
+            "corrected_original": query_processing.get('corrected_original', ''),
+            "english_translation": query_processing.get('english_translation', ''),
+            "processing_notes": query_processing.get('processing_notes', ''),
+            "cultural_context": multilingual.get('cultural_context', []),
+            "preserve_original_terms": multilingual.get('preserve_original_terms', []),
+            "translation_challenges": multilingual.get('translation_challenges', [])
         }
     
-    def test_multilingual_connection(self) -> Dict[str, Any]:
-        """Test the connection to Gemini API with multilingual capability"""
+    def test_enhanced_connection(self) -> Dict[str, Any]:
+        """Test the enhanced LLM processing with multilingual capability"""
         try:
-            # Test English
-            test_response_en = self.model.generate_content("Hello, this is a connection test.")
+            # Test with a multilingual query
+            test_queries = [
+                "machine learning for medical diagnosis",  # English
+                "apprentissage automatique pour diagnostic médical",  # French
+                "تعلم الآلة للتشخيص الطبي",  # Arabic
+                "医療診断のための機械学習"  # Japanese
+            ]
             
-            # Test with a simple non-English query
-            test_query = "Bonjour, recherche sur l'intelligence artificielle"
-            test_response_ml = self.process_query(test_query)
+            test_results = []
+            
+            for query in test_queries:
+                try:
+                    result = self.process_query(query)
+                    if result:
+                        lang_info = self.get_comprehensive_language_info(result)
+                        test_results.append({
+                            "query": query,
+                            "detected_language": lang_info.get('detected_language'),
+                            "translation_needed": lang_info.get('translation_needed'),
+                            "success": result.get('metadata', {}).get('success', False)
+                        })
+                    else:
+                        test_results.append({
+                            "query": query,
+                            "success": False,
+                            "error": "No result returned"
+                        })
+                except Exception as e:
+                    test_results.append({
+                        "query": query,
+                        "success": False,
+                        "error": str(e)
+                    })
             
             return {
                 "connected": True,
                 "model": "gemini-2.0-flash-exp",
+                "enhanced_processing": True,
                 "multilingual_support": True,
-                "test_response_english": test_response_en.text[:100] + "..." if test_response_en.text else "No response",
-                "test_multilingual_processing": test_response_ml is not None,
-                "sample_language_detection": test_response_ml.get('language_detection', {}) if test_response_ml else {}
+                "test_results": test_results,
+                "overall_success": all(r.get('success', False) for r in test_results)
             }
+            
         except Exception as e:
             return {
                 "connected": False,
+                "enhanced_processing": False,
                 "multilingual_support": False,
                 "error": str(e)
             }
     
     def test_connection(self) -> Dict[str, Any]:
-        """Test the connection to Gemini API"""
+        """Test basic connection to Gemini API"""
         try:
             test_response = self.model.generate_content("Hello, this is a connection test.")
             

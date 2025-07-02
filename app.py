@@ -1295,6 +1295,27 @@ def test_llm():
         logger.error(f"Error in test_llm endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/test-llm-enhanced', methods=['GET'])
+def test_llm_enhanced():
+    """Test endpoint for enhanced LLM processing with multilingual support"""
+    try:
+        if not llm_processor:
+            return jsonify({'error': 'LLM processor not initialized'}), 500
+        
+        # Test the enhanced connection with multilingual capability
+        test_result = llm_processor.test_enhanced_connection()
+        
+        return jsonify(test_result)
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced LLM test endpoint: {str(e)}")
+        return jsonify({
+            'connected': False,
+            'enhanced_processing': False,
+            'multilingual_support': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/test-db', methods=['GET'])
 def test_db():
     """Test endpoint for database connections"""

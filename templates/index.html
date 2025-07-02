@@ -203,8 +203,8 @@
             
             <!-- Sample Queries -->
             <div class="mb-4">
-                <h3 class="text-sm font-medium text-gray-700 mb-2">Sample Queries:</h3>
-                <div class="flex flex-wrap gap-2">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Sample Queries (English):</h3>
+                <div class="flex flex-wrap gap-2 mb-3">
                     <button onclick="setSearchQuery('reducing carbon emissions in cars')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
                         Carbon emissions in cars
                     </button>
@@ -216,6 +216,22 @@
                     </button>
                     <button onclick="setSearchQuery('IoT sensors for agriculture')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
                         IoT agriculture sensors
+                    </button>
+                </div>
+                
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Multilingual Queries (Test Language Detection):</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setSearchQuery('apprentissage automatique pour diagnostic médical')" class="bg-blue-200 hover:bg-blue-300 text-blue-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇫🇷 French - ML diagnosis
+                    </button>
+                    <button onclick="setSearchQuery('تعلم الآلة للتشخيص الطبي')" class="bg-green-200 hover:bg-green-300 text-green-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇸🇦 Arabic - ML diagnosis
+                    </button>
+                    <button onclick="setSearchQuery('機械学習による医療診断')" class="bg-purple-200 hover:bg-purple-300 text-purple-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇯🇵 Japanese - ML diagnosis
+                    </button>
+                    <button onclick="setSearchQuery('aprendizaje automático para diagnóstico médico')" class="bg-orange-200 hover:bg-orange-300 text-orange-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇪🇸 Spanish - ML diagnosis
                     </button>
                 </div>
             </div>
@@ -301,16 +317,54 @@
                 </button>
             </div>
             <div id="llmTestingSection" class="p-6 hidden">
+                <!-- Sample Queries for LLM Testing -->
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Quick Test Queries (English):</h3>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button onclick="setQuery('machine learning for medical diagnosis')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            ML medical diagnosis
+                        </button>
+                        <button onclick="setQuery('renewable energy storage solutions')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            Renewable energy storage
+                        </button>
+                        <button onclick="setQuery('quantum computing algorithms')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            Quantum computing
+                        </button>
+                    </div>
+                    
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Multilingual Test Queries:</h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="setQuery('apprentissage automatique pour diagnostic médical')" class="bg-blue-200 hover:bg-blue-300 text-blue-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇫🇷 French
+                        </button>
+                        <button onclick="setQuery('تعلم الآلة للتشخيص الطبي')" class="bg-green-200 hover:bg-green-300 text-green-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇸🇦 Arabic
+                        </button>
+                        <button onclick="setQuery('機械学習による医療診断')" class="bg-purple-200 hover:bg-purple-300 text-purple-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇯🇵 Japanese
+                        </button>
+                        <button onclick="setQuery('aprendizaje automático para diagnóstico médico')" class="bg-orange-200 hover:bg-orange-300 text-orange-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇪🇸 Spanish
+                        </button>
+                        <button onclick="setQuery('машинное обучение для медицинской диагностики')" class="bg-red-200 hover:bg-red-300 text-red-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇷🇺 Russian
+                        </button>
+                        <button onclick="setQuery('医疗诊断机器学习')" class="bg-yellow-200 hover:bg-yellow-300 text-yellow-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇨🇳 Chinese
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- Query Input -->
                 <div class="mb-4">
                     <label for="queryInput" class="block text-sm font-medium text-gray-700 mb-2">
-                        Enter your research query:
+                        Enter your research query (any language):
                     </label>
                     <textarea 
                         id="queryInput" 
                         rows="3" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                        placeholder="Enter your research question or topic here..."
+                        placeholder="Enter your research question or topic here in any language..."
                     ></textarea>
                 </div>
 
@@ -321,8 +375,11 @@
                         onclick="processQuery()" 
                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
                     >
-                        <span id="processText">Analyze Query</span>
+                        <span id="processText">🧠 Analyze Query</span>
                         <span id="processSpinner" class="loading ml-2 hidden"></span>
+                    </button>
+                    <button onclick="testEnhancedLLM()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        🔬 Test Enhanced LLM
                     </button>
                     <button onclick="clearLLMResults()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
                         Clear Analysis
@@ -340,19 +397,21 @@
                     
                     <!-- Structured Results -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        <!-- Left Column -->
-                        <div class="space-y-4">
-                            <div id="intentSection" class="p-4 bg-green-50 rounded-lg"></div>
-                            <div id="keywordsSection" class="p-4 bg-yellow-50 rounded-lg"></div>
-                            <div id="entitiesSection" class="p-4 bg-purple-50 rounded-lg"></div>
-                        </div>
-                        
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <div id="fieldsSection" class="p-4 bg-red-50 rounded-lg"></div>
-                            <div id="synonymsSection" class="p-4 bg-indigo-50 rounded-lg"></div>
-                            <div id="contextSection" class="p-4 bg-pink-50 rounded-lg"></div>
-                        </div>
+                                            <!-- Left Column -->
+                    <div class="space-y-4">
+                        <div id="languageSection" class="p-4 bg-blue-50 rounded-lg"></div>
+                        <div id="intentSection" class="p-4 bg-green-50 rounded-lg"></div>
+                        <div id="keywordsSection" class="p-4 bg-yellow-50 rounded-lg"></div>
+                        <div id="entitiesSection" class="p-4 bg-purple-50 rounded-lg"></div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                        <div id="fieldsSection" class="p-4 bg-red-50 rounded-lg"></div>
+                        <div id="synonymsSection" class="p-4 bg-indigo-50 rounded-lg"></div>
+                        <div id="searchStrategySection" class="p-4 bg-teal-50 rounded-lg"></div>
+                        <div id="contextSection" class="p-4 bg-pink-50 rounded-lg"></div>
+                    </div>
                     </div>
                     
                     <!-- Raw JSON Display -->
@@ -846,87 +905,193 @@
             }
         }
 
+        async function testEnhancedLLM() {
+            try {
+                const response = await fetch('/api/test-llm-enhanced');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.connected) {
+                    let testResultsHtml = `
+                        <div class="p-4 bg-purple-100 text-purple-800 rounded-lg">
+                            <h3 class="font-semibold">Enhanced LLM Test Results</h3>
+                            <div class="mt-2 text-sm space-y-2">
+                                <p><strong>Connection:</strong> ${data.connected ? '✅ Connected' : '❌ Not Connected'}</p>
+                                <p><strong>Enhanced Processing:</strong> ${data.enhanced_processing ? '✅ Available' : '❌ Not Available'}</p>
+                                <p><strong>Multilingual Support:</strong> ${data.multilingual_support ? '✅ Available' : '❌ Not Available'}</p>
+                                <p><strong>Overall Success:</strong> ${data.overall_success ? '✅ All Tests Passed' : '⚠️ Some Tests Failed'}</p>
+                            </div>
+                    `;
+                    
+                    if (data.test_results && data.test_results.length > 0) {
+                        testResultsHtml += '<div class="mt-3"><h4 class="font-medium mb-2">Test Results by Language:</h4>';
+                        data.test_results.forEach((result, index) => {
+                            const statusIcon = result.success ? '✅' : '❌';
+                            const langName = result.detected_language || 'Unknown';
+                            testResultsHtml += `
+                                <div class="text-xs p-2 bg-white rounded border mb-1">
+                                    ${statusIcon} <strong>Query ${index + 1}:</strong> ${result.query.substring(0, 50)}...
+                                    <br><span class="text-purple-600">Language: ${langName} | Translation: ${result.translation_needed ? 'Yes' : 'No'}</span>
+                                    ${result.error ? `<br><span class="text-red-600">Error: ${result.error}</span>` : ''}
+                                </div>
+                            `;
+                        });
+                        testResultsHtml += '</div>';
+                    }
+                    
+                    testResultsHtml += '</div>';
+                    statusDiv.innerHTML = testResultsHtml;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Enhanced LLM Test Failed</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error testing enhanced LLM: ' + error.message);
+            }
+        }
+
         function displayLLMResults(results) {
             const container = document.getElementById('llmResultsContainer');
             container.classList.remove('hidden');
 
-            // Display processing metadata
-            const metadata = results._metadata || {};
+            // Display processing metadata with enhanced information
+            const metadata = results._metadata || results.metadata || {};
+            const queryProcessing = results.query_processing || {};
             document.getElementById('processingMeta').innerHTML = `
                 <h3 class="font-semibold text-blue-800 mb-2">Processing Information</h3>
                 <div class="text-sm text-blue-700">
-                    <p><strong>Original Query:</strong> ${metadata.original_query || 'N/A'}</p>
-                    <p><strong>Corrected Query:</strong> ${results.corrected_query || 'N/A'}</p>
-                    <p><strong>Model Used:</strong> ${metadata.model_used || 'N/A'}</p>
+                    <p><strong>Original Query:</strong> ${queryProcessing.original_query || metadata.original_query || 'N/A'}</p>
+                    <p><strong>Corrected Query:</strong> ${queryProcessing.corrected_original || results.corrected_query || 'N/A'}</p>
+                    <p><strong>English Translation:</strong> ${queryProcessing.english_translation || 'Same as original'}</p>
+                    <p><strong>Model Used:</strong> ${metadata.model_used || metadata.model_version || 'N/A'}</p>
                     <p><strong>Processing Time:</strong> ${metadata.processing_timestamp || 'N/A'}</p>
                     <p><strong>Success:</strong> ${metadata.success ? 'Yes' : 'No'}</p>
+                    <p><strong>Enhanced Analysis:</strong> ${metadata.enhanced_analysis ? 'Yes' : 'No'}</p>
                 </div>
             `;
 
-            // Display intent
-            const intent = results.intent || {};
+            // Display language analysis (new section)
+            const languageAnalysis = results.language_analysis || {};
+            document.getElementById('languageSection').innerHTML = `
+                <h3 class="font-semibold text-blue-800 mb-2">🌍 Language Analysis</h3>
+                <div class="text-sm text-blue-700 space-y-1">
+                    <p><strong>Detected Language:</strong> ${languageAnalysis.language_name || 'Unknown'} (${languageAnalysis.detected_language || 'N/A'})</p>
+                    <p><strong>Script Type:</strong> ${languageAnalysis.script_type || 'N/A'}</p>
+                    <p><strong>Confidence:</strong> ${((languageAnalysis.confidence_score || 0) * 100).toFixed(1)}%</p>
+                    <p><strong>Is English:</strong> ${languageAnalysis.is_english ? 'Yes' : 'No'}</p>
+                    <p><strong>Translation Needed:</strong> ${queryProcessing.translation_needed ? 'Yes' : 'No'}</p>
+                    <p><strong>Correction Made:</strong> ${queryProcessing.correction_made ? 'Yes' : 'No'}</p>
+                    ${queryProcessing.processing_notes ? `<p><strong>Notes:</strong> ${queryProcessing.processing_notes}</p>` : ''}
+                </div>
+            `;
+
+            // Display enhanced intent analysis
+            const intentAnalysis = results.intent_analysis || results.intent || {};
             document.getElementById('intentSection').innerHTML = `
-                <h3 class="font-semibold text-green-800 mb-2">Intent Analysis</h3>
-                <div class="text-sm text-green-700">
-                    <p><strong>Primary Intent:</strong> ${intent.primary_intent || 'N/A'}</p>
-                    <p><strong>Confidence:</strong> ${(intent.confidence * 100).toFixed(1)}%</p>
-                    <p><strong>Secondary Intents:</strong> ${intent.secondary_intents?.join(', ') || 'None'}</p>
+                <h3 class="font-semibold text-green-800 mb-2">🎯 Intent Analysis</h3>
+                <div class="text-sm text-green-700 space-y-1">
+                    <p><strong>Primary Intent:</strong> ${intentAnalysis.primary_intent || 'N/A'}</p>
+                    <p><strong>Confidence:</strong> ${((intentAnalysis.confidence || 0) * 100).toFixed(1)}%</p>
+                    <p><strong>Secondary Intents:</strong> ${intentAnalysis.secondary_intents?.join(', ') || 'None'}</p>
+                    <p><strong>Search Scope:</strong> ${intentAnalysis.search_scope || 'N/A'}</p>
+                    <p><strong>Academic Level:</strong> ${intentAnalysis.academic_level || 'N/A'}</p>
+                    <p><strong>Urgency:</strong> ${intentAnalysis.urgency_level || intentAnalysis.urgency || 'N/A'}</p>
                 </div>
             `;
 
-            // Display keywords
-            const keywords = results.keywords || {};
+            // Display enhanced keywords
+            const keywordAnalysis = results.keyword_analysis || results.keywords || {};
             document.getElementById('keywordsSection').innerHTML = `
-                <h3 class="font-semibold text-yellow-800 mb-2">Keywords</h3>
+                <h3 class="font-semibold text-yellow-800 mb-2">🔑 Keywords Analysis</h3>
                 <div class="text-sm text-yellow-700 space-y-1">
-                    <p><strong>Primary:</strong> ${keywords.primary?.join(', ') || 'None'}</p>
-                    <p><strong>Secondary:</strong> ${keywords.secondary?.join(', ') || 'None'}</p>
-                    <p><strong>Technical:</strong> ${keywords.technical_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Primary Keywords:</strong> ${(keywordAnalysis.primary_keywords || keywordAnalysis.primary || []).join(', ') || 'None'}</p>
+                    <p><strong>Secondary Keywords:</strong> ${(keywordAnalysis.secondary_keywords || keywordAnalysis.secondary || []).join(', ') || 'None'}</p>
+                    <p><strong>Technical Terms:</strong> ${keywordAnalysis.technical_terms?.join(', ') || 'None'}</p>
+                    ${keywordAnalysis.original_language_keywords?.length ? `<p><strong>Original Language:</strong> ${keywordAnalysis.original_language_keywords.join(', ')}</p>` : ''}
+                    ${keywordAnalysis.long_tail_keywords?.length ? `<p><strong>Long-tail:</strong> ${keywordAnalysis.long_tail_keywords.join(', ')}</p>` : ''}
+                    ${keywordAnalysis.alternative_spellings?.length ? `<p><strong>Alt. Spellings:</strong> ${keywordAnalysis.alternative_spellings.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display entities
-            const entities = results.entities || {};
+            // Display enhanced entities
+            const entityExtraction = results.entity_extraction || results.entities || {};
             document.getElementById('entitiesSection').innerHTML = `
-                <h3 class="font-semibold text-purple-800 mb-2">Entities</h3>
+                <h3 class="font-semibold text-purple-800 mb-2">🏷️ Entity Extraction</h3>
                 <div class="text-sm text-purple-700 space-y-1">
-                    <p><strong>Technologies:</strong> ${entities.technologies?.join(', ') || 'None'}</p>
-                    <p><strong>Concepts:</strong> ${entities.concepts?.join(', ') || 'None'}</p>
-                    <p><strong>People:</strong> ${entities.people?.join(', ') || 'None'}</p>
-                    <p><strong>Organizations:</strong> ${entities.organizations?.join(', ') || 'None'}</p>
+                    <p><strong>People:</strong> ${entityExtraction.people?.join(', ') || 'None'}</p>
+                    <p><strong>Organizations:</strong> ${entityExtraction.organizations?.join(', ') || 'None'}</p>
+                    <p><strong>Technologies:</strong> ${entityExtraction.technologies?.join(', ') || 'None'}</p>
+                    <p><strong>Concepts:</strong> ${entityExtraction.concepts?.join(', ') || 'None'}</p>
+                    <p><strong>Locations:</strong> ${entityExtraction.locations?.join(', ') || 'None'}</p>
+                    ${entityExtraction.chemicals_materials?.length ? `<p><strong>Chemicals/Materials:</strong> ${entityExtraction.chemicals_materials.join(', ')}</p>` : ''}
+                    ${entityExtraction.medical_terms?.length ? `<p><strong>Medical Terms:</strong> ${entityExtraction.medical_terms.join(', ')}</p>` : ''}
+                    ${entityExtraction.mathematical_terms?.length ? `<p><strong>Math Terms:</strong> ${entityExtraction.mathematical_terms.join(', ')}</p>` : ''}
+                    ${entityExtraction.publications?.length ? `<p><strong>Publications:</strong> ${entityExtraction.publications.join(', ')}</p>` : ''}
+                    ${entityExtraction.fields_of_study?.length ? `<p><strong>Fields of Study:</strong> ${entityExtraction.fields_of_study.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display academic fields
-            const fields = results.academic_fields || {};
+            // Display academic classification
+            const academicClassification = results.academic_classification || results.academic_fields || {};
             document.getElementById('fieldsSection').innerHTML = `
-                <h3 class="font-semibold text-red-800 mb-2">Academic Fields</h3>
+                <h3 class="font-semibold text-red-800 mb-2">🎓 Academic Classification</h3>
                 <div class="text-sm text-red-700 space-y-1">
-                    <p><strong>Primary Field:</strong> ${fields.primary_field || 'N/A'}</p>
-                    <p><strong>Related Fields:</strong> ${fields.related_fields?.join(', ') || 'None'}</p>
-                    <p><strong>Specializations:</strong> ${fields.specializations?.join(', ') || 'None'}</p>
+                    <p><strong>Primary Field:</strong> ${academicClassification.primary_field || 'N/A'}</p>
+                    <p><strong>Secondary Fields:</strong> ${(academicClassification.secondary_fields || academicClassification.related_fields || []).join(', ') || 'None'}</p>
+                    <p><strong>Specializations:</strong> ${academicClassification.specializations?.join(', ') || 'None'}</p>
+                    ${academicClassification.interdisciplinary_connections?.length ? `<p><strong>Interdisciplinary:</strong> ${academicClassification.interdisciplinary_connections.join(', ')}</p>` : ''}
+                    ${academicClassification.research_methodologies?.length ? `<p><strong>Methodologies:</strong> ${academicClassification.research_methodologies.join(', ')}</p>` : ''}
+                    ${academicClassification.publication_types?.length ? `<p><strong>Publication Types:</strong> ${academicClassification.publication_types.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display synonyms and related terms
-            const synonyms = results.synonyms_and_related || {};
+            // Display semantic expansion
+            const semanticExpansion = results.semantic_expansion || results.synonyms_and_related || {};
             document.getElementById('synonymsSection').innerHTML = `
-                <h3 class="font-semibold text-indigo-800 mb-2">Synonyms & Related</h3>
+                <h3 class="font-semibold text-indigo-800 mb-2">🔗 Semantic Expansion</h3>
                 <div class="text-sm text-indigo-700 space-y-1">
-                    <p><strong>Synonyms:</strong> ${synonyms.synonyms?.join(', ') || 'None'}</p>
-                    <p><strong>Related Terms:</strong> ${synonyms.related_terms?.join(', ') || 'None'}</p>
-                    <p><strong>Broader Terms:</strong> ${synonyms.broader_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Synonyms:</strong> ${semanticExpansion.synonyms?.join(', ') || 'None'}</p>
+                    <p><strong>Related Terms:</strong> ${semanticExpansion.related_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Broader Terms:</strong> ${semanticExpansion.broader_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Narrower Terms:</strong> ${semanticExpansion.narrower_terms?.join(', ') || 'None'}</p>
+                    ${semanticExpansion.domain_specific_terms?.length ? `<p><strong>Domain-Specific:</strong> ${semanticExpansion.domain_specific_terms.join(', ')}</p>` : ''}
+                    ${semanticExpansion.cross_linguistic_terms?.length ? `<p><strong>Cross-linguistic:</strong> ${semanticExpansion.cross_linguistic_terms.join(', ')}</p>` : ''}
+                    ${semanticExpansion.acronyms_abbreviations?.length ? `<p><strong>Acronyms:</strong> ${semanticExpansion.acronyms_abbreviations.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display search context
-            const context = results.search_context || {};
+            // Display search strategy (new section)
+            const searchStrategy = results.search_strategy || {};
+            document.getElementById('searchStrategySection').innerHTML = `
+                <h3 class="font-semibold text-teal-800 mb-2">🔍 Search Strategy</h3>
+                <div class="text-sm text-teal-700 space-y-1">
+                    <p><strong>Database Priorities:</strong> ${searchStrategy.database_priorities?.join(', ') || 'None'}</p>
+                    <p><strong>Resource Types:</strong> ${searchStrategy.resource_types?.join(', ') || 'None'}</p>
+                    <p><strong>Temporal Focus:</strong> ${searchStrategy.temporal_focus || 'N/A'}</p>
+                    <p><strong>Geographic Scope:</strong> ${searchStrategy.geographical_scope || 'N/A'}</p>
+                    <p><strong>Quality Indicators:</strong> ${searchStrategy.quality_indicators?.join(', ') || 'None'}</p>
+                    <p><strong>Search Complexity:</strong> ${searchStrategy.search_complexity || 'N/A'}</p>
+                </div>
+            `;
+
+            // Display search context (backwards compatible)
+            const searchContext = results.search_context || {};
             document.getElementById('contextSection').innerHTML = `
-                <h3 class="font-semibold text-pink-800 mb-2">Search Context</h3>
+                <h3 class="font-semibold text-pink-800 mb-2">🌐 Search Context</h3>
                 <div class="text-sm text-pink-700 space-y-1">
-                    <p><strong>Resource Preferences:</strong> ${context.resource_preferences?.join(', ') || 'None'}</p>
-                    <p><strong>Urgency:</strong> ${context.urgency || 'N/A'}</p>
-                    <p><strong>Scope:</strong> ${context.scope || 'N/A'}</p>
+                    <p><strong>Resource Preferences:</strong> ${searchContext.resource_preferences?.join(', ') || 'None'}</p>
+                    <p><strong>Urgency:</strong> ${searchContext.urgency || 'N/A'}</p>
+                    <p><strong>Scope:</strong> ${searchContext.scope || 'N/A'}</p>
+                    ${results.multilingual_considerations ? `
+                        <p><strong>Cultural Context:</strong> ${results.multilingual_considerations.cultural_context?.join(', ') || 'None'}</p>
+                        <p><strong>Preserve Original:</strong> ${results.multilingual_considerations.preserve_original_terms?.join(', ') || 'None'}</p>
+                    ` : ''}
                 </div>
             `;
 
