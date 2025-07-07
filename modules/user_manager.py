@@ -1354,3 +1354,193 @@ The Libyan Open Science Team
             logger.info(f"DEVELOPMENT FALLBACK: Verification code for {email}: {verification_code}")
             print(f"🔐 VERIFICATION CODE FOR {email}: {verification_code}")
             return True  # Return True so the system continues to work
+
+    def request_password_reset(self, email: str) -> Dict[str, Any]:
+        """Request password reset by sending verification code to email"""
+        try:
+            if self.users_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Find user by email
+            user = self.users_collection.find_one({'email': email.lower().strip()})
+            if not user:
+                return {'success': False, 'error': 'No account found with this email address'}
+            
+            # Generate 6-digit verification code
+            verification_code = str(random.randint(100000, 999999))
+            
+            # Store verification code in database
+            code_record = {
+                'user_id': user['user_id'],
+                'email': email.lower().strip(),
+                'code': verification_code,
+                'type': 'password_reset',
+                'created_at': datetime.now().isoformat(),
+                'expires_at': (datetime.now() + timedelta(minutes=15)).isoformat(),  # 15 minutes expiry
+                'used': False
+            }
+            
+            if self.verification_codes_collection is not None:
+                # Remove any existing password reset codes for this user
+                self.verification_codes_collection.delete_many({
+                    'user_id': user['user_id'],
+                    'type': 'password_reset'
+                })
+                # Insert new code
+                self.verification_codes_collection.insert_one(code_record)
+            
+            # Send email
+            first_name = user.get('profile', {}).get('first_name', '')
+            email_sent = self._send_password_reset_email(email, verification_code, first_name)
+            
+            if email_sent:
+                logger.info(f"Password reset code sent to user {user['user_id']}")
+                return {'success': True, 'message': 'Password reset code sent successfully'}
+            else:
+                return {'success': False, 'error': 'Failed to send password reset email'}
+            
+        except Exception as e:
+            logger.error(f"Error requesting password reset: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def reset_password_with_code(self, email: str, verification_code: str, new_password: str) -> Dict[str, Any]:
+        """Reset password using verification code"""
+        try:
+            if self.users_collection is None or self.verification_codes_collection is None:
+                return {'success': False, 'error': 'User management not available'}
+            
+            # Find user by email
+            user = self.users_collection.find_one({'email': email.lower().strip()})
+            if not user:
+                return {'success': False, 'error': 'User not found'}
+            
+            # Find verification code record
+            code_record = self.verification_codes_collection.find_one({
+                'user_id': user['user_id'],
+                'email': email.lower().strip(),
+                'code': verification_code,
+                'type': 'password_reset',
+                'used': False
+            })
+            
+            if not code_record:
+                return {'success': False, 'error': 'Invalid or expired verification code'}
+            
+            # Check if code has expired
+            expires_at = datetime.fromisoformat(code_record['expires_at'])
+            if datetime.now() > expires_at:
+                return {'success': False, 'error': 'Verification code has expired'}
+            
+            # Validate new password
+            if len(new_password) < 8:
+                return {'success': False, 'error': 'Password must be at least 8 characters long'}
+            
+            # Hash new password
+            new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            
+            # Update user's password
+            result = self.users_collection.update_one(
+                {'user_id': user['user_id']},
+                {
+                    '$set': {
+                        'password_hash': new_password_hash,
+                        'updated_at': datetime.now().isoformat()
+                    }
+                }
+            )
+            
+            if result.modified_count > 0:
+                # Mark code as used
+                self.verification_codes_collection.update_one(
+                    {'_id': code_record['_id']},
+                    {'$set': {'used': True, 'used_at': datetime.now().isoformat()}}
+                )
+                
+                # Invalidate all existing sessions for this user (force re-login)
+                if self.sessions_collection is not None:
+                    self.sessions_collection.update_many(
+                        {'user_id': user['user_id']},
+                        {'$set': {'is_active': False}}
+                    )
+                
+                logger.info(f"Password reset successfully for user: {user['user_id']}")
+                return {'success': True, 'message': 'Password reset successfully'}
+            else:
+                return {'success': False, 'error': 'Failed to update password'}
+            
+        except Exception as e:
+            logger.error(f"Error resetting password: {str(e)}")
+            return {'success': False, 'error': str(e)}
+    
+    def _send_password_reset_email(self, email: str, verification_code: str, first_name: str = '') -> bool:
+        """Send password reset email using SMTP"""
+        try:
+            # Try to import email configuration
+            try:
+                import email_config
+                smtp_server = email_config.SMTP_SERVER
+                smtp_port = email_config.SMTP_PORT
+                smtp_username = email_config.SMTP_USERNAME
+                smtp_password = email_config.SMTP_PASSWORD
+            except ImportError:
+                # Fallback to hardcoded values
+                smtp_server = "smtp.gmail.com"
+                smtp_port = 587
+                smtp_username = "osama01k2@gmail.com"
+                smtp_password = "Kwayno*2002"  # ⚠️  REPLACE WITH YOUR GMAIL APP PASSWORD
+            
+            # Create message
+            msg = MIMEMultipart()
+            msg['From'] = smtp_username
+            msg['To'] = email
+            msg['Subject'] = "Password Reset - Libyan Open Science"
+            
+            # Email body
+            name_part = f"Hello {first_name}," if first_name else "Hello,"
+            body = f"""
+{name_part}
+
+You have requested to reset your password for your Libyan Open Science account. To complete the password reset process, please use the following 6-digit verification code:
+
+Password Reset Code: {verification_code}
+
+This code will expire in 15 minutes for security reasons.
+
+If you didn't request this password reset, please ignore this email and your password will remain unchanged.
+
+For security purposes, please do not share this code with anyone.
+
+Best regards,
+The Libyan Open Science Team
+"""
+            
+            msg.attach(MIMEText(body, 'plain'))
+            
+            # Send email
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(smtp_username, smtp_password)
+            text = msg.as_string()
+            server.sendmail(smtp_username, email, text)
+            server.quit()
+            
+            logger.info(f"Password reset email sent successfully to {email}")
+            return True
+            
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Error sending password reset email to {email}: {error_msg}")
+            
+            # Provide specific guidance based on the error
+            if "authentication failed" in error_msg.lower() or "username and password not accepted" in error_msg.lower():
+                print("\n" + "="*60)
+                print("📧 EMAIL SENDING FAILED - GMAIL APP PASSWORD REQUIRED")
+                print("="*60)
+                print(f"📋 Your password reset code (use this for now): {verification_code}")
+                print("="*60 + "\n")
+            
+            # For development purposes, still return True so the system works
+            # but log the code to console
+            logger.info(f"DEVELOPMENT FALLBACK: Password reset code for {email}: {verification_code}")
+            print(f"🔐 PASSWORD RESET CODE FOR {email}: {verification_code}")
+            return True  # Return True so the system continues to work

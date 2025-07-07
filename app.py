@@ -2402,6 +2402,63 @@ def get_research_project_details(project_id):
         logger.error(f"Error getting research project details: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/forgot-password')
+def forgot_password():
+    """Serve the forgot password page"""
+    return render_template('forgot_password.html')
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password_api():
+    """Request password reset endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return jsonify({'error': 'Email required'}), 400
+        
+        email = data['email']
+        result = user_manager.request_password_reset(email)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in forgot password endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password_api():
+    """Reset password with verification code endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        email = data.get('email')
+        verification_code = data.get('verification_code')
+        new_password = data.get('new_password')
+        
+        if not email or not verification_code or not new_password:
+            return jsonify({'error': 'Email, verification code, and new password are required'}), 400
+        
+        result = user_manager.reset_password_with_code(email, verification_code, new_password)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in reset password endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'

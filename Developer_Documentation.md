@@ -184,65 +184,97 @@ APOSSS (AI-Powered Open-Science Semantic Search System) is a sophisticated multi
 
 **Core Ranking Algorithms**:
 
-#### a) Heuristic Ranking (20% weight in hybrid mode)
+The system implements multiple ranking algorithms that work together in different modes:
+
+#### Traditional Algorithms (Used in "traditional" mode and as features for LTR):
+
+**a) Heuristic Ranking (20% weight in traditional mode)**
 - Keyword matching in titles vs. descriptions
 - Exact phrase matching bonuses
 - Field-specific scoring (title > abstract > content)
 - Recent publication bonuses
 - Availability status bonuses
 
-#### b) TF-IDF Similarity (20% weight in hybrid mode)
+**b) TF-IDF Similarity (20% weight in traditional mode)**
 - Uses scikit-learn TfidfVectorizer
 - Cosine similarity between query and document vectors
 - N-gram analysis (1-2 grams)
 - Stop word filtering
 
-#### c) BM25 Scoring
+**c) BM25 Scoring**
 - Implemented in ranking engine for base scoring
 - Also used as features in LTR model
 - Separate BM25 scores for title and description
 
-#### d) Intent Alignment (20% weight in hybrid mode)
+**d) Intent Alignment (20% weight in traditional mode)**
 - Resource type preference based on detected intent
 - Academic field alignment
 - Intent confidence weighting
 
-#### e) Embedding Similarity (20% weight in hybrid mode)
+**e) Embedding Similarity (20% weight in traditional mode)**
 - Real-time semantic similarity via embedding_ranker
 - Model: `paraphrase-multilingual-MiniLM-L12-v2`
 - 384-dimensional embeddings
 - Cosine similarity calculation
 
-#### f) Personalization Scoring (20% weight in hybrid mode)
+**f) Personalization Scoring (20% weight in traditional mode)**
 - User type preferences from interaction history
 - Field/category preferences
 - Author preferences
 - Recency and complexity preferences
 - Query similarity to past successful searches
 
+**g) Knowledge Graph Ranking**
+- PageRank scoring for academic entity authority
+- Connection strength between query terms and results
+- Authority scores based on citations and relationships
+- Graph-based features for network analysis
+- Integrated into score breakdown for all results
+
+#### Advanced ML-Based Algorithms:
+
+**h) Learning-to-Rank (LTR) - XGBoost Model**
+- **Primary Algorithm**: Uses all traditional scores (a-g) as 50+ features for ML-based ranking
+- **Ranking Modes**: 
+  - "ltr_only": 100% LTR scoring
+  - "hybrid": 70% LTR + 30% traditional weighted score
+- **Training**: Uses historical user feedback as relevance labels
+- **Evaluation**: NDCG (Normalized Discounted Cumulative Gain)
+- **Features**: BM25, textual features, metadata, user behavior, graph features
+
+**i) LLM Re-ranking (Available but NOT integrated in main search flow)**
+- **Purpose**: Advanced semantic understanding and quality assessment
+- **Model**: Gemini-2.0-flash for result relevance analysis
+- **Output**: Structured JSON with scores, explanations, and analysis
+- **Status**: Standalone module, not called in main search endpoint
+- **Integration**: Optional re-ranking layer with detailed relevance analysis
+
 **Ranking Modes**: The system supports three distinct ranking modes:
 
 #### 1. Traditional Mode (`"traditional"`)
-Uses weighted combination of traditional algorithms:
+Uses weighted combination of traditional algorithms (a-g):
 - **Heuristic Ranking** (20% weight): Keyword matching, field scoring, recency bonuses
 - **TF-IDF Similarity** (20% weight): Cosine similarity with scikit-learn
 - **Intent Alignment** (20% weight): Resource type preferences, academic field matching
 - **Embedding Similarity** (20% weight): Real-time semantic similarity via sentence transformers
 - **Personalization Scoring** (20% weight): User preferences and interaction history
+- **Knowledge Graph Features**: Authority scores and connection strength added to score breakdown
 
 #### 2. LTR-Only Mode (`"ltr_only"`)
-- **Learning-to-Rank (XGBoost)**: Uses all traditional scores as 50+ features for ML-based ranking
+- **Learning-to-Rank (XGBoost)**: Uses all traditional algorithms (a-g) as 50+ features for ML-based ranking
 - **Pure ML Approach**: Relies entirely on trained XGBoost model with pairwise ranking objective
+- **Feature-Rich**: Incorporates BM25, textual features, metadata, user behavior, and graph features
 
 #### 3. Hybrid Mode (`"hybrid"`) - Default
 - **LTR Score** (70% weight): XGBoost model using traditional scores as features
-- **Traditional Score** (30% weight): Weighted combination of the 5 traditional algorithms
+- **Traditional Score** (30% weight): Weighted combination of algorithms (a-f)
 - **Best of Both**: Combines ML learning with traditional ranking reliability
+- **Comprehensive**: Includes all traditional algorithms plus ML-based optimization
 
-**Additional Components**:
-- **BM25 Scoring**: Used as features in LTR model and for base scoring
-- **Knowledge Graph**: PageRank and authority scoring (provides features for LTR)
-- **LLM Re-ranking**: Available but NOT integrated in main search flow (standalone module)
+**System Integration**:
+- **Relevance Categorization**: High/Medium/Low relevance tiers across all modes
+- **Score Breakdown**: Detailed scoring components available for analysis
+- **Fallback Mechanism**: Graceful degradation if ML components fail
 
 ### 5. Embedding Ranker (`modules/embedding_ranker.py`)
 
