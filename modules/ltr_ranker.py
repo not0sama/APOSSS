@@ -349,6 +349,12 @@ class LTRRanker:
             'model_dir': self.model_dir
         }
         
+        # Add reason if LTR is not available
+        if not XGBOOST_AVAILABLE:
+            stats['reason'] = 'XGBoost dependencies not available'
+        elif not self.is_trained:
+            stats['reason'] = 'Model not yet trained (requires feedback data)'
+        
         if self.is_trained:
             stats.update(self.training_stats)
             stats['feature_importance'] = self.get_feature_importance()
