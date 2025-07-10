@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import wraps
 
 # Import our modules
 from modules.database_manager import DatabaseManager
@@ -14,12 +15,13 @@ from modules.search_engine import SearchEngine
 from modules.ranking_engine import RankingEngine
 from modules.feedback_system import FeedbackSystem
 from modules.user_manager import UserManager
+from modules.oauth_manager import OAuthManager
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
-app = Flask(__name__)
+# Initialize Flask app with static folder configuration
+app = Flask(__name__, static_folder='templates/static', static_url_path='/static')
 CORS(app)
 
 # Configure logging
@@ -30,11 +32,13 @@ logger = logging.getLogger(__name__)
 try:
     db_manager = DatabaseManager()
     llm_processor = LLMProcessor()
+    logger.info("LLM processor initialized successfully")
     query_processor = QueryProcessor(llm_processor)
     search_engine = SearchEngine(db_manager)
-    ranking_engine = RankingEngine()
+    ranking_engine = RankingEngine(llm_processor=llm_processor, use_embedding=True, use_ltr=True)
     feedback_system = FeedbackSystem(db_manager)
     user_manager = UserManager(db_manager)
+    oauth_manager = OAuthManager()
     logger.info("All components initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize components: {str(e)}")
@@ -45,11 +49,844 @@ except Exception as e:
     ranking_engine = None
     feedback_system = None
     user_manager = None
+    oauth_manager = None
+
+def get_current_user():
+    """Get current user from request headers or return anonymous user"""
+    try:
+        # Check for Authorization header
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            if user_manager:
+                verification = user_manager.verify_token(token)
+                if verification['success']:
+                    user = verification['user']
+                    # Ensure user is not marked as anonymous
+                    user['is_anonymous'] = False
+                    return user
+                else:
+                    logger.warning(f"Token verification failed: {verification.get('error', 'Unknown error')}")
+        
+        # Check for user_id in request data (for anonymous users)
+        if request.is_json:
+            data = request.get_json()
+            user_id = data.get('user_id')
+            if user_id and user_id.startswith('anon_'):
+                return {'user_id': user_id, 'is_anonymous': True}
+        
+        # Generate anonymous user if none found
+        if user_manager:
+            anonymous_id = user_manager.generate_anonymous_user_id()
+            return {'user_id': anonymous_id, 'is_anonymous': True}
+        
+        return {'user_id': 'anonymous', 'is_anonymous': True}
+        
+    except Exception as e:
+        logger.warning(f"Error getting current user: {e}")
+        return {'user_id': 'anonymous', 'is_anonymous': True}
+
+def track_search_interaction(user_id: str, query: str, session_id: str = None):
+    """Track search interaction for personalization"""
+    try:
+        if user_manager:
+            user_manager.track_user_interaction(user_id, {
+                'action': 'search',
+                'query': query,
+                'session_id': session_id or f"session_{int(datetime.now().timestamp())}",
+                'metadata': {
+                    'timestamp': datetime.now().isoformat(),
+                    'query_length': len(query),
+                    'query_words': len(query.split())
+                }
+            })
+    except Exception as e:
+        logger.warning(f"Error tracking search interaction: {e}")
 
 @app.route('/')
-def index():
-    """Serve the main interface"""
+def home():
+    """Serve the main landing page"""
+    return render_template('home.html')
+
+@app.route('/dev')
+def dev_index():
+    """Serve the developer interface"""
     return render_template('index.html')
+
+@app.route('/results')
+def results():
+    """Serve the search results page"""
+    return render_template('results.html')
+
+@app.route('/login')
+def login():
+    """Serve the login page"""
+    return render_template('login.html')
+
+@app.route('/signup')
+def signup():
+    """Serve the signup page"""
+    return render_template('signup.html')
+
+@app.route('/dashboard')
+def dashboard():
+    """Serve the user dashboard page"""
+    return render_template('user_dashboard.html')
+
+@app.route('/test-history')
+def test_history():
+    """Test history page for debugging"""
+    return render_template('test_history.html')
+
+@app.route('/api/auth/check-email', methods=['POST'])
+def check_email():
+    """Check if email exists endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return jsonify({'error': 'Email required'}), 400
+        
+        email = data['email']
+        exists = user_manager.check_email_exists(email)
+        
+        return jsonify({'exists': exists}), 200
+            
+    except Exception as e:
+        logger.error(f"Error in check email endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/check-username', methods=['POST'])
+def check_username():
+    """Check if username exists endpoint"""
+    try:
+        if not user_manager:
+            logger.error("User manager not available")
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'username' not in data:
+            logger.error("No username provided in request")
+            return jsonify({'error': 'Username required'}), 400
+        
+        username = data['username'].strip()
+        logger.info(f"Checking username availability: '{username}'")
+        
+        if not username:
+            logger.error("Empty username provided")
+            return jsonify({'error': 'Username cannot be empty'}), 400
+        
+        exists = user_manager.check_username_exists(username)
+        logger.info(f"Username '{username}' exists: {exists}")
+        
+        return jsonify({'exists': exists}), 200
+            
+    except Exception as e:
+        logger.error(f"Error in check username endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    """User registration endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Register user
+        result = user_manager.register_user(data)
+        
+        if result['success']:
+            # Generate JWT token for authentication
+            token = user_manager._generate_token(result['user']['user_id'])
+            result['token'] = token
+            return jsonify(result), 201
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in registration endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# OAuth endpoints
+@app.route('/api/auth/google', methods=['GET'])
+def google_auth():
+    """Initiate Google OAuth flow"""
+    try:
+        if not oauth_manager or not oauth_manager.is_configured('google'):
+            return jsonify({'error': 'Google OAuth not configured'}), 500
+        
+        result = oauth_manager.get_authorization_url('google')
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in Google OAuth initiation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/google/callback', methods=['GET'])
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        if not oauth_manager or not user_manager:
+            return jsonify({'error': 'OAuth not available'}), 500
+        
+        code = request.args.get('code')
+        state = request.args.get('state')
+        error = request.args.get('error')
+        
+        if error:
+            logger.error(f"Google OAuth error: {error}")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        if not code:
+            return jsonify({'error': 'Authorization code not provided'}), 400
+        
+        # Process OAuth login
+        oauth_result = oauth_manager.process_oauth_login('google', code, state)
+        if not oauth_result['success']:
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{oauth_result.get("error", "OAuth failed")}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        # Register or login user
+        user_result = user_manager.register_social_user(oauth_result['user_info'])
+        if user_result['success']:
+            import json
+            user_json = json.dumps(user_result['user'])
+            token = user_result['token']
+            message = user_result['message']
+            
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_success',
+                            user: {user_json},
+                            token: '{token}',
+                            message: '{message}'
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            '''
+        else:
+            error_msg = user_result.get("error", "User registration failed")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error_msg}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+            
+    except Exception as e:
+        logger.error(f"Error in Google OAuth callback: {str(e)}")
+        return f'''
+            <html>
+                <script>
+                    window.opener.postMessage({{ 
+                        type: 'oauth_error', 
+                        error: 'OAuth processing failed' 
+                    }}, window.location.origin);
+                    window.close();
+                </script>
+            </html>
+        ''', 500
+
+@app.route('/api/auth/orcid', methods=['GET'])
+def orcid_auth():
+    """Initiate ORCID OAuth flow"""
+    try:
+        if not oauth_manager or not oauth_manager.is_configured('orcid'):
+            return jsonify({'error': 'ORCID OAuth not configured'}), 500
+        
+        result = oauth_manager.get_authorization_url('orcid')
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in ORCID OAuth initiation: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/orcid/callback', methods=['GET'])
+def orcid_callback():
+    """Handle ORCID OAuth callback"""
+    try:
+        if not oauth_manager or not user_manager:
+            return jsonify({'error': 'OAuth not available'}), 500
+        
+        code = request.args.get('code')
+        state = request.args.get('state')
+        error = request.args.get('error')
+        
+        if error:
+            logger.error(f"ORCID OAuth error: {error}")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        if not code:
+            return jsonify({'error': 'Authorization code not provided'}), 400
+        
+        # Process OAuth login
+        oauth_result = oauth_manager.process_oauth_login('orcid', code, state)
+        if not oauth_result['success']:
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{oauth_result.get("error", "OAuth failed")}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+        
+        # Register or login user
+        user_result = user_manager.register_social_user(oauth_result['user_info'])
+        if user_result['success']:
+            import json
+            user_json = json.dumps(user_result['user'])
+            token = user_result['token']
+            message = user_result['message']
+            
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_success',
+                            user: {user_json},
+                            token: '{token}',
+                            message: '{message}'
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            '''
+        else:
+            error_msg = user_result.get("error", "User registration failed")
+            return f'''
+                <html>
+                    <script>
+                        window.opener.postMessage({{ 
+                            type: 'oauth_error', 
+                            error: '{error_msg}' 
+                        }}, window.location.origin);
+                        window.close();
+                    </script>
+                </html>
+            ''', 400
+            
+    except Exception as e:
+        logger.error(f"Error in ORCID OAuth callback: {str(e)}")
+        return f'''
+            <html>
+                <script>
+                    window.opener.postMessage({{ 
+                        type: 'oauth_error', 
+                        error: 'OAuth processing failed' 
+                    }}, window.location.origin);
+                    window.close();
+                </script>
+            </html>
+        ''', 500
+
+@app.route('/api/auth/login', methods=['POST'])
+def login_api():
+    """User login endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'identifier' not in data or 'password' not in data:
+            return jsonify({'error': 'Email/username and password required'}), 400
+        
+        # Authenticate user
+        result = user_manager.authenticate_user(data['identifier'], data['password'])
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        logger.error(f"Error in login endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/verify', methods=['POST'])
+def verify_token():
+    """Token verification endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'No valid token provided'}), 401
+        
+        token = auth_header.split(' ')[1]
+        result = user_manager.verify_token(token)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 401
+            
+    except Exception as e:
+        logger.error(f"Error in token verification: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile', methods=['GET'])
+def get_profile():
+    """Get user profile endpoint"""
+    try:
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        return jsonify({
+            'success': True,
+            'user': current_user
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting profile: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/profile')
+def profile():
+    """Serve the profile page"""
+    return render_template('profile.html')
+
+@app.route('/user-dashboard')
+def user_dashboard():
+    """Serve the user dashboard page"""
+    return render_template('user_dashboard.html')
+
+@app.route('/api/user/change-password', methods=['POST'])
+def change_password():
+    """Change user password endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not current_password or not new_password:
+            return jsonify({'error': 'Current password and new password are required'}), 400
+        
+        # Change password through user manager
+        user_id = current_user['user_id']
+        result = user_manager.change_password(user_id, current_password, new_password)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error changing password: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/statistics', methods=['GET'])
+def get_user_statistics():
+    """Get user activity statistics"""
+    try:
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user_id = current_user['user_id']
+        time_period = request.args.get('time_period', 'monthly')  # Default to monthly
+        
+        # Get user statistics from database
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'error': 'Database not available'}), 500
+        
+        # Get search history count
+        history_collection = aposss_db['user_search_history']
+        search_count = history_collection.count_documents({'user_id': user_id})
+        
+        # Get bookmarks count
+        bookmarks_collection = aposss_db['user_bookmarks']
+        bookmarks_count = bookmarks_collection.count_documents({'user_id': user_id})
+        
+        # Get feedback statistics by user_id
+        feedback_collection = aposss_db['user_feedback']
+        total_feedback = feedback_collection.count_documents({'user_id': user_id})
+        positive_feedback = feedback_collection.count_documents({
+            'user_id': user_id,
+            'rating': {'$gte': 4}
+        })
+        negative_feedback = feedback_collection.count_documents({
+            'user_id': user_id,
+            'rating': {'$lte': 2}
+        })
+        
+        # Get recent activity
+        recent_searches = list(history_collection.find(
+            {'user_id': user_id},
+            {'_id': 0, 'query': 1, 'timestamp': 1}
+        ).sort('timestamp', -1).limit(5))
+        
+        recent_bookmarks = list(bookmarks_collection.find(
+            {'user_id': user_id},
+            {'_id': 1, 'title': 1, 'type': 1, 'created_at': 1, 'result_id': 1}
+        ).sort('created_at', -1).limit(5))
+        
+        # Convert ObjectId to string for JSON serialization
+        for bookmark in recent_bookmarks:
+            bookmark['id'] = str(bookmark['_id'])
+            bookmark.pop('_id', None)
+        
+        # Get user interaction patterns
+        interactions_collection = aposss_db['user_interactions']
+        interactions = list(interactions_collection.find(
+            {'user_id': user_id},
+            {'action': 1, 'timestamp': 1}
+        ).sort('timestamp', -1).limit(500))  # Increased limit for better analysis
+        
+        # Calculate activity based on time period
+        activity_data = calculate_activity_by_period(interactions, time_period)
+        
+        # Calculate account age
+        account_age_days = 0
+        if current_user.get('created_at'):
+            try:
+                created_at_str = current_user.get('created_at', datetime.now().isoformat()).replace('Z', '+00:00')
+                created_at = datetime.fromisoformat(created_at_str)
+                account_age_days = (datetime.now() - created_at).days
+            except Exception as e:
+                logger.warning(f"Error calculating account age: {str(e)}")
+                account_age_days = 0
+
+        statistics = {
+            'total_searches': search_count,
+            'total_bookmarks': bookmarks_count,
+            'positive_feedback': positive_feedback,
+            'negative_feedback': negative_feedback,
+            'total_feedback': total_feedback,
+            'recent_searches': recent_searches,
+            'recent_bookmarks': recent_bookmarks,
+            'activity_data': activity_data,
+            'monthly_activity': activity_data if time_period == 'monthly' else [],  # Backward compatibility
+            'account_age_days': account_age_days
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': statistics
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user statistics: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+def calculate_activity_by_period(interactions, time_period):
+    """Calculate user activity data based on specified time period"""
+    from collections import defaultdict
+    
+    activity_counts = defaultdict(int)
+    
+    for interaction in interactions:
+        try:
+            # Parse timestamp
+            timestamp_str = interaction['timestamp']
+            if timestamp_str.endswith('Z'):
+                timestamp_str = timestamp_str.replace('Z', '+00:00')
+            
+            date = datetime.fromisoformat(timestamp_str)
+            
+            # Generate key based on time period
+            if time_period == 'daily':
+                # Format: YYYY-MM-DD
+                key = date.strftime('%Y-%m-%d')
+            elif time_period == 'weekly':
+                # Get start of week (Monday)
+                start_of_week = date - timedelta(days=date.weekday())
+                key = start_of_week.strftime('%Y-%m-%d')
+            else:  # monthly
+                # Format: YYYY-MM
+                key = f"{date.year}-{date.month:02d}"
+            
+            activity_counts[key] += 1
+            
+        except Exception as e:
+            logger.warning(f"Error parsing interaction timestamp: {str(e)}")
+            continue
+    
+    # Sort and limit results based on time period
+    sorted_activity = sorted(activity_counts.items())
+    
+    if time_period == 'daily':
+        # Last 30 days
+        result = sorted_activity[-30:]
+    elif time_period == 'weekly':
+        # Last 12 weeks
+        result = sorted_activity[-12:]
+    else:  # monthly
+        # Last 6 months
+        result = sorted_activity[-6:]
+    
+    return result
+
+@app.route('/api/user/profile', methods=['PUT'])
+def update_profile():
+    """Update user profile endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Update user profile
+        user_id = current_user['user_id']
+        result = user_manager.update_user_profile(user_id, data)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error updating profile: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile-picture', methods=['POST'])
+def upload_profile_picture():
+    """Upload user profile picture endpoint"""
+    import base64
+    import uuid
+    
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data or 'image' not in data:
+            return jsonify({'error': 'No image data provided'}), 400
+        
+        image_data = data['image']
+        
+        # Validate image data format (should be base64)
+        if not image_data.startswith('data:image/'):
+            return jsonify({'error': 'Invalid image format'}), 400
+        
+        # Extract image type and base64 data
+        try:
+            header, encoded = image_data.split(',', 1)
+            image_type = header.split(';')[0].split(':')[1]
+            
+            # Validate image type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+            if image_type not in allowed_types:
+                return jsonify({'error': 'Unsupported image type. Allowed: JPEG, PNG, GIF, WebP'}), 400
+            
+            # Decode base64 data
+            image_binary = base64.b64decode(encoded)
+            
+            # Check file size (limit to 5MB)
+            max_size = 5 * 1024 * 1024  # 5MB
+            if len(image_binary) > max_size:
+                return jsonify({'error': 'Image too large. Maximum size is 5MB'}), 400
+            
+        except Exception as e:
+            return jsonify({'error': 'Invalid image data format'}), 400
+        
+        # Generate unique filename
+        file_extension = image_type.split('/')[-1]
+        filename = f"profile_{current_user['user_id']}_{uuid.uuid4().hex[:8]}.{file_extension}"
+        
+        # Store image in MongoDB
+        user_id = current_user['user_id']
+        result = user_manager.update_profile_picture(user_id, {
+            'filename': filename,
+            'data': image_binary,
+            'content_type': image_type,
+            'size': len(image_binary),
+            'uploaded_at': datetime.now().isoformat()
+        })
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': 'Profile picture uploaded successfully',
+                'profile_picture_id': result.get('profile_picture_id')
+            }), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error uploading profile picture: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/profile-picture/<user_id>', methods=['GET'])
+def get_profile_picture(user_id):
+    """Get user profile picture endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 404
+        
+        # Get profile picture data
+        picture_data = user_manager.get_profile_picture(user_id)
+        
+        if not picture_data:
+            return jsonify({'error': 'Profile picture not found'}), 404
+        
+        # Return the image data
+        return Response(
+            picture_data['data'],
+            mimetype=picture_data['content_type'],
+            headers={
+                'Cache-Control': 'public, max-age=3600',  # Cache for 1 hour
+                'Content-Disposition': f'inline; filename="{picture_data["filename"]}"'
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting profile picture: {str(e)}")
+        return jsonify({'error': str(e)}), 404
+
+@app.route('/api/user/profile-picture', methods=['DELETE'])
+def delete_profile_picture():
+    """Delete user profile picture endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        current_user = get_current_user()
+        if current_user.get('is_anonymous', False):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user_id = current_user['user_id']
+        result = user_manager.delete_profile_picture(user_id)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error deleting profile picture: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/send-verification-code', methods=['POST'])
+def send_verification_code():
+    """Send email verification code to user"""
+    try:
+        current_user = get_current_user()
+        logger.info(f"Send verification code - current_user: {current_user}")
+        
+        if not current_user or current_user.get('is_anonymous', True):
+            logger.warning(f"Authentication failed - user: {current_user}")
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        result = user_manager.send_verification_code(current_user['user_id'])
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in send verification code endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/verify-email', methods=['POST'])
+def verify_email():
+    """Verify user email with verification code"""
+    try:
+        current_user = get_current_user()
+        if not current_user or current_user.get('is_anonymous', True):
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'verification_code' not in data:
+            return jsonify({'error': 'Verification code required'}), 400
+        
+        verification_code = data['verification_code'].strip()
+        if not verification_code or len(verification_code) != 6:
+            return jsonify({'error': 'Invalid verification code format'}), 400
+        
+        result = user_manager.verify_email_code(current_user['user_id'], verification_code)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in verify email endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/search', methods=['POST'])
 def search():
@@ -61,13 +898,18 @@ def search():
         
         user_query = data['query']
         ranking_mode = data.get('ranking_mode', 'hybrid')  # hybrid, ltr_only, traditional
+        database_filters = data.get('database_filters', None)  # Optional database filtering
         
         if not query_processor or not search_engine or not ranking_engine:
             return jsonify({'error': 'Search components not initialized'}), 500
         
-        # Get authenticated user (optional)
-        current_user = get_authenticated_user()
-        user_id = current_user['_id'] if current_user else None
+        # Get current user for personalization
+        current_user = get_current_user()
+        user_id = current_user.get('user_id', 'anonymous')
+        session_id = data.get('session_id', f"session_{int(datetime.now().timestamp())}")
+        
+        # Track search interaction
+        track_search_interaction(user_id, user_query, session_id)
         
         # Step 1: Process query with LLM
         logger.info(f"Processing search query: {user_query[:50]}...")
@@ -76,27 +918,11 @@ def search():
         if not processed_query:
             return jsonify({'error': 'Failed to process query'}), 500
         
-        # Step 2: Search databases
-        logger.info("Searching databases...")
-        search_results = search_engine.search_all_databases(processed_query)
+        # Step 2: Search databases (with optional filtering)
+        logger.info(f"Searching databases{' with filters: ' + str(database_filters) if database_filters else ''}...")
+        search_results = search_engine.search_all_databases(processed_query, database_filters=database_filters)
         
         if not search_results or not search_results.get('results'):
-            # Track search interaction even if no results
-            if user_manager and user_id:
-                user_manager.track_user_interaction(
-                    user_id,
-                    'search',
-                    {
-                        'query': user_query,
-                        'processed_query': processed_query,
-                        'results_count': 0,
-                        'ranking_mode': ranking_mode,
-                        'session_id': data.get('session_id'),
-                        'user_agent': request.headers.get('User-Agent'),
-                        'ip_address': request.remote_addr
-                    }
-                )
-            
             return jsonify({
                 'success': True,
                 'message': 'No results found',
@@ -104,8 +930,7 @@ def search():
                 'search_results': {'results': [], 'total_results': 0},
                 'categorized_results': {'high_relevance': [], 'medium_relevance': [], 'low_relevance': []},
                 'query_id': None,
-                'user_logged_in': user_id is not None,
-                'personalized': False
+                'personalization_applied': False
             })
         
         # Step 3: Get user feedback data for LTR
@@ -125,59 +950,29 @@ def search():
             logger.warning(f"Error getting feedback data for LTR: {e}")
             user_feedback_data = {}
         
-        # Step 4: Apply personalization if user is logged in
-        personalized = False
-        if current_user and user_manager:
-            try:
-                # Get user's research interests and preferences
-                research_interests = current_user.get('research_interests', [])
-                preferences = current_user.get('preferences', {})
-                
-                # Boost results that match user's research interests
-                if research_interests:
-                    for result in search_results['results']:
-                        result_text = f"{result.get('title', '')} {result.get('description', '')}".lower()
-                        
-                        # Check for research interest matches
-                        interest_boost = 0
-                        for interest in research_interests:
-                            if interest.lower() in result_text:
-                                interest_boost += 0.1  # Boost by 10% per matching interest
-                        
-                        if interest_boost > 0:
-                            result['personalization_boost'] = interest_boost
-                            personalized = True
-                
-                logger.info(f"Applied personalization for user: {current_user['username']}")
-                
-            except Exception as e:
-                logger.warning(f"Error applying personalization: {e}")
+        # Step 4: Get user personalization data
+        user_personalization_data = None
+        try:
+            if user_manager and not current_user.get('is_anonymous', True):
+                # Get user preferences and interaction history
+                user_personalization_data = user_manager.get_user_personalization_data(user_id)
+                logger.info(f"Retrieved personalization data for user: {user_id}")
+            elif user_manager and current_user.get('is_anonymous', True):
+                # For anonymous users, get basic interaction patterns
+                user_personalization_data = user_manager.get_anonymous_personalization_data(user_id)
+                logger.info(f"Retrieved anonymous personalization data for: {user_id}")
+        except Exception as e:
+            logger.warning(f"Error getting personalization data: {e}")
+            user_personalization_data = None
         
-        # Step 5: Rank results using selected mode
-        logger.info(f"Ranking results using mode: {ranking_mode}...")
+        # Step 5: Rank results using selected mode with personalization
+        logger.info(f"Ranking results using mode: {ranking_mode} with personalization...")
         ranked_results = ranking_engine.rank_search_results(
-            search_results, processed_query, user_feedback_data, ranking_mode
+            search_results, processed_query, user_feedback_data, ranking_mode, user_personalization_data
         )
         
         # Generate unique query ID for feedback tracking
         query_id = f"query_{hash(user_query)}_{int(datetime.now().timestamp())}"
-        
-        # Step 6: Track search interaction
-        if user_manager:
-            interaction_data = {
-                'query': user_query,
-                'processed_query': processed_query,
-                'search_results': ranked_results,
-                'results_count': ranked_results.get('total_results', 0),
-                'ranking_mode': ranking_mode,
-                'query_id': query_id,
-                'personalized': personalized,
-                'session_id': data.get('session_id'),
-                'user_agent': request.headers.get('User-Agent'),
-                'ip_address': request.remote_addr
-            }
-            
-            user_manager.track_user_interaction(user_id, 'search', interaction_data)
         
         return jsonify({
             'success': True,
@@ -186,12 +981,8 @@ def search():
             'categorized_results': ranked_results.get('categorized_results', {}),
             'query_id': query_id,
             'ranking_mode': ranking_mode,
-            'user_logged_in': user_id is not None,
-            'personalized': personalized,
-            'user_info': {
-                'username': current_user.get('username') if current_user else None,
-                'research_interests': current_user.get('research_interests', []) if current_user else []
-            }
+            'personalization_applied': user_personalization_data is not None,
+            'user_type': 'authenticated' if not current_user.get('is_anonymous', True) else 'anonymous'
         })
         
     except Exception as e:
@@ -213,56 +1004,32 @@ def submit_feedback():
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
-        # Get authenticated user (optional)
-        current_user = get_authenticated_user()
-        user_id = current_user['_id'] if current_user else None
+        # Get current user for feedback linking
+        current_user = get_current_user()
+        user_id = current_user.get('user_id', 'anonymous')
         
-        # Prepare feedback data
-        feedback_data = {
+
+        
+        # Submit feedback through feedback system
+        feedback_result = feedback_system.submit_feedback({
             'query_id': data['query_id'],
             'result_id': data['result_id'],
             'rating': data['rating'],
             'feedback_type': data['feedback_type'],
             'user_session': data.get('user_session', 'anonymous'),
+            'user_id': user_id,  # Add user_id for proper linking
             'additional_data': data.get('additional_data', {}),
-            'timestamp': datetime.now().isoformat(),
-            'user_id': user_id,  # Link feedback to user if logged in
-            'user_profile': {
-                'username': current_user.get('username') if current_user else 'anonymous',
-                'role': current_user.get('role') if current_user else None,
-                'organization': current_user.get('organization') if current_user else None,
-                'research_interests': current_user.get('research_interests', []) if current_user else []
-            }
-        }
-        
-        # Submit feedback through feedback system
-        feedback_result = feedback_system.submit_feedback(feedback_data)
+            'timestamp': datetime.now().isoformat()
+        })
         
         feedback_id = feedback_result.get('feedback_id') or 'unknown'
         
-        # Track feedback interaction for user analytics
-        if user_manager:
-            interaction_data = {
-                'query_id': data['query_id'],
-                'result_id': data['result_id'],
-                'rating': data['rating'],
-                'feedback_type': data['feedback_type'],
-                'feedback_id': feedback_id,
-                'session_id': data.get('session_id'),
-                'user_agent': request.headers.get('User-Agent'),
-                'ip_address': request.remote_addr
-            }
-            
-            user_manager.track_user_interaction(user_id, 'feedback', interaction_data)
-        
-        logger.info(f"Feedback submitted successfully: {feedback_id} (User: {current_user.get('username') if current_user else 'anonymous'})")
+        logger.info(f"Feedback submitted successfully: {feedback_id}")
         
         return jsonify({
             'success': True,
             'feedback_id': feedback_id,
-            'message': 'Feedback submitted successfully',
-            'user_logged_in': user_id is not None,
-            'points_earned': 1 if user_id else 0  # Gamification element
+            'message': 'Feedback submitted successfully'
         })
         
     except Exception as e:
@@ -528,6 +1295,27 @@ def test_llm():
         logger.error(f"Error in test_llm endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/test-llm-enhanced', methods=['GET'])
+def test_llm_enhanced():
+    """Test endpoint for enhanced LLM processing with multilingual support"""
+    try:
+        if not llm_processor:
+            return jsonify({'error': 'LLM processor not initialized'}), 500
+        
+        # Test the enhanced connection with multilingual capability
+        test_result = llm_processor.test_enhanced_connection()
+        
+        return jsonify(test_result)
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced LLM test endpoint: {str(e)}")
+        return jsonify({
+            'connected': False,
+            'enhanced_processing': False,
+            'multilingual_support': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/test-db', methods=['GET'])
 def test_db():
     """Test endpoint for database connections"""
@@ -556,312 +1344,13 @@ def health_check():
         'query_processor': query_processor is not None,
         'search_engine': search_engine is not None,
         'ranking_engine': ranking_engine is not None,
-        'feedback_system': feedback_system is not None,
-        'user_manager': user_manager is not None
+        'feedback_system': feedback_system is not None
     }
     
     return jsonify({
         'status': 'healthy' if all(status.values()) else 'unhealthy',
         'components': status
     })
-
-# Authentication and User Management Endpoints
-
-@app.route('/login')
-def login_page():
-    """Serve the login page"""
-    return render_template('login.html')
-
-@app.route('/signup')
-def signup_page():
-    """Serve the signup page"""
-    return render_template('signup.html')
-
-@app.route('/api/auth/register', methods=['POST'])
-def register_user():
-    """Register a new user"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No data provided'}), 400
-        
-        result = user_manager.register_user(data)
-        
-        if result['success']:
-            logger.info(f"New user registered: {data.get('username')}")
-            return jsonify(result), 201
-        else:
-            return jsonify(result), 400
-            
-    except Exception as e:
-        logger.error(f"Error in user registration: {str(e)}")
-        return jsonify({'error': 'Registration failed due to server error'}), 500
-
-@app.route('/api/auth/login', methods=['POST'])
-def login_user():
-    """Authenticate user login"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No data provided'}), 400
-        
-        login_identifier = data.get('login_identifier')
-        password = data.get('password')
-        
-        if not login_identifier or not password:
-            return jsonify({'error': 'Login identifier and password are required'}), 400
-        
-        result = user_manager.authenticate_user(login_identifier, password)
-        
-        if result['success']:
-            logger.info(f"User logged in: {login_identifier}")
-            return jsonify(result)
-        else:
-            return jsonify(result), 401
-            
-    except Exception as e:
-        logger.error(f"Error in user authentication: {str(e)}")
-        return jsonify({'error': 'Login failed due to server error'}), 500
-
-@app.route('/api/auth/verify', methods=['POST'])
-def verify_token():
-    """Verify JWT token"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'No valid authorization header'}), 401
-        
-        token = auth_header.split(' ')[1]
-        result = user_manager.verify_token(token)
-        
-        if result['success']:
-            return jsonify(result)
-        else:
-            return jsonify(result), 401
-            
-    except Exception as e:
-        logger.error(f"Error verifying token: {str(e)}")
-        return jsonify({'error': 'Token verification failed'}), 500
-
-@app.route('/api/auth/check-email', methods=['POST'])
-def check_email_availability():
-    """Check if email is available for registration"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        data = request.get_json()
-        email = data.get('email')
-        
-        if not email:
-            return jsonify({'error': 'Email is required'}), 400
-        
-        # Check if email exists in database
-        users_collection = user_manager.aposss_db['users']
-        existing_user = users_collection.find_one({'email': email.lower()})
-        
-        return jsonify({'available': existing_user is None})
-        
-    except Exception as e:
-        logger.error(f"Error checking email availability: {str(e)}")
-        return jsonify({'error': 'Email check failed'}), 500
-
-@app.route('/api/auth/check-username', methods=['POST'])
-def check_username_availability():
-    """Check if username is available for registration"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        data = request.get_json()
-        username = data.get('username')
-        
-        if not username:
-            return jsonify({'error': 'Username is required'}), 400
-        
-        # Check if username exists in database
-        users_collection = user_manager.aposss_db['users']
-        existing_user = users_collection.find_one({'username': username})
-        
-        return jsonify({'available': existing_user is None})
-        
-    except Exception as e:
-        logger.error(f"Error checking username availability: {str(e)}")
-        return jsonify({'error': 'Username check failed'}), 500
-
-@app.route('/api/auth/logout', methods=['POST'])
-def logout_user():
-    """Logout user (client-side token removal)"""
-    try:
-        # Since we're using JWT tokens stored client-side,
-        # logout is mainly handled on the frontend
-        # But we can track the logout event if user is authenticated
-        
-        auth_header = request.headers.get('Authorization')
-        if auth_header and auth_header.startswith('Bearer ') and user_manager:
-            token = auth_header.split(' ')[1]
-            result = user_manager.verify_token(token)
-            
-            if result['success']:
-                user_id = result['user']['_id']
-                # Track logout interaction
-                user_manager.track_user_interaction(
-                    user_id, 
-                    'logout', 
-                    {
-                        'timestamp': datetime.now().isoformat(),
-                        'user_agent': request.headers.get('User-Agent'),
-                        'ip_address': request.remote_addr
-                    }
-                )
-        
-        return jsonify({'success': True, 'message': 'Logged out successfully'})
-        
-    except Exception as e:
-        logger.error(f"Error in logout: {str(e)}")
-        return jsonify({'success': True, 'message': 'Logged out successfully'})
-
-@app.route('/api/user/profile', methods=['GET'])
-def get_user_profile():
-    """Get user profile"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        # Get user from token
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Authentication required'}), 401
-        
-        token = auth_header.split(' ')[1]
-        auth_result = user_manager.verify_token(token)
-        
-        if not auth_result['success']:
-            return jsonify({'error': 'Invalid token'}), 401
-        
-        user_id = auth_result['user']['_id']
-        profile_result = user_manager.get_user_profile(user_id)
-        
-        return jsonify(profile_result)
-        
-    except Exception as e:
-        logger.error(f"Error getting user profile: {str(e)}")
-        return jsonify({'error': 'Failed to get profile'}), 500
-
-@app.route('/api/user/profile', methods=['PUT'])
-def update_user_profile():
-    """Update user profile"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        # Get user from token
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Authentication required'}), 401
-        
-        token = auth_header.split(' ')[1]
-        auth_result = user_manager.verify_token(token)
-        
-        if not auth_result['success']:
-            return jsonify({'error': 'Invalid token'}), 401
-        
-        user_id = auth_result['user']['_id']
-        update_data = request.get_json()
-        
-        if not update_data:
-            return jsonify({'error': 'No data provided'}), 400
-        
-        result = user_manager.update_user_profile(user_id, update_data)
-        return jsonify(result)
-        
-    except Exception as e:
-        logger.error(f"Error updating user profile: {str(e)}")
-        return jsonify({'error': 'Failed to update profile'}), 500
-
-@app.route('/api/user/recommendations', methods=['GET'])
-def get_user_recommendations():
-    """Get personalized recommendations for user"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        # Get user from token
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Authentication required'}), 401
-        
-        token = auth_header.split(' ')[1]
-        auth_result = user_manager.verify_token(token)
-        
-        if not auth_result['success']:
-            return jsonify({'error': 'Invalid token'}), 401
-        
-        user_id = auth_result['user']['_id']
-        recommendations = user_manager.get_user_recommendations(user_id)
-        
-        return jsonify(recommendations)
-        
-    except Exception as e:
-        logger.error(f"Error getting user recommendations: {str(e)}")
-        return jsonify({'error': 'Failed to get recommendations'}), 500
-
-@app.route('/api/user/analytics', methods=['GET'])
-def get_user_analytics():
-    """Get user analytics and statistics"""
-    try:
-        if not user_manager:
-            return jsonify({'error': 'User management not available'}), 500
-        
-        # Get user from token
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Authentication required'}), 401
-        
-        token = auth_header.split(' ')[1]
-        auth_result = user_manager.verify_token(token)
-        
-        if not auth_result['success']:
-            return jsonify({'error': 'Invalid token'}), 401
-        
-        user_id = auth_result['user']['_id']
-        analytics = user_manager.get_user_analytics(user_id)
-        
-        return jsonify(analytics)
-        
-    except Exception as e:
-        logger.error(f"Error getting user analytics: {str(e)}")
-        return jsonify({'error': 'Failed to get analytics'}), 500
-
-# Helper function to get authenticated user
-def get_authenticated_user():
-    """Helper function to get authenticated user from request"""
-    if not user_manager:
-        return None
-    
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return None
-    
-    try:
-        token = auth_header.split(' ')[1]
-        auth_result = user_manager.verify_token(token)
-        
-        if auth_result['success']:
-            return auth_result['user']
-        return None
-        
-    except Exception:
-        return None
 
 @app.route('/api/preindex/stats', methods=['GET'])
 def get_preindex_stats():
@@ -981,6 +1470,138 @@ def get_preindex_progress():
         
     except Exception as e:
         logger.error(f"Error getting pre-index progress: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/preferences', methods=['GET'])
+def get_user_preferences():
+    """Get user preferences including theme"""
+    try:
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        user_id = current_user['user_id']
+        
+        # Get user preferences from database
+        preferences_collection = db_manager.get_collection('aposss', 'user_preferences')
+        if not preferences_collection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        user_prefs = preferences_collection.find_one({'user_id': user_id})
+        
+        if not user_prefs:
+            # Return default preferences
+            default_prefs = {
+                'ui_preferences': {
+                    'theme_preference': 'light',
+                    'display_language': 'en'
+                },
+                'search_preferences': {
+                    'preferred_resource_types': [],
+                    'preferred_databases': [],
+                    'language_preference': 'en',
+                    'results_per_page': 20,
+                    'sort_preference': 'relevance'
+                },
+                'ranking_preferences': {
+                    'weight_recency': 0.2,
+                    'weight_relevance': 0.4,
+                    'weight_authority': 0.2,
+                    'weight_user_feedback': 0.2
+                }
+            }
+            return jsonify({
+                'success': True,
+                'preferences': default_prefs
+            })
+        
+        return jsonify({
+            'success': True,
+            'preferences': {
+                'ui_preferences': user_prefs.get('ui_preferences', {
+                    'theme_preference': 'light',
+                    'display_language': 'en'
+                }),
+                'search_preferences': user_prefs.get('search_preferences', {}),
+                'ranking_preferences': user_prefs.get('ranking_preferences', {})
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user preferences: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/user/preferences', methods=['POST'])
+def update_user_preferences():
+    """Update user preferences including theme"""
+    try:
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        user_id = current_user['user_id']
+        
+        # Get user preferences collection
+        preferences_collection = db_manager.get_collection('aposss', 'user_preferences')
+        if not preferences_collection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        # Prepare update data
+        update_data = {}
+        
+        if 'theme_preference' in data:
+            if data['theme_preference'] not in ['light', 'dark']:
+                return jsonify({'error': 'Invalid theme preference. Must be "light" or "dark"'}), 400
+            if 'ui_preferences' not in update_data:
+                update_data['ui_preferences'] = {}
+            update_data['ui_preferences']['theme_preference'] = data['theme_preference']
+        
+        if 'display_language' in data:
+            if data['display_language'] not in ['en', 'ar']:
+                return jsonify({'error': 'Invalid language preference. Must be "en" or "ar"'}), 400
+            if 'ui_preferences' not in update_data:
+                update_data['ui_preferences'] = {}
+            update_data['ui_preferences']['display_language'] = data['display_language']
+        
+        if 'search_preferences' in data:
+            update_data['search_preferences'] = data['search_preferences']
+        
+        if 'ranking_preferences' in data:
+            update_data['ranking_preferences'] = data['ranking_preferences']
+        
+        if not update_data:
+            return jsonify({'error': 'No valid preferences to update'}), 400
+        
+        # Add timestamp
+        update_data['updated_at'] = datetime.utcnow().isoformat()
+        
+        # Update or insert preferences
+        result = preferences_collection.update_one(
+            {'user_id': user_id},
+            {
+                '$set': update_data,
+                '$setOnInsert': {
+                    'user_id': user_id,
+                    'created_at': datetime.utcnow().isoformat()
+                }
+            },
+            upsert=True
+        )
+        
+        logger.info(f"Updated preferences for user {user_id}: {update_data}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Preferences updated successfully',
+            'updated_fields': list(update_data.keys())
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating user preferences: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ltr/stats', methods=['GET'])
@@ -1151,6 +1772,691 @@ def get_feature_importance():
         
     except Exception as e:
         logger.error(f"Error getting feature importance: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Bookmark and History Management APIs
+@app.route('/api/user/bookmarks', methods=['GET'])
+def get_user_bookmarks():
+    """Get user's bookmarks"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get bookmarks from database
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        bookmarks = list(bookmarks_collection.find(
+            {'user_id': user_id},
+            {'_id': 0}
+        ).sort('created_at', -1))
+        
+        return jsonify({
+            'success': True,
+            'bookmarks': bookmarks
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting bookmarks: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/toggle', methods=['POST'])
+def toggle_bookmark():
+    """Toggle bookmark for a result"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        result_id = data.get('result_id')
+        title = data.get('title', '')
+        database = data.get('database', '')
+        result_type = data.get('type', '')
+        
+        if not result_id:
+            return jsonify({'success': False, 'error': 'Result ID required'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Check if bookmark exists
+        existing_bookmark = bookmarks_collection.find_one({
+            'user_id': user_id,
+            'result_id': result_id
+        })
+        
+        if existing_bookmark:
+            # Remove bookmark
+            bookmarks_collection.delete_one({
+                'user_id': user_id,
+                'result_id': result_id
+            })
+            bookmarked = False
+        else:
+            # Add bookmark
+            bookmark_doc = {
+                'user_id': user_id,
+                'result_id': result_id,
+                'title': title,
+                'database': database,
+                'type': result_type,
+                'created_at': datetime.now().isoformat()
+            }
+            bookmarks_collection.insert_one(bookmark_doc)
+            bookmarked = True
+        
+        return jsonify({
+            'success': True,
+            'bookmarked': bookmarked
+        })
+        
+    except Exception as e:
+        logger.error(f"Error toggling bookmark: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/remove', methods=['POST'])
+def remove_bookmark():
+    """Remove a bookmark"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        result_id = data.get('result_id')
+        
+        if not result_id:
+            return jsonify({'success': False, 'error': 'Result ID required'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Remove bookmark
+        result = bookmarks_collection.delete_one({
+            'user_id': user_id,
+            'result_id': result_id
+        })
+        
+        return jsonify({
+            'success': True,
+            'removed': result.deleted_count > 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing bookmark: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history', methods=['GET'])
+def get_user_history():
+    """Get user's search history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get history from database
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        history = list(history_collection.find(
+            {'user_id': user_id},
+            {'_id': 1, 'query': 1, 'filters': 1, 'timestamp': 1}
+        ).sort('timestamp', -1).limit(50))
+        
+        # Convert ObjectId to string for JSON serialization
+        for item in history:
+            item['_id'] = str(item['_id'])
+        
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history', methods=['POST'])
+def add_to_history():
+    """Add search to user's history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        query = data.get('query', '')
+        filters = data.get('filters', [])
+        timestamp = data.get('timestamp', datetime.now().isoformat())
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query required'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Check if this exact search already exists recently (within last hour)
+        recent_cutoff = datetime.now() - timedelta(hours=1)
+        existing_search = history_collection.find_one({
+            'user_id': user_id,
+            'query': query,
+            'timestamp': {'$gte': recent_cutoff.isoformat()}
+        })
+        
+        if not existing_search:
+            # Add to history
+            history_doc = {
+                'user_id': user_id,
+                'query': query,
+                'filters': filters,
+                'timestamp': timestamp
+            }
+            history_collection.insert_one(history_doc)
+            
+            # Keep only last 100 searches per user
+            user_history = list(history_collection.find(
+                {'user_id': user_id}
+            ).sort('timestamp', -1))
+            
+            if len(user_history) > 100:
+                # Remove oldest entries
+                oldest_entries = user_history[100:]
+                for entry in oldest_entries:
+                    history_collection.delete_one({'_id': entry['_id']})
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error adding to history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history', methods=['DELETE'])
+def delete_search_from_history():
+    """Remove a specific search query from search history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        query = data.get('query')
+        
+        if not query:
+            return jsonify({'success': False, 'error': 'Query required'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Remove all history items with this query for this user
+        result = history_collection.delete_many({
+            'user_id': user_id,
+            'query': query
+        })
+        
+        return jsonify({
+            'success': True,
+            'removed_count': result.deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing from history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history/clear', methods=['DELETE'])
+def clear_search_history():
+    """Clear all search history for the current user"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Remove all history items for this user
+        result = history_collection.delete_many({
+            'user_id': user_id
+        })
+        
+        return jsonify({
+            'success': True,
+            'cleared_count': result.deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/<bookmark_id>', methods=['DELETE'])
+def delete_bookmark(bookmark_id):
+    """Delete a specific bookmark"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Remove bookmark - can use either MongoDB ObjectId or result_id
+        try:
+            from bson import ObjectId
+            # Try as MongoDB ObjectId first
+            result = bookmarks_collection.delete_one({
+                '_id': ObjectId(bookmark_id),
+                'user_id': user_id
+            })
+        except:
+            # Fall back to using as result_id
+            result = bookmarks_collection.delete_one({
+                'result_id': bookmark_id,
+                'user_id': user_id
+            })
+        
+        return jsonify({
+            'success': True,
+            'removed': result.deleted_count > 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing bookmark: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/bookmarks/clear', methods=['DELETE'])
+def clear_all_bookmarks():
+    """Clear all bookmarks for the current user"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        # Get bookmarks collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        bookmarks_collection = aposss_db['user_bookmarks']
+        
+        # Remove all bookmarks for this user
+        result = bookmarks_collection.delete_many({
+            'user_id': user_id
+        })
+        
+        return jsonify({
+            'success': True,
+            'cleared_count': result.deleted_count
+        })
+        
+    except Exception as e:
+        logger.error(f"Error clearing bookmarks: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/user/history/remove', methods=['POST'])
+def remove_from_history():
+    """Remove an item from search history"""
+    try:
+        # Get current user
+        current_user = get_current_user()
+        if not current_user:
+            return jsonify({'success': False, 'error': 'Authentication required'})
+        
+        user_id = current_user.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Invalid user'})
+        
+        data = request.get_json()
+        history_id = data.get('history_id')
+        
+        if not history_id:
+            return jsonify({'success': False, 'error': 'History ID required'})
+        
+        # Get history collection
+        aposss_db = db_manager.get_database('aposss')
+        if aposss_db is None:
+            return jsonify({'success': False, 'error': 'Database not available'})
+        
+        history_collection = aposss_db['user_search_history']
+        
+        # Remove history item
+        from bson import ObjectId
+        result = history_collection.delete_one({
+            '_id': ObjectId(history_id),
+            'user_id': user_id  # Ensure user can only delete their own history
+        })
+        
+        return jsonify({
+            'success': True,
+            'removed': result.deleted_count > 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Error removing from history: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/funding/institution/<institution_id>', methods=['GET'])
+def get_institution_details(institution_id):
+    """Get detailed information about a funding institution and its projects"""
+    try:
+        if not db_manager:
+            return jsonify({'error': 'Database manager not available'}), 500
+        
+        # Get query parameter for filtering relevant projects
+        search_query = request.args.get('query', '').strip()
+        
+        # Get funding database
+        funding_db = db_manager.get_database('funding')
+        if funding_db is None:
+            return jsonify({'error': 'Funding database not available'}), 500
+        
+        from bson import ObjectId
+        try:
+            institution_oid = ObjectId(institution_id)
+        except:
+            return jsonify({'error': 'Invalid institution ID format'}), 400
+        
+        # Get institution details
+        institutions_collection = funding_db['institutions']
+        institution = institutions_collection.find_one({'_id': institution_oid})
+        
+        if not institution:
+            return jsonify({'error': 'Institution not found'}), 404
+        
+        # Convert ObjectId to string for JSON serialization
+        institution['_id'] = str(institution['_id'])
+        
+        # Get all funding records for this institution
+        funding_records_collection = funding_db['funding_records']
+        research_projects_collection = funding_db['research_projects']
+        
+        funding_records = list(funding_records_collection.find({'institution_id': institution_oid}))
+        
+        # Get detailed project information
+        all_funded_projects = []
+        relevant_projects = []
+        total_funding = 0
+        
+        for record in funding_records:
+            total_funding += record.get('amount', 0)
+            
+            # Get project details
+            project_id = record.get('research_project_id')
+            if project_id:
+                project = research_projects_collection.find_one({'_id': project_id})
+                if project:
+                    project_info = {
+                        'project_id': str(project['_id']),
+                        'title': project.get('title', ''),
+                        'status': project.get('status', ''),
+                        'field_category': project.get('field_category', ''),
+                        'field_group': project.get('field_group', ''),
+                        'field_area': project.get('field_area', ''),
+                        'background': project.get('background', {}),
+                        'objectives': project.get('objectives', []),
+                        'budget_requested': project.get('budget_requested', 0),
+                        'submission_date': str(project.get('submission_date', '')),
+                        'funding_amount': record.get('amount', 0),
+                        'disbursed_on': str(record.get('disbursed_on', '')),
+                        'funding_notes': record.get('notes', '')
+                    }
+                    
+                    all_funded_projects.append(project_info)
+                    
+                    # If search query provided, check relevance
+                    if search_query:
+                        project_text = f"{project.get('title', '')} {project.get('field_category', '')} {project.get('field_group', '')} {project.get('field_area', '')}"
+                        search_terms = search_query.lower().split()
+                        
+                        # Simple relevance check
+                        is_relevant = any(term in project_text.lower() for term in search_terms)
+                        if is_relevant:
+                            relevant_projects.append(project_info)
+        
+        # If search query provided, limit relevant projects to top 2, otherwise show all
+        if search_query and relevant_projects:
+            funded_projects_to_show = relevant_projects[:2]
+            projects_context = "query-relevant"
+        elif search_query:
+            # If no relevant projects found but query provided, show sample projects
+            funded_projects_to_show = all_funded_projects[:2]
+            projects_context = "sample"
+        else:
+            # No query provided, show all projects
+            funded_projects_to_show = all_funded_projects
+            projects_context = "all"
+        
+        # Prepare response
+        institution_details = {
+            'institution': institution,
+            'funding_summary': {
+                'total_projects': len(all_funded_projects),
+                'total_funding_amount': total_funding,
+                'average_funding_per_project': total_funding / len(all_funded_projects) if all_funded_projects else 0,
+                'relevant_projects_count': len(relevant_projects) if search_query else len(all_funded_projects),
+                'projects_context': projects_context
+            },
+            'funded_projects': funded_projects_to_show,
+            'search_context': {
+                'query': search_query,
+                'total_relevant_projects': len(relevant_projects) if search_query else None,
+                'showing_count': len(funded_projects_to_show)
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': institution_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting institution details: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/funding/project/<project_id>', methods=['GET'])
+def get_research_project_details(project_id):
+    """Get detailed information about a research project"""
+    try:
+        if not db_manager:
+            return jsonify({'error': 'Database manager not available'}), 500
+        
+        # Get funding database
+        funding_db = db_manager.get_database('funding')
+        if funding_db is None:
+            return jsonify({'error': 'Funding database not available'}), 500
+        
+        from bson import ObjectId
+        try:
+            project_oid = ObjectId(project_id)
+        except:
+            return jsonify({'error': 'Invalid project ID format'}), 400
+        
+        # Get project details
+        research_projects_collection = funding_db['research_projects']
+        project = research_projects_collection.find_one({'_id': project_oid})
+        
+        if not project:
+            return jsonify({'error': 'Research project not found'}), 404
+        
+        # Convert ObjectId to string for JSON serialization
+        project['_id'] = str(project['_id'])
+        
+        # Get funding information for this project
+        funding_records_collection = funding_db['funding_records']
+        institutions_collection = funding_db['institutions']
+        
+        funding_records = list(funding_records_collection.find({'research_project_id': project_oid}))
+        
+        # Get funding institutions
+        funding_institutions = []
+        total_received_funding = 0
+        
+        for record in funding_records:
+            total_received_funding += record.get('amount', 0)
+            
+            institution_id = record.get('institution_id')
+            if institution_id:
+                institution = institutions_collection.find_one({'_id': institution_id})
+                if institution:
+                    funding_institutions.append({
+                        'institution_id': str(institution['_id']),
+                        'name': institution.get('name', ''),
+                        'type': institution.get('type', ''),
+                        'country': institution.get('country', ''),
+                        'funding_amount': record.get('amount', 0),
+                        'disbursed_on': str(record.get('disbursed_on', '')),
+                        'notes': record.get('notes', '')
+                    })
+        
+        # Prepare response
+        project_details = {
+            'project': project,
+            'funding_summary': {
+                'total_funding_received': total_received_funding,
+                'budget_requested': project.get('budget_requested', 0),
+                'funding_percentage': (total_received_funding / project.get('budget_requested', 1)) * 100 if project.get('budget_requested') else 0,
+                'funding_institutions_count': len(funding_institutions)
+            },
+            'funding_institutions': funding_institutions
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': project_details
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting research project details: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/forgot-password')
+def forgot_password():
+    """Serve the forgot password page"""
+    return render_template('forgot_password.html')
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password_api():
+    """Request password reset endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return jsonify({'error': 'Email required'}), 400
+        
+        email = data['email']
+        result = user_manager.request_password_reset(email)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in forgot password endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password_api():
+    """Reset password with verification code endpoint"""
+    try:
+        if not user_manager:
+            return jsonify({'error': 'User management not available'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        email = data.get('email')
+        verification_code = data.get('verification_code')
+        new_password = data.get('new_password')
+        
+        if not email or not verification_code or not new_password:
+            return jsonify({'error': 'Email, verification code, and new password are required'}), 400
+        
+        result = user_manager.reset_password_with_code(email, verification_code, new_password)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"Error in reset password endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

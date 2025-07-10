@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+APOSSSenv/
 
 # Spyder project settings
 .spyderproject
@@ -127,6 +128,35 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom additions for APOSSS project
+*.pyc
+__pycache__/
+.DS_Store
+.vscode/
+.idea/
+
+# Database files
+*.db
+*.sqlite
+
+# Log files
+*.log
+
+# Cache directories
+embedding_cache/
+production_index_cache/
+ltr_models/
+
+# Email configuration (contains sensitive information)
+email_config.py
+email_config_local.py
+.env
+
+# Secret keys and credentials
+config.env
+secrets.txt
+credentials.json
 
 # IDEs and editors
 .vscode/
@@ -173,12 +203,6 @@ htmlcov/
 
 # Local configuration
 config.local.py
-
-# PyCharm
-.idea/
-
-# Visual Studio Code
-.vscode/
 
 # Sublime Text
 *.sublime-project

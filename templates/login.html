@@ -3,22 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - APOSSS</title>
+    <title>Login - Libyan Open Science</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=globe" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@heroicons/v2/24/outline/esm/index.js"></script>
     <style>
-        .bg-gradient-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #4a5568;
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --container-border: rgba(255, 255, 255, 0.3);
+            --input-bg: #ffffff;
+            --input-border: #e2e8f0;
+            --button-bg: rgba(255, 255, 255, 0.9);
+            --button-hover: #f1f3f4;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.95);
         }
-        .glass-effect {
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #F8F9FA;
+            --text-secondary: #a0aec0;
+            --container-bg: rgba(18, 18, 18, 0.95);
+            --container-border: rgba(255, 255, 255, 0.1);
+            --input-bg: #1a1a1a;
+            --input-border: #2d3748;
+            --button-bg: rgba(18, 18, 18, 0.9);
+            --button-hover: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --glass-bg: rgba(18, 18, 18, 0.95);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 17px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            transition: background 0.3s ease;
+        }
+        
+        .login-container {
             backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--glass-bg);
+            transition: all 0.3s ease;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+        }
+
+        /* Language toggle as icon button */
+        .language-toggle-icon {
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .language-toggle-icon:hover {
+            color: #3b82f6;
+            background: var(--button-hover);
+        }
+
+        /* The switch - the box around the slider */
+        .switch {
+          display: block;
+          --width-of-switch: 3.5em;
+          --height-of-switch: 2em;
+          /* size of sliding icon -- sun and moon */
+          --size-of-icon: 1.4em;
+          /* it is like a inline-padding of switch */
+          --slider-offset: 0.3em;
+          position: relative;
+          width: var(--width-of-switch);
+          height: var(--height-of-switch);
+        }
+
+        /* Hide default HTML checkbox */
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        /* The slider */
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #f4f4f5;
+          transition: .4s;
+          border-radius: 30px;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: var(--size-of-icon,1.4em);
+          width: var(--size-of-icon,1.4em);
+          border-radius: 20px;
+          left: var(--slider-offset,0.3em);
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(40deg,#ff0080,#ff8c00 70%);
+          transition: .4s;
+        }
+
+        input:checked + .slider {
+          background-color: #303136;
+        }
+
+        input:checked + .slider:before {
+          left: calc(100% - (var(--size-of-icon,1.4em) + var(--slider-offset,0.3em)));
+          background: #303136;
+          /* change the value of second inset in box-shadow to change the angle and direction of the moon  */
+          box-shadow: inset -3px -2px 5px -2px #8983f7, inset -10px -4px 0 0 #a3dafb;
+        }
+
+        /* Input styles */
+        input, textarea, select {
+            background: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Text color overrides */
+        .text-themed-primary { color: var(--text-primary) !important; }
+        .text-themed-secondary { color: var(--text-secondary) !important; }
+
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .floating-elements::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(59, 130, 246, 0.15) 0%,
+                rgba(99, 102, 241, 0.1) 30%,
+                rgba(139, 92, 246, 0.05) 60%,
+                rgba(139, 92, 246, 0) 100%
+            );
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            animation: float 12s ease-in-out infinite, morph 20s ease-in-out infinite;
+            filter: blur(20px);
+        }
+        .floating-elements::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            right: 5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(99, 102, 241, 0.15) 0%,
+                rgba(139, 92, 246, 0.1) 30%,
+                rgba(59, 130, 246, 0.05) 60%,
+                rgba(59, 130, 246, 0) 100%
+            );
+            border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%;
+            animation: float 15s ease-in-out infinite reverse, morph 25s ease-in-out infinite;
+            filter: blur(20px);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+        @keyframes morph {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            25% { border-radius: 40% 60% 70% 30% / 40% 50% 50% 60%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 70%; }
+            75% { border-radius: 60% 40% 50% 50% / 30% 60% 70% 40%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
         }
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid #f3f3f6;
+            border: 3px solid #f3f3f6;
             border-radius: 50%;
             border-top-color: #3b82f6;
             animation: spin 1s ease-in-out infinite;
@@ -26,219 +236,470 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-    </style>
-</head>
-<body class="bg-gradient-custom min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-        <!-- Login Form -->
-        <div class="glass-effect rounded-2xl shadow-2xl p-8 text-white">
-            <!-- Header -->
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold mb-2">Welcome Back</h1>
-                <p class="text-blue-100">Sign in to access APOSSS</p>
-            </div>
 
-            <!-- Success/Error Messages -->
-            <div id="messageContainer" class="hidden mb-6">
-                <div id="messageContent" class="p-4 rounded-lg text-center"></div>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="mb-6">
-                    <label for="loginIdentifier" class="block text-sm font-medium mb-2">
-                        Email or Username
-                    </label>
-                    <input 
-                        type="text" 
-                        id="loginIdentifier" 
-                        name="loginIdentifier" 
-                        required
-                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
-                        placeholder="Enter your email or username"
-                    >
-                </div>
-
-                <div class="mb-6">
-                    <label for="password" class="block text-sm font-medium mb-2">
-                        Password
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        required
-                        class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-blue-100"
-                        placeholder="Enter your password"
-                    >
-                </div>
-
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center">
-                        <input 
-                            type="checkbox" 
-                            id="rememberMe" 
-                            name="rememberMe"
-                            class="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500"
-                        >
-                        <label for="rememberMe" class="ml-2 text-sm text-blue-100">
-                            Remember me
-                        </label>
-                    </div>
-                    <a href="#" class="text-sm text-blue-200 hover:text-white transition-colors">
-                        Forgot password?
-                    </a>
-                </div>
-
-                <button 
-                    type="submit" 
-                    id="loginButton"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
-                >
-                    <span id="loginText">Sign In</span>
-                    <span id="loginSpinner" class="loading ml-2 hidden"></span>
-                </button>
-            </form>
-
-            <!-- Alternative Actions -->
-            <div class="mt-8 text-center space-y-4">
-                <p class="text-blue-100">
-                    Don't have an account? 
-                    <a href="/signup" class="text-white font-medium hover:underline">
-                        Sign up here
-                    </a>
-                </p>
-                
-                <div class="border-t border-white/20 pt-4">
-                    <p class="text-blue-100 mb-3">Or continue without an account</p>
-                    <a 
-                        href="/" 
-                        class="inline-block bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-                    >
-                        Browse as Guest
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="text-center mt-6 text-blue-200">
-            <p class="text-sm">
-                APOSSS - AI-Powered Open-Science Semantic Search System
-            </p>
-        </div>
-    </div>
-
-    <script>
-        function showMessage(message, type) {
-            const container = document.getElementById('messageContainer');
-            const content = document.getElementById('messageContent');
-            
-            container.classList.remove('hidden');
-            content.className = `p-4 rounded-lg text-center ${
-                type === 'error' ? 'bg-red-500/20 border border-red-400 text-red-100' :
-                type === 'success' ? 'bg-green-500/20 border border-green-400 text-green-100' :
-                'bg-blue-500/20 border border-blue-400 text-blue-100'
-            }`;
-            content.textContent = message;
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                container.classList.add('hidden');
-            }, 5000);
+        /* Dark theme adjustments for the OR divider */
+        [data-theme="dark"] .relative .border-t {
+            border-color: var(--input-border);
+        }
+        
+        [data-theme="dark"] .or-divider-text {
+            background: var(--glass-bg);
         }
 
-        function setLoading(loading) {
-            const button = document.getElementById('loginButton');
-            const text = document.getElementById('loginText');
-            const spinner = document.getElementById('loginSpinner');
+        .force-ltr {
+            direction: ltr !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg relative">
+    <!-- Theme and Language Toggle Buttons -->
+    <div class="fixed top-4 right-4 z-50 flex space-x-2">
+        <!-- Language Toggle Icon -->
+        <span id="languageToggle" class="material-symbols-outlined language-toggle-icon" title="Switch Language">globe</span>
+        
+        <!-- Theme Toggle Switch -->
+        <label class="switch">
+            <input type="checkbox" id="themeToggleInput">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- Floating Background Elements -->
+    <div class="floating-elements"></div>
+    
+    <!-- Header -->
+    <header class="relative z-10 bg-transparent">
+        <div class="container mx-auto px-6 py-6">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <a href="/" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img 
+                            id="headerLogo"
+                            src="/static/images/logo-light.svg" 
+                            alt="Libyan Open Science Logo"
+                            class="w-full h-full object-contain"
+                            onerror="this.onerror=null; this.src='/static/images/logo.png';"
+                        >
+                    </div>
+                    <div>
+                        <h1 class="text-themed-primary text-xl font-bold" data-translate="site-title">Libyan Open Science</h1>
+                        <p class="text-themed-secondary text-sm" data-translate="site-subtitle">Advanced Research Search</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 flex-1 flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-md">
+            <!-- Login Container -->
+            <div class="login-container rounded-2xl p-8 shadow-2xl">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-themed-primary mb-2" data-translate="welcome-back">Welcome Back</h2>
+                    <p class="text-themed-secondary" data-translate="sign-in-subtitle">Sign in to your account</p>
+                </div>
+
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="identifier" class="block text-sm font-medium text-themed-primary mb-2" data-translate="email-username-label">Email or Username</label>
+                        <input 
+                            type="text" 
+                            id="identifier"
+                            name="identifier"
+                            required
+                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all force-ltr"
+                            placeholder="Enter your email or username"
+                            data-translate="email-username-placeholder"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-themed-primary mb-2" data-translate="password-label">Password</label>
+                        <input 
+                            type="password" 
+                            id="password"
+                            name="password"
+                            required
+                            class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all force-ltr"
+                            placeholder="Enter your password"
+                            data-translate="password-placeholder"
+                        >
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input 
+                                type="checkbox" 
+                                id="remember"
+                                name="remember"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            >
+                            <label for="remember" class="ml-2 block text-sm text-themed-secondary" data-translate="remember-me">Remember me</label>
+                        </div>
+                        <a href="/forgot-password" class="text-sm text-blue-600 hover:text-blue-800" data-translate="forgot-password">Forgot password?</a>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                    >
+                        <span id="loginText" data-translate="sign-in-btn">Sign In</span>
+                        <span id="loginSpinner" class="loading ml-2 hidden"></span>
+                    </button>
+                </form>
+
+                <div class="relative mt-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-themed-secondary or-divider-text" data-translate="or">OR</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex space-x-3">
+                    <button 
+                        id="googleLoginBtn"
+                        class="flex-1 bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span data-translate="sign-in-with-google">Google</span>
+                    </button>
+                    
+                    <button 
+                        id="orcidLoginBtn"
+                        class="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947 0 .525-.422.947-.947.947-.525 0-.946-.422-.946-.947 0-.516.421-.947.946-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c2.359 0 3.781-1.444 3.781-3.722 0-2.016-1.3-3.722-3.781-3.722h-2.297z"/>
+                        </svg>
+                        <span data-translate="sign-in-with-orcid">ORCID</span>
+                    </button>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <p class="text-themed-secondary text-sm">
+                        <span data-translate="no-account">Don't have an account?</span>
+                        <a href="/signup" class="text-blue-600 hover:text-blue-800 font-medium" data-translate="sign-up-link">Sign up</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 text-center py-8">
+        <div class="container mx-auto px-6">
+            <p class="text-themed-secondary text-sm">
+                <span data-translate="copyright">© 2024 Libyan Open Science •</span>
+                <a href="/dev" class="hover:text-blue-600 transition-colors" data-translate="developer-portal">Developer Portal</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Translations
+        const translations = {
+            en: {
+                'site-title': 'Libyan Open Science',
+                'site-subtitle': 'Advanced Research Search',
+                'welcome-back': 'Welcome Back',
+                'sign-in-subtitle': 'Sign in to your account',
+                'email-username-label': 'Email or Username',
+                'email-username-placeholder': 'Enter your email or username',
+                'password-label': 'Password',
+                'password-placeholder': 'Enter your password',
+                'remember-me': 'Remember me',
+                'forgot-password': 'Forgot password?',
+                'sign-in-btn': 'Sign In',
+                'signing-in-btn': 'Signing in...',
+                'or': 'OR',
+                'sign-in-with-google': 'Google',
+                'sign-in-with-orcid': 'ORCID',
+                'no-account': "Don't have an account?",
+                'sign-up-link': 'Sign up',
+                'copyright': '© 2024 Libyan Open Science •',
+                'developer-portal': 'Developer Portal',
+                'login-failed': 'Login failed',
+                'invalid-credentials': 'Invalid email/username or password',
+                'network-error': 'Network error. Please try again.',
+                'login-success': 'Login successful! Redirecting...'
+            },
+            ar: {
+                'site-title': 'العلوم المفتوحة الليبية',
+                'site-subtitle': 'البحث المتقدم في الأبحاث',
+                'welcome-back': 'مرحباً بك مرة أخرى',
+                'sign-in-subtitle': 'قم بتسجيل الدخول إلى حسابك',
+                'email-username-label': 'البريد الإلكتروني أو اسم المستخدم',
+                'email-username-placeholder': 'أدخل بريدك الإلكتروني أو اسم المستخدم',
+                'password-label': 'كلمة المرور',
+                'password-placeholder': 'أدخل كلمة المرور',
+                'remember-me': 'تذكرني',
+                'forgot-password': 'نسيت كلمة المرور؟',
+                'sign-in-btn': 'تسجيل الدخول',
+                'signing-in-btn': 'جاري تسجيل الدخول...',
+                'or': 'أو',
+                'sign-in-with-google': 'Google',
+                'sign-in-with-orcid': 'ORCID',
+                'no-account': 'ليس لديك حساب؟',
+                'sign-up-link': 'إنشاء حساب',
+                'copyright': '© 2024 العلوم المفتوحة الليبية •',
+                'developer-portal': 'بوابة المطور',
+                'login-failed': 'فشل تسجيل الدخول',
+                'invalid-credentials': 'البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة',
+                'network-error': 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.',
+                'login-success': 'تم تسجيل الدخول بنجاح! جاري التوجيه...'
+            }
+        };
+        
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.checked = theme === 'dark';
+            }
             
-            if (loading) {
-                button.disabled = true;
-                button.classList.add('opacity-75', 'cursor-not-allowed');
-                text.textContent = 'Signing In...';
-                spinner.classList.remove('hidden');
+            const headerLogo = document.getElementById('headerLogo');
+            
+            if (theme === 'dark') {
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-dark.svg';
+                }
             } else {
-                button.disabled = false;
-                button.classList.remove('opacity-75', 'cursor-not-allowed');
-                text.textContent = 'Sign In';
-                spinner.classList.add('hidden');
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-light.svg';
+                }
             }
         }
 
-        async function handleLogin(event) {
-            event.preventDefault();
+        document.getElementById('themeToggleInput').addEventListener('change', function(e) {
+            const newTheme = e.target.checked ? 'dark' : 'light';
+            setTheme(newTheme);
+        });
+
+        // Language management
+        function initializeLanguage() {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+        }
+
+        function setLanguage(language) {
+            document.documentElement.setAttribute('lang', language);
+            localStorage.setItem('language', language);
             
-            const formData = new FormData(event.target);
-            const loginData = {
-                login_identifier: formData.get('loginIdentifier'),
-                password: formData.get('password'),
-                remember_me: formData.get('rememberMe') === 'on'
-            };
+            const languageToggle = document.getElementById('languageToggle');
+            if (language === 'ar') {
+                if (languageToggle) languageToggle.title = 'Switch to English';
+            } else {
+                if (languageToggle) languageToggle.title = 'التبديل إلى العربية';
+            }
+            
+            // Apply translations
+            applyTranslations(language);
+            
+            // Save to database if user is authenticated
+            saveLanguagePreference(language);
+        }
 
-            setLoading(true);
+        function applyTranslations(language) {
+            const trans = translations[language];
+            
+            // Apply translations to all elements with data-translate attribute
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (trans[key]) {
+                    if (element.tagName === 'INPUT' && element.type !== 'submit') {
+                        element.placeholder = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                    
+                    // Apply minimal RTL styling only for longer text content in Arabic
+                    if (language === 'ar' && trans[key].length > 10) {
+                        element.style.direction = 'rtl';
+                    } else {
+                        element.style.direction = '';
+                    }
+                }
+            });
+        }
 
+        async function saveLanguagePreference(language) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            display_language: language
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving language preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const newLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            setLanguage(newLanguage);
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const identifier = document.getElementById('identifier').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            
+            // Show loading state
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            loginText.textContent = translations[currentLanguage]['signing-in-btn'];
+            loginSpinner.classList.remove('hidden');
+            
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(loginData)
+                    body: JSON.stringify({
+                        identifier,
+                        password,
+                        remember
+                    })
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (data.success) {
-                    // Store authentication token
-                    localStorage.setItem('auth_token', data.token);
-                    localStorage.setItem('user_data', JSON.stringify(data.user));
+                    // Store auth token and user data
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    localStorage.setItem('userMode', 'authenticated');
                     
-                    showMessage('Login successful! Redirecting...', 'success');
+                    console.log('Login successful, stored auth data:', {
+                        token: data.token.substring(0, 20) + '...',
+                        user: data.user,
+                        userMode: 'authenticated'
+                    });
                     
-                    // Redirect to main page after short delay
+                    // Redirect to home page
+                    window.location.href = '/';
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+            } catch (error) {
+                // Show translated error message
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                const trans = translations[currentLanguage];
+                let errorMessage = error.message;
+                
+                // Translate common error messages
+                if (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('credentials')) {
+                    errorMessage = trans['invalid-credentials'];
+                } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+                    errorMessage = trans['network-error'];
+                } else if (!errorMessage || errorMessage === 'Login failed') {
+                    errorMessage = trans['login-failed'];
+                }
+                
+                alert(errorMessage);
+                
+                // Reset loading state
+                loginText.textContent = trans['sign-in-btn'];
+                loginSpinner.classList.add('hidden');
+            }
+        });
+
+        // OAuth popup handler
+        function handleOAuthPopup(provider) {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const trans = translations[currentLanguage];
+            
+            // Open OAuth popup
+            const popup = window.open(
+                `/api/auth/${provider}`,
+                `${provider}OAuth`,
+                'width=500,height=600,scrollbars=yes,resizable=yes'
+            );
+            
+            // Listen for OAuth response
+            const messageHandler = (event) => {
+                if (event.origin !== window.location.origin) return;
+                
+                if (event.data.type === 'oauth_success') {
+                    // Store auth data
+                    localStorage.setItem('authToken', event.data.token);
+                    localStorage.setItem('userData', JSON.stringify(event.data.user));
+                    localStorage.setItem('userMode', 'authenticated');
+                    
+                    // Close popup and redirect
+                    popup.close();
+                    window.removeEventListener('message', messageHandler);
+                    
+                    // Show success message
+                    alert(trans['login-success']);
+                    
+                    // Redirect to home
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1000);
-                } else {
-                    showMessage(data.error || 'Login failed', 'error');
+                    
+                } else if (event.data.type === 'oauth_error') {
+                    popup.close();
+                    window.removeEventListener('message', messageHandler);
+                    alert(event.data.error || trans['network-error']);
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                showMessage('Network error. Please try again.', 'error');
-            } finally {
-                setLoading(false);
-            }
+            };
+            
+            window.addEventListener('message', messageHandler);
+            
+            // Handle popup blocked or closed manually
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener('message', messageHandler);
+                }
+            }, 1000);
         }
 
-        // Check if user is already logged in
-        window.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('auth_token');
-            if (token) {
-                // Verify token is still valid
-                fetch('/api/auth/verify', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // User is already logged in, redirect to main page
-                        showMessage('You are already logged in. Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 1000);
-                    }
-                })
-                .catch(error => {
-                    // Token is invalid, remove it
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('user_data');
-                });
-            }
+        // Google login
+        document.getElementById('googleLoginBtn').addEventListener('click', function() {
+            handleOAuthPopup('google');
+        });
+
+        // ORCID login
+        document.getElementById('orcidLoginBtn').addEventListener('click', function() {
+            handleOAuthPopup('orcid');
+        });
+
+        // Initialize theme and language on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            initializeLanguage();
         });
     </script>
 </body>

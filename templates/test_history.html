@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Search History</title>
+</head>
+<body>
+    <h1>Test Search History</h1>
+    
+    <div>
+        <input type="text" id="testQuery" placeholder="Enter test query" value="machine learning">
+        <button onclick="testSaveHistory()">Save to History</button>
+        <button onclick="testShowHistory()">Show History</button>
+        <button onclick="testClearHistory()">Clear History</button>
+    </div>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    
+    <script>
+        function getCurrentUser() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        async function saveSearchToHistory(query, filters) {
+            const currentUser = getCurrentUser();
+            console.log('saveSearchToHistory called:', { query, filters, currentUser });
+            
+            if (currentUser) {
+                // Save to database for logged-in users
+                console.log('User is logged in, would save to database');
+                // Database save logic would go here
+            } else {
+                // Save to localStorage for anonymous users
+                console.log('Saving search to local storage for anonymous user');
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    console.log('Current local history:', localHistory);
+                    
+                    // Check if this exact search already exists recently (within last hour)
+                    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                    const existingSearch = localHistory.find(item => 
+                        item.query === query && item.timestamp > oneHourAgo
+                    );
+                    
+                    if (!existingSearch) {
+                        const historyItem = {
+                            _id: Date.now().toString(), // Simple ID for local storage
+                            query: query,
+                            filters: filters,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        localHistory.unshift(historyItem); // Add to beginning
+                        
+                        // Keep only last 50 searches
+                        if (localHistory.length > 50) {
+                            localHistory.splice(50);
+                        }
+                        
+                        localStorage.setItem('searchHistory', JSON.stringify(localHistory));
+                        console.log('Search saved to local storage:', historyItem);
+                        console.log('Updated local history:', localHistory);
+                        return true;
+                    } else {
+                        console.log('Search already exists in recent history, skipping');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Error saving search to local storage:', error);
+                    return false;
+                }
+            }
+        }
+        
+        function showHistory() {
+            const currentUser = getCurrentUser();
+            
+            if (currentUser) {
+                console.log('User is logged in, would load from database');
+            } else {
+                // Load from localStorage for anonymous users
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    console.log('Loading local history:', localHistory);
+                    return localHistory;
+                } catch (error) {
+                    console.error('Error loading local history:', error);
+                    return [];
+                }
+            }
+        }
+        
+        async function testSaveHistory() {
+            const query = document.getElementById('testQuery').value;
+            const filters = ['test'];
+            
+            const result = await saveSearchToHistory(query, filters);
+            
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h3>Save Result:</h3>
+                <p>Query: ${query}</p>
+                <p>Saved: ${result}</p>
+                <p>Check console for detailed logs</p>
+            `;
+        }
+        
+        function testShowHistory() {
+            const history = showHistory();
+            
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h3>Current History:</h3>
+                <pre>${JSON.stringify(history, null, 2)}</pre>
+            `;
+        }
+        
+        function testClearHistory() {
+            localStorage.removeItem('searchHistory');
+            const output = document.getElementById('output');
+            output.innerHTML = `<h3>History Cleared</h3>`;
+        }
+    </script>
+</body>
+</html> 

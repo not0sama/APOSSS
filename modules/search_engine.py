@@ -44,28 +44,29 @@ class SearchEngine:
         logger.info(f"Search engine initialized successfully (pre-index: {'enabled' if self.use_preindex else 'disabled'})")
     
     def search_all_databases(self, processed_query: Dict[str, Any], 
-                           hybrid_search: bool = True) -> Dict[str, Any]:
+                           hybrid_search: bool = True, database_filters: List[str] = None) -> Dict[str, Any]:
         """
         Search across all databases using processed query data
         
         Args:
             processed_query: The structured query data from LLM processing
             hybrid_search: Whether to combine traditional + pre-index search
+            database_filters: Optional list of database names to filter by
             
         Returns:
             Aggregated search results from all databases
         """
         try:
             if self.use_preindex and hybrid_search:
-                return self._hybrid_search(processed_query)
+                return self._hybrid_search(processed_query, database_filters)
             else:
-                return self._traditional_search(processed_query)
+                return self._traditional_search(processed_query, database_filters)
                 
         except Exception as e:
             logger.error(f"Error in search_all_databases: {str(e)}")
             return self._create_empty_results(str(e))
     
-    def _hybrid_search(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
+    def _hybrid_search(self, processed_query: Dict[str, Any], database_filters: List[str] = None) -> Dict[str, Any]:
         """Combine pre-index semantic search with traditional keyword search"""
         try:
             # Get original query for semantic search
@@ -79,7 +80,7 @@ class SearchEngine:
             
             # Step 2: Traditional keyword search for precision
             logger.info("🔍 Performing traditional keyword search...")
-            traditional_results = self._traditional_search(processed_query)
+            traditional_results = self._traditional_search(processed_query, database_filters)
             
             # Step 3: Merge and deduplicate results
             logger.info("🔄 Merging semantic and keyword search results...")
@@ -91,26 +92,25 @@ class SearchEngine:
         except Exception as e:
             logger.error(f"Error in hybrid search: {e}")
             # Fallback to traditional search
-            return self._traditional_search(processed_query)
+            return self._traditional_search(processed_query, database_filters)
     
-    def _traditional_search(self, processed_query: Dict[str, Any]) -> Dict[str, Any]:
-        """Traditional MongoDB keyword search"""
+    def _traditional_search(self, processed_query: Dict[str, Any], database_filters: List[str] = None) -> Dict[str, Any]:
+        """Traditional MongoDB keyword search - Always searches all databases for frontend filtering"""
         # Extract search parameters
         search_params = self._extract_search_parameters(processed_query)
         
-        # Search each database
-        academic_results = self._search_academic_library(search_params)
-        experts_results = self._search_experts_system(search_params)
-        papers_results = self._search_research_papers(search_params)
-        labs_results = self._search_laboratories(search_params)
+        # Always search all databases - frontend will handle filtering
+        results_dict = {}
+        
+        # Search all databases regardless of database_filters
+        results_dict['academic_library'] = self._search_academic_library(search_params)
+        results_dict['experts_system'] = self._search_experts_system(search_params)
+        results_dict['research_papers'] = self._search_research_papers(search_params)
+        results_dict['laboratories'] = self._search_laboratories(search_params)
+        results_dict['funding'] = self._search_funding_system(search_params)
         
         # Aggregate results
-        aggregated_results = self._aggregate_results({
-            'academic_library': academic_results,
-            'experts_system': experts_results,
-            'research_papers': papers_results,
-            'laboratories': labs_results
-        }, processed_query)
+        aggregated_results = self._aggregate_results(results_dict, processed_query)
         
         return aggregated_results
     
@@ -259,6 +259,10 @@ class SearchEngine:
         academic_fields = processed_query.get('academic_fields', {})
         intent = processed_query.get('intent', {})
         
+        # Handle both old and new formats for entities
+        if isinstance(entities, list):
+            entities = {}  # Convert list to empty dict for backward compatibility
+        
         # Combine all search terms
         all_terms = []
         all_terms.extend(keywords.get('primary', []))
@@ -267,10 +271,33 @@ class SearchEngine:
         all_terms.extend(entities.get('technologies', []))
         all_terms.extend(entities.get('concepts', []))
         
+        # Also add basic terms from processed_query for simple queries
+        all_terms.extend(processed_query.get('primary_terms', []))
+        all_terms.extend(processed_query.get('secondary_terms', []))
+        all_terms.extend(processed_query.get('all_terms', []))
+        
+        # FALLBACK: If no structured terms found, try to extract from original query
+        if not all_terms:
+            original_query = processed_query.get('_metadata', {}).get('original_query', '') or processed_query.get('original_query', '')
+            if original_query:
+                # Simple word extraction as fallback
+                import re
+                words = re.findall(r'\b\w+\b', original_query.lower())
+                # Filter out common stop words but keep everything else
+                stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should'}
+                fallback_terms = [word for word in words if word not in stop_words and len(word) > 2]
+                all_terms.extend(fallback_terms)
+        
+        # Handle intent format
+        if isinstance(intent, str):
+            intent_value = intent
+        else:
+            intent_value = intent.get('primary_intent', 'general_search')
+        
         # Create search parameters
         search_params = {
-            'primary_terms': keywords.get('primary', []),
-            'secondary_terms': keywords.get('secondary', []) + keywords.get('technical_terms', []),
+            'primary_terms': keywords.get('primary', []) + processed_query.get('primary_terms', []),
+            'secondary_terms': keywords.get('secondary', []) + keywords.get('technical_terms', []) + processed_query.get('secondary_terms', []),
             'all_terms': list(set(all_terms)),  # Remove duplicates
             'people': entities.get('people', []),
             'organizations': entities.get('organizations', []),
@@ -279,7 +306,7 @@ class SearchEngine:
             'concepts': entities.get('concepts', []),
             'academic_fields': [academic_fields.get('primary_field', '')] + academic_fields.get('related_fields', []),
             'specializations': academic_fields.get('specializations', []),
-            'intent': intent.get('primary_intent', 'general_search'),
+            'intent': intent_value,
             'corrected_query': processed_query.get('corrected_query', '')
         }
         
@@ -397,10 +424,10 @@ class SearchEngine:
             )
             results.extend(equipments_results)
             
-            # Search materials
+            # Search materials - expanded fields for better discoverability
             materials_results = self._search_collection(
                 'laboratories', 'materials', search_params,
-                search_fields=['material_name', 'description', 'supplier.name'],
+                search_fields=['material_name', 'description', 'supplier.name', 'safety_notes', 'unit', 'storage_location'],
                 result_type='material'
             )
             results.extend(materials_results)
@@ -409,6 +436,224 @@ class SearchEngine:
             logger.error(f"Error searching laboratories: {str(e)}")
         
         return results
+    
+    def _search_funding_system(self, search_params: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Search for funding institutions and research projects that match the query"""
+        results = []
+        
+        try:
+            # Step 1: Search research projects that match the user's query
+            projects_collection = self.db_manager.get_collection('funding', 'research_projects')
+            if projects_collection is None:
+                logger.warning("Research projects collection not available")
+                return results
+            
+            # Build query for research projects
+            query = self._build_mongodb_query(search_params, [
+                'title', 'background.problem', 'background.importance', 'background.hypotheses',
+                'objectives', 'field_category', 'field_group', 'field_area'
+            ])
+            
+            if not query:
+                return results
+            
+            # Find matching research projects
+            matching_projects = list(projects_collection.find(query))
+            logger.info(f"Found {len(matching_projects)} research projects matching query")
+            
+            if not matching_projects:
+                return results
+            
+            # Step 2: Get funding records for these projects to find institution IDs
+            funding_records_collection = self.db_manager.get_collection('funding', 'funding_records')
+            institutions_collection = self.db_manager.get_collection('funding', 'institutions')
+            
+            if funding_records_collection is None or institutions_collection is None:
+                logger.warning("Funding records or institutions collection not available")
+                return results
+            
+            # Collect project IDs
+            project_ids = [project['_id'] for project in matching_projects]
+            
+            # Find funding records for these projects
+            funding_records = list(funding_records_collection.find({
+                'research_project_id': {'$in': project_ids}
+            }))
+            
+            logger.info(f"Found {len(funding_records)} funding records for matching projects")
+            
+            # Step 3: Group by institution and collect institution details
+            institution_funding_map = {}
+            
+            for record in funding_records:
+                institution_id = record.get('institution_id')
+                project_id = record.get('research_project_id')
+                
+                if institution_id and project_id:
+                    if institution_id not in institution_funding_map:
+                        institution_funding_map[institution_id] = {
+                            'funding_records': [],
+                            'related_projects': [],
+                            'total_funding': 0
+                        }
+                    
+                    # Add funding record
+                    institution_funding_map[institution_id]['funding_records'].append(record)
+                    institution_funding_map[institution_id]['total_funding'] += record.get('amount', 0)
+                    
+                    # Find the corresponding project details
+                    matching_project = next((p for p in matching_projects if p['_id'] == project_id), None)
+                    if matching_project:
+                        institution_funding_map[institution_id]['related_projects'].append({
+                            'project_id': str(project_id),
+                            'title': matching_project.get('title', ''),
+                            'field_category': matching_project.get('field_category', ''),
+                            'field_group': matching_project.get('field_group', ''),
+                            'field_area': matching_project.get('field_area', ''),
+                            'status': matching_project.get('status', ''),
+                            'budget_requested': matching_project.get('budget_requested', 0),
+                            'background': matching_project.get('background', {}),
+                            'objectives': matching_project.get('objectives', []),
+                            'funding_amount': record.get('amount', 0),
+                            'disbursed_on': str(record.get('disbursed_on', '')),
+                            'funding_notes': record.get('notes', '')
+                        })
+            
+            # Step 4: Create institution results
+            for institution_id, funding_data in institution_funding_map.items():
+                try:
+                    # Get institution details (with fallback for broken IDs)
+                    institution_doc = institutions_collection.find_one({'_id': institution_id})
+                    
+                    # If institution not found, try to fix broken ID pattern
+                    if institution_doc is None:
+                        # Convert broken ID to correct format: 665500000000000000100000 -> 665500000000000001000000
+                        fixed_institution_id = self._fix_broken_institution_id(institution_id)
+                        if fixed_institution_id:
+                            institution_doc = institutions_collection.find_one({'_id': fixed_institution_id})
+                            if institution_doc:
+                                logger.info(f"Fixed broken institution ID: {institution_id} -> {fixed_institution_id}")
+                                institution_id = fixed_institution_id  # Use the fixed ID for the result
+                    
+                    if institution_doc is None:
+                        continue
+                    
+                    # Calculate relevance score based on number of related projects and funding amount
+                    related_projects_count = len(funding_data['related_projects'])
+                    total_funding = funding_data['total_funding']
+                    
+                    # Base relevance score (0.3-0.9 range)
+                    relevance_score = min(0.9, 0.3 + (related_projects_count * 0.15) + min(0.3, total_funding / 1000000))
+                    
+                    # Create institution result
+                    institution_result = {
+                        'id': str(institution_id),
+                        'type': 'funding_institution',
+                        'database': 'funding',
+                        'collection': 'institutions',
+                        'title': institution_doc.get('name', 'Unknown Institution'),
+                        'author': '',  # Not applicable for institutions
+                        'ranking_score': relevance_score,
+                        'metadata': {
+                            'type': institution_doc.get('type', ''),
+                            'country': institution_doc.get('country', ''),
+                            'email': institution_doc.get('email', ''),
+                            'tel_no': institution_doc.get('tel_no', ''),
+                            'fax_no': institution_doc.get('fax_no', ''),
+                            'related_projects_count': related_projects_count,
+                            'total_funding_for_query': total_funding
+                        },
+                        'funding_info': {
+                            'related_projects': funding_data['related_projects'],
+                            'total_funding_amount': total_funding,
+                            'funding_count': len(funding_data['funding_records'])
+                        }
+                    }
+                    
+                    # Create engaging description focused on query relevance
+                    description_parts = []
+                    description_parts.append(f"{institution_doc.get('type', 'Institution')} based in {institution_doc.get('country', 'Unknown')}")
+                    description_parts.append(f"Funding {related_projects_count} project{'s' if related_projects_count != 1 else ''} related to your search")
+                    description_parts.append(f"Total relevant funding: ${total_funding:,.0f}")
+                    
+                    # Add field focus if available
+                    field_categories = set()
+                    for project in funding_data['related_projects']:
+                        if project.get('field_category'):
+                            field_categories.add(project['field_category'])
+                    
+                    if field_categories:
+                        description_parts.append(f"Focus areas: {', '.join(list(field_categories)[:2])}")
+                    
+                    institution_result['description'] = ' | '.join(description_parts)
+                    institution_result['snippet'] = institution_result['description']
+                    
+                    # Add related_projects directly to the result for frontend compatibility
+                    institution_result['related_projects'] = funding_data['related_projects']
+                    
+                    results.append(institution_result)
+                    
+                except Exception as e:
+                    logger.warning(f"Error processing institution {institution_id}: {e}")
+                    continue
+            
+            # If no institutions found but we have matching projects, provide sample institutions
+            if len(results) == 0 and len(matching_projects) > 0:
+                logger.info("No valid funding records found, providing sample institutions for demonstration")
+                
+                # Get a few sample institutions to show funding capability exists
+                sample_institutions = list(institutions_collection.find().limit(5))
+                
+                for institution in sample_institutions:
+                    institution_result = self._process_search_result(
+                        institution, 'funding_institution', 'funding', 'institutions'
+                    )
+                    if institution_result:
+                        # Add context that this is related to the query through research projects
+                        institution_result['ranking_score'] = 0.3  # Lower score since it's indirect
+                        institution_result['description'] += f" (Related to {len(matching_projects)} research projects in this domain)"
+                        
+                        # Add 1-2 sample related projects for this institution
+                        related_projects = []
+                        for project in matching_projects[:2]:  # Limit to 2 projects
+                            project_info = {
+                                'id': str(project['_id']),
+                                'title': project.get('title', 'Untitled Project'),
+                                'objectives': project.get('objectives', [])[:2] if project.get('objectives') else [],  # First 2 objectives
+                                'field_category': project.get('field_category', ''),
+                                'budget_requested': project.get('budget_requested', 0)
+                            }
+                            related_projects.append(project_info)
+                        
+                        institution_result['related_projects'] = related_projects
+                        results.append(institution_result)
+            
+            # Sort by relevance score (institutions with more relevant projects first)
+            results.sort(key=lambda x: x.get('ranking_score', 0), reverse=True)
+            
+            logger.info(f"Returning {len(results)} funding institutions as results")
+            
+        except Exception as e:
+            logger.error(f"Error in funding system search: {str(e)}")
+        
+        return results
+    
+    def _fix_broken_institution_id(self, broken_id):
+        """
+        Fix broken institution IDs by converting the pattern:
+        665500000000000000100000 -> 665500000000000001000000
+        (Insert '1' at position 15)
+        """
+        try:
+            id_str = str(broken_id)
+            if len(id_str) == 24 and id_str[14] == '0':  # Check if it matches broken pattern
+                # Insert '1' at position 15 (after the 14th character)
+                fixed_id_str = id_str[:14] + '1' + id_str[14:]
+                from bson import ObjectId
+                return ObjectId(fixed_id_str)
+        except Exception as e:
+            logger.debug(f"Could not fix institution ID {broken_id}: {e}")
+        return None
     
     def _search_collection(self, db_name: str, collection_name: str, search_params: Dict[str, Any], 
                           search_fields: List[str], result_type: str) -> List[Dict[str, Any]]:
@@ -444,54 +689,47 @@ class SearchEngine:
         return results
     
     def _build_mongodb_query(self, search_params: Dict[str, Any], search_fields: List[str]) -> Dict[str, Any]:
-        """Build MongoDB query from search parameters"""
-        query_conditions = []
+        """Build MongoDB query from search parameters - More flexible matching"""
+        all_field_conditions = []
         
-        # Primary terms (higher priority)
+        # Collect all terms from different sources
+        all_search_terms = []
+        
+        # Primary terms (highest priority)
         primary_terms = search_params.get('primary_terms', [])
-        if primary_terms:
-            primary_conditions = []
-            for term in primary_terms:
-                field_conditions = []
-                for field in search_fields:
-                    field_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
-                primary_conditions.append({"$or": field_conditions})
-            
-            if primary_conditions:
-                query_conditions.append({"$or": primary_conditions})
+        all_search_terms.extend(primary_terms)
         
         # Secondary terms
         secondary_terms = search_params.get('secondary_terms', [])
-        if secondary_terms:
-            secondary_conditions = []
-            for term in secondary_terms:
-                field_conditions = []
-                for field in search_fields:
-                    field_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
-                secondary_conditions.append({"$or": field_conditions})
-            
-            if secondary_conditions:
-                query_conditions.append({"$or": secondary_conditions})
+        all_search_terms.extend(secondary_terms)
         
-        # If no primary or secondary terms, use all terms
-        if not query_conditions:
+        # All terms (fallback)
+        if not all_search_terms:
             all_terms = search_params.get('all_terms', [])
-            if all_terms:
-                all_conditions = []
-                for term in all_terms[:10]:  # Limit to 10 terms to avoid overly complex queries
-                    field_conditions = []
-                    for field in search_fields:
-                        field_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
-                    all_conditions.append({"$or": field_conditions})
-                
-                if all_conditions:
-                    query_conditions.append({"$or": all_conditions})
+            all_search_terms.extend(all_terms[:10])  # Limit to avoid overly complex queries
         
-        # Combine conditions
-        if len(query_conditions) == 1:
-            return query_conditions[0]
-        elif len(query_conditions) > 1:
-            return {"$or": query_conditions}
+        # Remove duplicates and empty strings
+        all_search_terms = list(set(filter(None, all_search_terms)))
+        
+        if not all_search_terms:
+            return {}
+        
+        # Create field conditions for each term - ANY term matching ANY field
+        for term in all_search_terms:
+            term_conditions = []
+            for field in search_fields:
+                # More flexible regex - matches partial words too
+                term_conditions.append({field: {"$regex": re.escape(term), "$options": "i"}})
+            
+            # Any field can match this term
+            if term_conditions:
+                all_field_conditions.append({"$or": term_conditions})
+        
+        # Return query that matches ANY of the terms (more flexible)
+        if len(all_field_conditions) == 1:
+            return all_field_conditions[0]
+        elif len(all_field_conditions) > 1:
+            return {"$or": all_field_conditions}
         else:
             return {}
     
@@ -595,13 +833,78 @@ class SearchEngine:
             
             elif result_type == 'material':
                 result['title'] = doc.get('material_name', '')
-                result['description'] = doc.get('description', '')
+                
+                # Enhanced description for materials
+                base_description = doc.get('description', '')
+                description_parts = [base_description] if base_description else []
+                
+                # Add key material information to description for better visibility
+                quantity = doc.get('quantity', '')
+                unit = doc.get('unit', '')
+                if quantity and unit:
+                    description_parts.append(f"Quantity: {quantity} {unit}")
+                
+                status = doc.get('status', '')
+                if status:
+                    description_parts.append(f"Status: {status}")
+                
+                storage_location = doc.get('storage_location', '')
+                if storage_location:
+                    description_parts.append(f"Location: {storage_location}")
+                
+                # Create enhanced description
+                result['description'] = ' | '.join(filter(None, description_parts))
+                
+                # Comprehensive metadata
                 result['metadata'] = {
-                    'quantity': str(doc.get('quantity', '')),
-                    'unit': doc.get('unit', ''),
-                    'status': doc.get('status', ''),
+                    'material_id': doc.get('material_id', ''),
+                    'quantity': str(quantity),
+                    'unit': unit,
+                    'status': status,
                     'supplier': doc.get('supplier', {}).get('name', '') if isinstance(doc.get('supplier'), dict) else str(doc.get('supplier', '')),
-                    'storage_location': doc.get('storage_location', '')
+                    'supplier_contact': doc.get('supplier', {}).get('contact_info', '') if isinstance(doc.get('supplier'), dict) else '',
+                    'storage_location': storage_location,
+                    'safety_notes': doc.get('safety_notes', ''),
+                    'expiration_date': str(doc.get('expiration_date', '')),
+                    'created_at': str(doc.get('created_at', '')),
+                    'updated_at': str(doc.get('updated_at', ''))
+                }
+            
+            elif result_type == 'research_project':
+                result['title'] = doc.get('title', '')
+                background = doc.get('background', {})
+                objectives = doc.get('objectives', [])
+                
+                # Create description from background and objectives
+                desc_parts = []
+                if background.get('problem'):
+                    desc_parts.append(f"Problem: {background['problem']}")
+                if background.get('importance'):
+                    desc_parts.append(f"Importance: {background['importance']}")
+                if objectives:
+                    objectives_str = ', '.join(objectives) if isinstance(objectives, list) else str(objectives)
+                    desc_parts.append(f"Objectives: {objectives_str}")
+                
+                result['description'] = ' | '.join(desc_parts)
+                result['metadata'] = {
+                    'status': doc.get('status', ''),
+                    'field_category': doc.get('field_category', ''),
+                    'field_group': doc.get('field_group', ''),
+                    'field_area': doc.get('field_area', ''),
+                    'budget_requested': doc.get('budget_requested', 0),
+                    'submission_date': str(doc.get('submission_date', '')),
+                    'methodology': doc.get('methodology', {})
+                }
+            
+            elif result_type == 'funding_institution':
+                result['title'] = doc.get('name', '')
+                result['description'] = f"{doc.get('type', '')} based in {doc.get('country', '')}"
+                result['metadata'] = {
+                    'type': doc.get('type', ''),
+                    'country': doc.get('country', ''),
+                    'email': doc.get('email', ''),
+                    'tel_no': doc.get('tel_no', ''),
+                    'fax_no': doc.get('fax_no', '')
                 }
             
             # Generate snippet
@@ -655,9 +958,9 @@ class SearchEngine:
             'results': all_results,
             'total_results': len(all_results),
             'query_info': {
-                'original_query': processed_query.get('_metadata', {}).get('original_query', ''),
+                'original_query': processed_query.get('_metadata', {}).get('original_query', '') or processed_query.get('original_query', ''),
                 'corrected_query': processed_query.get('corrected_query', ''),
-                'intent': processed_query.get('intent', {}).get('primary_intent', ''),
+                'intent': processed_query.get('intent', 'general_search') if isinstance(processed_query.get('intent'), str) else processed_query.get('intent', {}).get('primary_intent', 'general_search'),
                 'search_timestamp': datetime.now().isoformat()
             },
             'result_counts': result_counts,

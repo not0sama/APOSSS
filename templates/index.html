@@ -63,7 +63,7 @@
     <!-- Header -->
     <header class="bg-blue-600 text-white shadow-lg">
         <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-bold">APOSSS</h1>
                     <p class="text-blue-100 mt-2">AI-Powered Open-Science Semantic Search System</p>
@@ -71,52 +71,22 @@
                 </div>
                 
                 <!-- User Authentication Section -->
-                <div id="authSection" class="flex items-center space-x-4">
-                    <!-- Not logged in state -->
-                    <div id="guestSection" class="flex items-center space-x-3">
-                        <span class="text-blue-200 text-sm">Welcome, Guest</span>
-                        <a href="/login" class="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg transition-colors text-sm">
-                            Sign In
-                        </a>
-                        <a href="/signup" class="bg-white hover:bg-gray-100 text-blue-600 px-4 py-2 rounded-lg transition-colors text-sm">
-                            Sign Up
-                        </a>
+                <div class="flex items-center space-x-4">
+                    <!-- User Info (when authenticated) -->
+                    <div id="userInfo" class="flex items-center space-x-3" style="display: none;">
+                        <div id="userProfile">
+                            <!-- This will be populated by JavaScript when user is authenticated -->
+                        </div>
                     </div>
                     
-                    <!-- Logged in state -->
-                    <div id="userSection" class="hidden flex items-center space-x-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="text-right">
-                                <div id="userWelcome" class="text-sm font-medium"></div>
-                                <div id="userRole" class="text-xs text-blue-200"></div>
-                            </div>
-                            <div class="relative">
-                                <button 
-                                    id="userMenuButton" 
-                                    onclick="toggleUserMenu()"
-                                    class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors"
-                                >
-                                    <span id="userInitials" class="text-sm font-medium">?</span>
-                                </button>
-                                
-                                <!-- User Dropdown Menu -->
-                                <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
-                                    <a href="#" onclick="showProfile()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors">
-                                        👤 View Profile
-                                    </a>
-                                    <a href="#" onclick="showRecommendations()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors">
-                                        ⭐ Recommendations
-                                    </a>
-                                    <a href="#" onclick="showAnalytics()" class="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors">
-                                        📊 My Analytics
-                                    </a>
-                                    <div class="border-t border-gray-200 my-1"></div>
-                                    <a href="#" onclick="logout()" class="block px-4 py-2 text-red-600 hover:bg-red-50 transition-colors">
-                                        🚪 Sign Out
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Login/Signup Buttons (shown when not authenticated) -->
+                    <div id="authButtons" class="flex space-x-3">
+                        <a href="/login" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-green-500 hover:bg-green-400 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                            Sign Up
+                        </a>
                     </div>
                 </div>
             </div>
@@ -233,8 +203,8 @@
             
             <!-- Sample Queries -->
             <div class="mb-4">
-                <h3 class="text-sm font-medium text-gray-700 mb-2">Sample Queries:</h3>
-                <div class="flex flex-wrap gap-2">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Sample Queries (English):</h3>
+                <div class="flex flex-wrap gap-2 mb-3">
                     <button onclick="setSearchQuery('reducing carbon emissions in cars')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
                         Carbon emissions in cars
                     </button>
@@ -246,6 +216,22 @@
                     </button>
                     <button onclick="setSearchQuery('IoT sensors for agriculture')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
                         IoT agriculture sensors
+                    </button>
+                </div>
+                
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Multilingual Queries (Test Language Detection):</h3>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setSearchQuery('apprentissage automatique pour diagnostic médical')" class="bg-blue-200 hover:bg-blue-300 text-blue-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇫🇷 French - ML diagnosis
+                    </button>
+                    <button onclick="setSearchQuery('تعلم الآلة للتشخيص الطبي')" class="bg-green-200 hover:bg-green-300 text-green-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇸🇦 Arabic - ML diagnosis
+                    </button>
+                    <button onclick="setSearchQuery('機械学習による医療診断')" class="bg-purple-200 hover:bg-purple-300 text-purple-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇯🇵 Japanese - ML diagnosis
+                    </button>
+                    <button onclick="setSearchQuery('aprendizaje automático para diagnóstico médico')" class="bg-orange-200 hover:bg-orange-300 text-orange-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                        🇪🇸 Spanish - ML diagnosis
                     </button>
                 </div>
             </div>
@@ -267,7 +253,7 @@
             <div class="flex gap-4 mb-6">
                 <button 
                     id="searchBtn"
-                    onclick="performSearch()" 
+                    onclick="performSearchWithAuth()" 
                     class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
                 >
                     <span id="searchText">🔍 Search & Rank Results</span>
@@ -331,16 +317,54 @@
                 </button>
             </div>
             <div id="llmTestingSection" class="p-6 hidden">
+                <!-- Sample Queries for LLM Testing -->
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Quick Test Queries (English):</h3>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button onclick="setQuery('machine learning for medical diagnosis')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            ML medical diagnosis
+                        </button>
+                        <button onclick="setQuery('renewable energy storage solutions')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            Renewable energy storage
+                        </button>
+                        <button onclick="setQuery('quantum computing algorithms')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            Quantum computing
+                        </button>
+                    </div>
+                    
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Multilingual Test Queries:</h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="setQuery('apprentissage automatique pour diagnostic médical')" class="bg-blue-200 hover:bg-blue-300 text-blue-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇫🇷 French
+                        </button>
+                        <button onclick="setQuery('تعلم الآلة للتشخيص الطبي')" class="bg-green-200 hover:bg-green-300 text-green-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇸🇦 Arabic
+                        </button>
+                        <button onclick="setQuery('機械学習による医療診断')" class="bg-purple-200 hover:bg-purple-300 text-purple-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇯🇵 Japanese
+                        </button>
+                        <button onclick="setQuery('aprendizaje automático para diagnóstico médico')" class="bg-orange-200 hover:bg-orange-300 text-orange-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇪🇸 Spanish
+                        </button>
+                        <button onclick="setQuery('машинное обучение для медицинской диагностики')" class="bg-red-200 hover:bg-red-300 text-red-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇷🇺 Russian
+                        </button>
+                        <button onclick="setQuery('医疗诊断机器学习')" class="bg-yellow-200 hover:bg-yellow-300 text-yellow-700 px-3 py-1 rounded-lg text-sm transition-colors">
+                            🇨🇳 Chinese
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- Query Input -->
                 <div class="mb-4">
                     <label for="queryInput" class="block text-sm font-medium text-gray-700 mb-2">
-                        Enter your research query:
+                        Enter your research query (any language):
                     </label>
                     <textarea 
                         id="queryInput" 
                         rows="3" 
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                        placeholder="Enter your research question or topic here..."
+                        placeholder="Enter your research question or topic here in any language..."
                     ></textarea>
                 </div>
 
@@ -351,8 +375,11 @@
                         onclick="processQuery()" 
                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center"
                     >
-                        <span id="processText">Analyze Query</span>
+                        <span id="processText">🧠 Analyze Query</span>
                         <span id="processSpinner" class="loading ml-2 hidden"></span>
+                    </button>
+                    <button onclick="testEnhancedLLM()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        🔬 Test Enhanced LLM
                     </button>
                     <button onclick="clearLLMResults()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
                         Clear Analysis
@@ -370,19 +397,21 @@
                     
                     <!-- Structured Results -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        <!-- Left Column -->
-                        <div class="space-y-4">
-                            <div id="intentSection" class="p-4 bg-green-50 rounded-lg"></div>
-                            <div id="keywordsSection" class="p-4 bg-yellow-50 rounded-lg"></div>
-                            <div id="entitiesSection" class="p-4 bg-purple-50 rounded-lg"></div>
-                        </div>
-                        
-                        <!-- Right Column -->
-                        <div class="space-y-4">
-                            <div id="fieldsSection" class="p-4 bg-red-50 rounded-lg"></div>
-                            <div id="synonymsSection" class="p-4 bg-indigo-50 rounded-lg"></div>
-                            <div id="contextSection" class="p-4 bg-pink-50 rounded-lg"></div>
-                        </div>
+                                            <!-- Left Column -->
+                    <div class="space-y-4">
+                        <div id="languageSection" class="p-4 bg-blue-50 rounded-lg"></div>
+                        <div id="intentSection" class="p-4 bg-green-50 rounded-lg"></div>
+                        <div id="keywordsSection" class="p-4 bg-yellow-50 rounded-lg"></div>
+                        <div id="entitiesSection" class="p-4 bg-purple-50 rounded-lg"></div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="space-y-4">
+                        <div id="fieldsSection" class="p-4 bg-red-50 rounded-lg"></div>
+                        <div id="synonymsSection" class="p-4 bg-indigo-50 rounded-lg"></div>
+                        <div id="searchStrategySection" class="p-4 bg-teal-50 rounded-lg"></div>
+                        <div id="contextSection" class="p-4 bg-pink-50 rounded-lg"></div>
+                    </div>
                     </div>
                     
                     <!-- Raw JSON Display -->
@@ -479,210 +508,121 @@
             }
         }
 
-        async function performSearch() {
-            const queryInput = document.getElementById('searchInput');
-            const searchButton = document.getElementById('searchBtn');
-            const resultsDiv = document.getElementById('searchResultsContainer');
-            const rankingMode = document.getElementById('rankingMode').value;
+        async function performSearchWithAuth() {
+            const query = document.getElementById('searchInput').value.trim();
             
-            const query = queryInput.value.trim();
             if (!query) {
-                showTemporaryMessage('Please enter a search query', 'error');
+                alert('Please enter a query to search.');
                 return;
             }
-            
-            // Show loading state
-            searchButton.disabled = true;
-            searchButton.innerHTML = '<div class="loading mr-2"></div> Searching...';
-            resultsDiv.innerHTML = '<div class="text-center p-8"><div class="loading mx-auto"></div><p class="mt-2 text-gray-600">Searching across all databases...</p></div>';
-            resultsDiv.classList.remove('hidden');
-            
+
+            showSearchLoading(true);
+            feedbackSubmitted.clear();
+
             try {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeaders()
-                };
-                
-                const requestData = {
+                const searchData = {
                     query: query,
-                    ranking_mode: rankingMode,
-                    ...getSessionData()
+                    ranking_mode: document.getElementById('rankingMode').value
                 };
                 
-                console.log('🔍 Sending search request:', requestData);
+                // Add auth headers if available
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
                 
                 const response = await fetch('/api/search', {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify(requestData)
+                    body: JSON.stringify(searchData)
                 });
                 
                 const data = await response.json();
-                console.log('📊 Search response received:', {
-                    success: data.success,
-                    hasSearchResults: !!data.search_results,
-                    hasCategorizedResults: !!data.categorized_results,
-                    searchResultsKeys: data.search_results ? Object.keys(data.search_results) : 'none',
-                    totalResults: data.search_results?.total_results || 0
-                });
                 
                 if (data.success) {
-                    // Store search results for feedback system
-                    currentSearchResults = data;
-                    currentQueryId = data.query_id || `query_${Date.now()}`;
-                    feedbackSubmitted.clear(); // Reset feedback tracking
+                    currentSearchResults = data.search_results;
+                    currentQueryId = data.query_id;
+                    displaySearchResults(data.search_results, data.query_analysis, data.categorized_results);
                     
-                    console.log('✅ Calling displaySearchResults...');
-                    // Display the results
-                    displaySearchResults(data);
-                    
-                    // Show personalization message if applicable
-                    if (data.personalized && data.user_logged_in) {
-                        showTemporaryMessage(`Search personalized for ${data.user_info.username}`, 'success');
+                    // Show personalization status
+                    if (data.personalization_applied) {
+                        showTemporaryMessage(`Search personalized for ${data.user_type} user`, 'success');
+                    } else {
+                        showTemporaryMessage(`Standard search results (${data.user_type} user)`, 'info');
                     }
                 } else {
-                    resultsDiv.innerHTML = `<div class="text-center p-8 text-red-600">Error: ${data.error}</div>`;
+                    throw new Error(data.error || 'Search failed');
                 }
-                
             } catch (error) {
                 console.error('Search error:', error);
-                resultsDiv.innerHTML = `<div class="text-center p-8 text-red-600">Search failed: ${error.message}</div>`;
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h3 class="text-red-800 font-semibold">Search Error</h3>
+                        <p class="text-red-600">${error.message}</p>
+                    </div>
+                `;
             } finally {
-                // Reset button state
-                searchButton.disabled = false;
-                searchButton.innerHTML = '🔍 Search';
+                showSearchLoading(false);
             }
         }
 
-        function displaySearchResults(data) {
-            try {
-                console.log('📋 displaySearchResults called with data keys:', Object.keys(data));
-                console.log('📋 search_results structure:', data.search_results ? Object.keys(data.search_results) : 'none');
-                console.log('📋 categorized_results:', !!data.categorized_results);
-                
-                const container = document.getElementById('searchResultsContainer');
-                container.classList.remove('hidden');
+        function displaySearchResults(searchResults, queryAnalysis, categorizedResults) {
+            const container = document.getElementById('searchResultsContainer');
+            container.classList.remove('hidden');
 
-                console.log('📊 Calling displayResultsSummary...');
-                // Display results summary
-                displayResultsSummary(data);
+            // Display results summary
+            displayResultsSummary(searchResults);
 
-                console.log('📊 Calling displayCategorizedResults...');
-                // Display categorized results
-                if (data.categorized_results) {
-                    console.log('📋 Using top-level categorized_results');
-                    displayCategorizedResults(data.categorized_results);
-                } else {
-                    console.log('📋 Using fallback categorization from search_results');
-                    // Fallback: display all results in one category
-                    const allResults = data.search_results?.results || [];
-                    console.log('📋 Fallback results count:', allResults.length);
-                    displayCategorizedResults({
-                        high_relevance: allResults.filter(r => r.ranking_score > 0.7),
-                        medium_relevance: allResults.filter(r => r.ranking_score > 0.4 && r.ranking_score <= 0.7),
-                        low_relevance: allResults.filter(r => r.ranking_score <= 0.4)
-                    });
-                }
-                
-                console.log('✅ displaySearchResults completed successfully');
-                
-            } catch (error) {
-                console.error('❌ Error in displaySearchResults:', error);
-                showTemporaryMessage('Error displaying search results: ' + error.message, 'error');
-            }
+            // Display categorized results
+            displayCategorizedResults(categorizedResults);
         }
 
         function displayResultsSummary(searchResults) {
             const summary = document.getElementById('resultsSummary');
+            const resultCounts = searchResults.result_counts;
+            const rankingMetadata = searchResults.ranking_metadata || {};
             
-            // Check if the summary element exists
-            if (!summary) {
-                console.error('Error: resultsSummary element not found in DOM');
-                showTemporaryMessage('Error displaying search summary: DOM element not found', 'error');
-                return;
-            }
-            
-            // Safely access nested properties with fallbacks
-            try {
-                // Access result_counts from the nested search_results object
-                const resultCounts = searchResults.search_results?.result_counts || {};
-                const rankingMetadata = searchResults.search_results?.ranking_metadata || {};
-                const totalResults = searchResults.search_results?.total_results || 0;
-                
-                // Safely access nested properties with fallbacks
-                const byDatabase = resultCounts.by_database || {};
-                const byType = resultCounts.by_type || {};
-                
-                summary.innerHTML = `
-                    <div class="bg-green-100 p-4 rounded-lg text-center">
-                        <div class="text-2xl font-bold text-green-800">${totalResults}</div>
-                        <div class="text-sm text-green-600">Total Results</div>
+            summary.innerHTML = `
+                <div class="bg-green-100 p-4 rounded-lg text-center">
+                    <div class="text-2xl font-bold text-green-800">${searchResults.total_results}</div>
+                    <div class="text-sm text-green-600">Total Results</div>
+                </div>
+                <div class="bg-blue-100 p-4 rounded-lg">
+                    <div class="text-sm font-medium text-blue-800 mb-2">By Database:</div>
+                    <div class="text-xs text-blue-600 space-y-1">
+                        ${Object.entries(resultCounts.by_database).map(([db, count]) => 
+                            `<div>${db}: ${count}</div>`
+                        ).join('')}
                     </div>
-                    <div class="bg-blue-100 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-blue-800 mb-2">By Database:</div>
-                        <div class="text-xs text-blue-600 space-y-1">
-                            ${Object.entries(byDatabase).map(([db, count]) => 
-                                `<div>${db}: ${count}</div>`
-                            ).join('') || '<div>No database breakdown available</div>'}
-                        </div>
+                </div>
+                <div class="bg-purple-100 p-4 rounded-lg">
+                    <div class="text-sm font-medium text-purple-800 mb-2">By Type:</div>
+                    <div class="text-xs text-purple-600 space-y-1">
+                        ${Object.entries(resultCounts.by_type).map(([type, count]) => 
+                            `<div>${type}: ${count}</div>`
+                        ).join('')}
                     </div>
-                    <div class="bg-purple-100 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-purple-800 mb-2">By Type:</div>
-                        <div class="text-xs text-purple-600 space-y-1">
-                            ${Object.entries(byType).map(([type, count]) => 
-                                `<div>${type}: ${count}</div>`
-                            ).join('') || '<div>No type breakdown available</div>'}
-                        </div>
+                </div>
+                <div class="bg-orange-100 p-4 rounded-lg">
+                    <div class="text-sm font-medium text-orange-800 mb-2">Ranking Info:</div>
+                    <div class="text-xs text-orange-600 space-y-1">
+                        <div>Algorithm: ${rankingMetadata.ranking_algorithm || 'N/A'}</div>
+                        <div>Ranked: ${rankingMetadata.total_ranked || 0}</div>
+                        <div>Components: ${rankingMetadata.score_components?.join(', ') || 'N/A'}</div>
                     </div>
-                    <div class="bg-orange-100 p-4 rounded-lg">
-                        <div class="text-sm font-medium text-orange-800 mb-2">Ranking Info:</div>
-                        <div class="text-xs text-orange-600 space-y-1">
-                            <div>Algorithm: ${rankingMetadata.ranking_algorithm || 'N/A'}</div>
-                            <div>Ranked: ${rankingMetadata.total_ranked || 0}</div>
-                            <div>Components: ${rankingMetadata.score_components?.join(', ') || 'N/A'}</div>
-                        </div>
-                    </div>
-                `;
-                
-            } catch (error) {
-                console.error('Error in displayResultsSummary:', error);
-                showTemporaryMessage('Error displaying search summary: ' + error.message, 'error');
-                
-                // Show a fallback summary
-                summary.innerHTML = `
-                    <div class="bg-red-100 p-4 rounded-lg text-center">
-                        <div class="text-red-800 font-semibold">Error displaying summary</div>
-                        <div class="text-sm text-red-600">Please try again</div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
         }
 
         function displayCategorizedResults(categorizedResults) {
-            try {
-                console.log('📂 displayCategorizedResults called with keys:', Object.keys(categorizedResults));
-                console.log('📂 Results breakdown:', {
-                    high: categorizedResults.high_relevance?.length || 0,
-                    medium: categorizedResults.medium_relevance?.length || 0,
-                    low: categorizedResults.low_relevance?.length || 0
-                });
-                
-                // Display high relevance results
-                console.log('📊 Displaying high relevance results...');
-                displayRelevanceCategory('high', categorizedResults.high_relevance || []);
-                
-                console.log('📊 Displaying medium relevance results...');
-                displayRelevanceCategory('medium', categorizedResults.medium_relevance || []);
-                
-                console.log('📊 Displaying low relevance results...');
-                displayRelevanceCategory('low', categorizedResults.low_relevance || []);
-                
-                console.log('✅ displayCategorizedResults completed successfully');
-                
-            } catch (error) {
-                console.error('❌ Error in displayCategorizedResults:', error);
-                showTemporaryMessage('Error displaying categorized results: ' + error.message, 'error');
-            }
+            // Display high relevance results
+            displayRelevanceCategory('high', categorizedResults.high_relevance || []);
+            displayRelevanceCategory('medium', categorizedResults.medium_relevance || []);
+            displayRelevanceCategory('low', categorizedResults.low_relevance || []);
         }
 
         function displayRelevanceCategory(level, results) {
@@ -692,19 +632,6 @@
             const section = document.getElementById(sectionId);
             const container = document.getElementById(containerId);
             
-            // Check if DOM elements exist
-            if (!section) {
-                console.error(`Error: ${sectionId} element not found in DOM`);
-                showTemporaryMessage(`Error displaying ${level} relevance results: section not found`, 'error');
-                return;
-            }
-            
-            if (!container) {
-                console.error(`Error: ${containerId} element not found in DOM`);
-                showTemporaryMessage(`Error displaying ${level} relevance results: container not found`, 'error');
-                return;
-            }
-            
             if (results.length === 0) {
                 section.classList.add('hidden');
                 return;
@@ -712,167 +639,175 @@
             
             section.classList.remove('hidden');
             
-            try {
-                container.innerHTML = results.map(result => `
-                        <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
-                            <div class="flex items-start justify-between mb-2">
-                                <div class="flex items-center space-x-2 flex-1">
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
-                                    <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
-                                    <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
-                                        ${result.type}
-                                    </span>
-                                </div>
+            container.innerHTML = results.map(result => `
+                    <div class="result-card bg-gray-50 border border-gray-200 rounded-lg p-4 relevance-${level}">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex items-center space-x-2 flex-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">#${result.rank}</span>
+                                <h3 class="text-lg font-semibold text-gray-900 flex-1">${result.title || 'Untitled'}</h3>
+                                <span class="result-type-badge ${getTypeBadgeClass(result.type)} ml-2">
+                                    ${result.type}
+                                </span>
                             </div>
-                            
-                            <!-- Ranking Score Display -->
-                            <div class="mb-3">
-                                <div class="flex items-center justify-between text-sm mb-1">
-                                    <span class="text-gray-600">Relevance Score</span>
-                                    <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
-                                         style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
-                                </div>
+                        </div>
+                        
+                        <!-- Ranking Score Display -->
+                        <div class="mb-3">
+                            <div class="flex items-center justify-between text-sm mb-1">
+                                <span class="text-gray-600">Relevance Score</span>
+                                <span class="font-medium">${(result.ranking_score * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="score-bar bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" 
+                                     style="width: ${(result.ranking_score * 100).toFixed(1)}%"></div>
+                            </div>
                             <div class="flex justify-between text-xs text-gray-500 mt-1">
                                 <span>Heuristic: ${(result.score_breakdown?.heuristic_score * 100).toFixed(0)}%</span>
-                                <span>TF-IDF: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
+                                <span>Text Match: ${(result.score_breakdown?.tfidf_score * 100).toFixed(0)}%</span>
+                                <span>BM25: ${(result.score_breakdown?.bm25_score * 100).toFixed(0)}%</span>
                                 <span>Intent: ${(result.score_breakdown?.intent_score * 100).toFixed(0)}%</span>
                                 ${result.score_breakdown?.embedding_score !== undefined ? 
                                     `<span>Real-time: ${(result.score_breakdown.embedding_score * 100).toFixed(0)}%</span>` : ''}
                             </div>
+                            ${result.score_breakdown?.graph_authority !== undefined ? `
+                            <div class="mt-2">
+                                <div class="text-xs text-gray-500 mb-1">Graph-based Features:</div>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>Authority: ${(result.score_breakdown.graph_authority * 100).toFixed(0)}%</span>
+                                    <span>Connection: ${(result.score_breakdown.graph_connection * 100).toFixed(0)}%</span>
+                                    <span>PageRank: ${(result.score_breakdown.graph_pagerank * 100).toFixed(0)}%</span>
+                                </div>
                             </div>
-                            
-                            ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
-                            
-                            <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
-                            
-                            <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
-                                <span>Source: ${result.database} → ${result.collection}</span>
-                                <span>ID: ${result.id.substring(0, 8)}...</span>
+                            ` : ''}
+                            ${result.score_breakdown?.llm_relevance !== undefined ? `
+                            <div class="mt-2">
+                                <div class="text-xs text-gray-500 mb-1">LLM Analysis:</div>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>Relevance: ${(result.score_breakdown.llm_relevance * 100).toFixed(0)}%</span>
+                                </div>
+                                <div class="text-xs text-gray-600 mt-1">
+                                    ${result.score_breakdown.llm_explanation}
+                                </div>
+                                ${result.score_breakdown.llm_key_aspects ? `
+                                <div class="mt-1">
+                                    <div class="text-xs font-medium text-gray-500">Key Aspects:</div>
+                                    <ul class="text-xs text-gray-600 space-y-1 mt-1">
+                                        ${result.score_breakdown.llm_key_aspects.map(aspect => `
+                                            <li>
+                                                <span class="font-medium">${aspect.aspect}:</span> ${aspect.relevance}
+                                                <span class="text-gray-500">(Importance: ${(aspect.importance * 100).toFixed(0)}%)</span>
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                                ` : ''}
                             </div>
-                            
-                            ${displayMetadata(result.metadata)}
-                            
-                            <!-- Feedback Buttons -->
-                            <div class="mt-4 pt-3 border-t border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">Was this result helpful?</span>
-                                    <div class="flex space-x-2">
-                                        <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
-                                                class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                            👍 Helpful
-                                        </button>
-                                        <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
-                                                class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
-                                            👎 Not Helpful
-                                        </button>
-                                    </div>
+                            ` : ''}
+                        </div>
+                        
+                        ${result.author ? `<div class="text-sm text-gray-600 mb-2">By: ${result.author}</div>` : ''}
+                        
+                        <div class="text-gray-700 mb-3">${result.snippet || result.description || 'No description available'}</div>
+                        
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                            <span>Source: ${result.database} → ${result.collection}</span>
+                            <span>ID: ${result.id.substring(0, 8)}...</span>
+                        </div>
+                        
+                        ${displayMetadata(result.metadata)}
+                        
+                        <!-- Feedback Buttons -->
+                        <div class="mt-4 pt-3 border-t border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Was this result helpful?</span>
+                                <div class="flex space-x-2">
+                                    <button onclick="submitFeedback('${result.id}', 5, 'thumbs_up')" 
+                                            class="feedback-btn bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                        👍 Helpful
+                                    </button>
+                                    <button onclick="submitFeedback('${result.id}', 1, 'thumbs_down')" 
+                                            class="feedback-btn bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg text-sm flex items-center">
+                                        👎 Not Helpful
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error(`Error rendering ${level} relevance results:`, error);
-                showTemporaryMessage(`Error displaying ${level} relevance results: ` + error.message, 'error');
-                
-                // Show fallback content
-                container.innerHTML = `
-                    <div class="bg-red-100 p-4 rounded-lg">
-                        <div class="text-red-800 font-semibold">Error displaying results</div>
-                        <div class="text-sm text-red-600">Could not render ${level} relevance results</div>
                     </div>
-                `;
-            }
+            `).join('');
         }
 
         async function submitFeedback(resultId, rating, feedbackType) {
             if (!currentQueryId) {
-                showTemporaryMessage('No active search to provide feedback for', 'error');
+                alert('No active query for feedback');
                 return;
             }
-
-            // Check if feedback already submitted for this result
-            const feedbackKey = `${currentQueryId}_${resultId}`;
-            if (feedbackSubmitted.has(feedbackKey)) {
-                showTemporaryMessage('Feedback already submitted for this result', 'warning');
+            
+            if (feedbackSubmitted.has(resultId)) {
+                alert('Feedback already submitted for this result');
                 return;
             }
 
             try {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeaders()
-                };
-                
-                const requestData = {
-                    query_id: currentQueryId,
-                    result_id: resultId,
-                    rating: rating,
-                    feedback_type: feedbackType,
-                    user_session: 'web_interface',
-                    additional_data: {
-                        user_agent: navigator.userAgent,
-                        timestamp: new Date().toISOString(),
-                        page_url: window.location.href
-                    },
-                    ...getSessionData()
-                };
-                
                 const response = await fetch('/api/feedback', {
                     method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(requestData)
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query_id: currentQueryId,
+                        result_id: resultId,
+                        rating: rating,
+                        feedback_type: feedbackType,
+                        user_session: 'web_session_' + Date.now()
+                    })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    // Mark feedback as submitted
-                    feedbackSubmitted.add(feedbackKey);
+                    feedbackSubmitted.add(resultId);
+                    // Mark buttons as submitted
+                    const buttons = document.querySelectorAll(`[onclick*="${resultId}"]`);
+                    buttons.forEach(btn => {
+                        btn.classList.add('feedback-submitted');
+                        btn.textContent = btn.textContent.includes('👍') ? '✅ Submitted' : '❌ Submitted';
+                    });
                     
-                    // Update the feedback buttons to show submitted state
-                    const resultCard = document.querySelector(`[data-result-id="${resultId}"]`);
-                    if (resultCard) {
-                        const feedbackButtons = resultCard.querySelectorAll('.feedback-btn');
-                        feedbackButtons.forEach(btn => {
-                            btn.disabled = true;
-                            btn.classList.add('opacity-50');
-                        });
-                        
-                        // Highlight the submitted rating
-                        const submittedBtn = resultCard.querySelector(`[data-rating="${rating}"]`);
-                        if (submittedBtn) {
-                            submittedBtn.classList.add('bg-green-500', 'text-white');
-                        }
-                    }
-                    
-                    let message = 'Feedback submitted successfully!';
-                    if (data.user_logged_in && data.points_earned > 0) {
-                        message += ` (+${data.points_earned} point)`;
-                    }
-                    
-                    showTemporaryMessage(message, 'success');
+                    // Show success message
+                    showTemporaryMessage('Feedback submitted successfully!', 'success');
                 } else {
-                    showTemporaryMessage('Failed to submit feedback: ' + (data.error || 'Unknown error'), 'error');
+                    alert('Error submitting feedback: ' + (data.error || 'Unknown error'));
                 }
-                
             } catch (error) {
-                console.error('Feedback submission error:', error);
-                showTemporaryMessage('Error submitting feedback: ' + error.message, 'error');
+                console.error('Error:', error);
+                alert('Error submitting feedback: ' + error.message);
             }
         }
 
         function showTemporaryMessage(message, type) {
+            // Remove any existing message
+            const existingMessage = document.querySelector('.temporary-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Create new message
             const messageDiv = document.createElement('div');
-            messageDiv.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            messageDiv.className = `temporary-message fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'info' ? 'bg-blue-500 text-white' : 
+                'bg-gray-500 text-white'
+            }`;
             messageDiv.textContent = message;
+            
             document.body.appendChild(messageDiv);
             
+            // Auto-remove after 3 seconds
             setTimeout(() => {
-                document.body.removeChild(messageDiv);
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
             }, 3000);
         }
 
@@ -970,87 +905,193 @@
             }
         }
 
+        async function testEnhancedLLM() {
+            try {
+                const response = await fetch('/api/test-llm-enhanced');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('systemStatus');
+                
+                if (data.connected) {
+                    let testResultsHtml = `
+                        <div class="p-4 bg-purple-100 text-purple-800 rounded-lg">
+                            <h3 class="font-semibold">Enhanced LLM Test Results</h3>
+                            <div class="mt-2 text-sm space-y-2">
+                                <p><strong>Connection:</strong> ${data.connected ? '✅ Connected' : '❌ Not Connected'}</p>
+                                <p><strong>Enhanced Processing:</strong> ${data.enhanced_processing ? '✅ Available' : '❌ Not Available'}</p>
+                                <p><strong>Multilingual Support:</strong> ${data.multilingual_support ? '✅ Available' : '❌ Not Available'}</p>
+                                <p><strong>Overall Success:</strong> ${data.overall_success ? '✅ All Tests Passed' : '⚠️ Some Tests Failed'}</p>
+                            </div>
+                    `;
+                    
+                    if (data.test_results && data.test_results.length > 0) {
+                        testResultsHtml += '<div class="mt-3"><h4 class="font-medium mb-2">Test Results by Language:</h4>';
+                        data.test_results.forEach((result, index) => {
+                            const statusIcon = result.success ? '✅' : '❌';
+                            const langName = result.detected_language || 'Unknown';
+                            testResultsHtml += `
+                                <div class="text-xs p-2 bg-white rounded border mb-1">
+                                    ${statusIcon} <strong>Query ${index + 1}:</strong> ${result.query.substring(0, 50)}...
+                                    <br><span class="text-purple-600">Language: ${langName} | Translation: ${result.translation_needed ? 'Yes' : 'No'}</span>
+                                    ${result.error ? `<br><span class="text-red-600">Error: ${result.error}</span>` : ''}
+                                </div>
+                            `;
+                        });
+                        testResultsHtml += '</div>';
+                    }
+                    
+                    testResultsHtml += '</div>';
+                    statusDiv.innerHTML = testResultsHtml;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-100 text-red-800 rounded-lg">
+                            <h3 class="font-semibold">Enhanced LLM Test Failed</h3>
+                            <p class="mt-2 text-sm">Error: ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error testing enhanced LLM: ' + error.message);
+            }
+        }
+
         function displayLLMResults(results) {
             const container = document.getElementById('llmResultsContainer');
             container.classList.remove('hidden');
 
-            // Display processing metadata
-            const metadata = results._metadata || {};
+            // Display processing metadata with enhanced information
+            const metadata = results._metadata || results.metadata || {};
+            const queryProcessing = results.query_processing || {};
             document.getElementById('processingMeta').innerHTML = `
                 <h3 class="font-semibold text-blue-800 mb-2">Processing Information</h3>
                 <div class="text-sm text-blue-700">
-                    <p><strong>Original Query:</strong> ${metadata.original_query || 'N/A'}</p>
-                    <p><strong>Corrected Query:</strong> ${results.corrected_query || 'N/A'}</p>
-                    <p><strong>Model Used:</strong> ${metadata.model_used || 'N/A'}</p>
+                    <p><strong>Original Query:</strong> ${queryProcessing.original_query || metadata.original_query || 'N/A'}</p>
+                    <p><strong>Corrected Query:</strong> ${queryProcessing.corrected_original || results.corrected_query || 'N/A'}</p>
+                    <p><strong>English Translation:</strong> ${queryProcessing.english_translation || 'Same as original'}</p>
+                    <p><strong>Model Used:</strong> ${metadata.model_used || metadata.model_version || 'N/A'}</p>
                     <p><strong>Processing Time:</strong> ${metadata.processing_timestamp || 'N/A'}</p>
                     <p><strong>Success:</strong> ${metadata.success ? 'Yes' : 'No'}</p>
+                    <p><strong>Enhanced Analysis:</strong> ${metadata.enhanced_analysis ? 'Yes' : 'No'}</p>
                 </div>
             `;
 
-            // Display intent
-            const intent = results.intent || {};
+            // Display language analysis (new section)
+            const languageAnalysis = results.language_analysis || {};
+            document.getElementById('languageSection').innerHTML = `
+                <h3 class="font-semibold text-blue-800 mb-2">🌍 Language Analysis</h3>
+                <div class="text-sm text-blue-700 space-y-1">
+                    <p><strong>Detected Language:</strong> ${languageAnalysis.language_name || 'Unknown'} (${languageAnalysis.detected_language || 'N/A'})</p>
+                    <p><strong>Script Type:</strong> ${languageAnalysis.script_type || 'N/A'}</p>
+                    <p><strong>Confidence:</strong> ${((languageAnalysis.confidence_score || 0) * 100).toFixed(1)}%</p>
+                    <p><strong>Is English:</strong> ${languageAnalysis.is_english ? 'Yes' : 'No'}</p>
+                    <p><strong>Translation Needed:</strong> ${queryProcessing.translation_needed ? 'Yes' : 'No'}</p>
+                    <p><strong>Correction Made:</strong> ${queryProcessing.correction_made ? 'Yes' : 'No'}</p>
+                    ${queryProcessing.processing_notes ? `<p><strong>Notes:</strong> ${queryProcessing.processing_notes}</p>` : ''}
+                </div>
+            `;
+
+            // Display enhanced intent analysis
+            const intentAnalysis = results.intent_analysis || results.intent || {};
             document.getElementById('intentSection').innerHTML = `
-                <h3 class="font-semibold text-green-800 mb-2">Intent Analysis</h3>
-                <div class="text-sm text-green-700">
-                    <p><strong>Primary Intent:</strong> ${intent.primary_intent || 'N/A'}</p>
-                    <p><strong>Confidence:</strong> ${(intent.confidence * 100).toFixed(1)}%</p>
-                    <p><strong>Secondary Intents:</strong> ${intent.secondary_intents?.join(', ') || 'None'}</p>
+                <h3 class="font-semibold text-green-800 mb-2">🎯 Intent Analysis</h3>
+                <div class="text-sm text-green-700 space-y-1">
+                    <p><strong>Primary Intent:</strong> ${intentAnalysis.primary_intent || 'N/A'}</p>
+                    <p><strong>Confidence:</strong> ${((intentAnalysis.confidence || 0) * 100).toFixed(1)}%</p>
+                    <p><strong>Secondary Intents:</strong> ${intentAnalysis.secondary_intents?.join(', ') || 'None'}</p>
+                    <p><strong>Search Scope:</strong> ${intentAnalysis.search_scope || 'N/A'}</p>
+                    <p><strong>Academic Level:</strong> ${intentAnalysis.academic_level || 'N/A'}</p>
+                    <p><strong>Urgency:</strong> ${intentAnalysis.urgency_level || intentAnalysis.urgency || 'N/A'}</p>
                 </div>
             `;
 
-            // Display keywords
-            const keywords = results.keywords || {};
+            // Display enhanced keywords
+            const keywordAnalysis = results.keyword_analysis || results.keywords || {};
             document.getElementById('keywordsSection').innerHTML = `
-                <h3 class="font-semibold text-yellow-800 mb-2">Keywords</h3>
+                <h3 class="font-semibold text-yellow-800 mb-2">🔑 Keywords Analysis</h3>
                 <div class="text-sm text-yellow-700 space-y-1">
-                    <p><strong>Primary:</strong> ${keywords.primary?.join(', ') || 'None'}</p>
-                    <p><strong>Secondary:</strong> ${keywords.secondary?.join(', ') || 'None'}</p>
-                    <p><strong>Technical:</strong> ${keywords.technical_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Primary Keywords:</strong> ${(keywordAnalysis.primary_keywords || keywordAnalysis.primary || []).join(', ') || 'None'}</p>
+                    <p><strong>Secondary Keywords:</strong> ${(keywordAnalysis.secondary_keywords || keywordAnalysis.secondary || []).join(', ') || 'None'}</p>
+                    <p><strong>Technical Terms:</strong> ${keywordAnalysis.technical_terms?.join(', ') || 'None'}</p>
+                    ${keywordAnalysis.original_language_keywords?.length ? `<p><strong>Original Language:</strong> ${keywordAnalysis.original_language_keywords.join(', ')}</p>` : ''}
+                    ${keywordAnalysis.long_tail_keywords?.length ? `<p><strong>Long-tail:</strong> ${keywordAnalysis.long_tail_keywords.join(', ')}</p>` : ''}
+                    ${keywordAnalysis.alternative_spellings?.length ? `<p><strong>Alt. Spellings:</strong> ${keywordAnalysis.alternative_spellings.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display entities
-            const entities = results.entities || {};
+            // Display enhanced entities
+            const entityExtraction = results.entity_extraction || results.entities || {};
             document.getElementById('entitiesSection').innerHTML = `
-                <h3 class="font-semibold text-purple-800 mb-2">Entities</h3>
+                <h3 class="font-semibold text-purple-800 mb-2">🏷️ Entity Extraction</h3>
                 <div class="text-sm text-purple-700 space-y-1">
-                    <p><strong>Technologies:</strong> ${entities.technologies?.join(', ') || 'None'}</p>
-                    <p><strong>Concepts:</strong> ${entities.concepts?.join(', ') || 'None'}</p>
-                    <p><strong>People:</strong> ${entities.people?.join(', ') || 'None'}</p>
-                    <p><strong>Organizations:</strong> ${entities.organizations?.join(', ') || 'None'}</p>
+                    <p><strong>People:</strong> ${entityExtraction.people?.join(', ') || 'None'}</p>
+                    <p><strong>Organizations:</strong> ${entityExtraction.organizations?.join(', ') || 'None'}</p>
+                    <p><strong>Technologies:</strong> ${entityExtraction.technologies?.join(', ') || 'None'}</p>
+                    <p><strong>Concepts:</strong> ${entityExtraction.concepts?.join(', ') || 'None'}</p>
+                    <p><strong>Locations:</strong> ${entityExtraction.locations?.join(', ') || 'None'}</p>
+                    ${entityExtraction.chemicals_materials?.length ? `<p><strong>Chemicals/Materials:</strong> ${entityExtraction.chemicals_materials.join(', ')}</p>` : ''}
+                    ${entityExtraction.medical_terms?.length ? `<p><strong>Medical Terms:</strong> ${entityExtraction.medical_terms.join(', ')}</p>` : ''}
+                    ${entityExtraction.mathematical_terms?.length ? `<p><strong>Math Terms:</strong> ${entityExtraction.mathematical_terms.join(', ')}</p>` : ''}
+                    ${entityExtraction.publications?.length ? `<p><strong>Publications:</strong> ${entityExtraction.publications.join(', ')}</p>` : ''}
+                    ${entityExtraction.fields_of_study?.length ? `<p><strong>Fields of Study:</strong> ${entityExtraction.fields_of_study.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display academic fields
-            const fields = results.academic_fields || {};
+            // Display academic classification
+            const academicClassification = results.academic_classification || results.academic_fields || {};
             document.getElementById('fieldsSection').innerHTML = `
-                <h3 class="font-semibold text-red-800 mb-2">Academic Fields</h3>
+                <h3 class="font-semibold text-red-800 mb-2">🎓 Academic Classification</h3>
                 <div class="text-sm text-red-700 space-y-1">
-                    <p><strong>Primary Field:</strong> ${fields.primary_field || 'N/A'}</p>
-                    <p><strong>Related Fields:</strong> ${fields.related_fields?.join(', ') || 'None'}</p>
-                    <p><strong>Specializations:</strong> ${fields.specializations?.join(', ') || 'None'}</p>
+                    <p><strong>Primary Field:</strong> ${academicClassification.primary_field || 'N/A'}</p>
+                    <p><strong>Secondary Fields:</strong> ${(academicClassification.secondary_fields || academicClassification.related_fields || []).join(', ') || 'None'}</p>
+                    <p><strong>Specializations:</strong> ${academicClassification.specializations?.join(', ') || 'None'}</p>
+                    ${academicClassification.interdisciplinary_connections?.length ? `<p><strong>Interdisciplinary:</strong> ${academicClassification.interdisciplinary_connections.join(', ')}</p>` : ''}
+                    ${academicClassification.research_methodologies?.length ? `<p><strong>Methodologies:</strong> ${academicClassification.research_methodologies.join(', ')}</p>` : ''}
+                    ${academicClassification.publication_types?.length ? `<p><strong>Publication Types:</strong> ${academicClassification.publication_types.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display synonyms and related terms
-            const synonyms = results.synonyms_and_related || {};
+            // Display semantic expansion
+            const semanticExpansion = results.semantic_expansion || results.synonyms_and_related || {};
             document.getElementById('synonymsSection').innerHTML = `
-                <h3 class="font-semibold text-indigo-800 mb-2">Synonyms & Related</h3>
+                <h3 class="font-semibold text-indigo-800 mb-2">🔗 Semantic Expansion</h3>
                 <div class="text-sm text-indigo-700 space-y-1">
-                    <p><strong>Synonyms:</strong> ${synonyms.synonyms?.join(', ') || 'None'}</p>
-                    <p><strong>Related Terms:</strong> ${synonyms.related_terms?.join(', ') || 'None'}</p>
-                    <p><strong>Broader Terms:</strong> ${synonyms.broader_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Synonyms:</strong> ${semanticExpansion.synonyms?.join(', ') || 'None'}</p>
+                    <p><strong>Related Terms:</strong> ${semanticExpansion.related_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Broader Terms:</strong> ${semanticExpansion.broader_terms?.join(', ') || 'None'}</p>
+                    <p><strong>Narrower Terms:</strong> ${semanticExpansion.narrower_terms?.join(', ') || 'None'}</p>
+                    ${semanticExpansion.domain_specific_terms?.length ? `<p><strong>Domain-Specific:</strong> ${semanticExpansion.domain_specific_terms.join(', ')}</p>` : ''}
+                    ${semanticExpansion.cross_linguistic_terms?.length ? `<p><strong>Cross-linguistic:</strong> ${semanticExpansion.cross_linguistic_terms.join(', ')}</p>` : ''}
+                    ${semanticExpansion.acronyms_abbreviations?.length ? `<p><strong>Acronyms:</strong> ${semanticExpansion.acronyms_abbreviations.join(', ')}</p>` : ''}
                 </div>
             `;
 
-            // Display search context
-            const context = results.search_context || {};
+            // Display search strategy (new section)
+            const searchStrategy = results.search_strategy || {};
+            document.getElementById('searchStrategySection').innerHTML = `
+                <h3 class="font-semibold text-teal-800 mb-2">🔍 Search Strategy</h3>
+                <div class="text-sm text-teal-700 space-y-1">
+                    <p><strong>Database Priorities:</strong> ${searchStrategy.database_priorities?.join(', ') || 'None'}</p>
+                    <p><strong>Resource Types:</strong> ${searchStrategy.resource_types?.join(', ') || 'None'}</p>
+                    <p><strong>Temporal Focus:</strong> ${searchStrategy.temporal_focus || 'N/A'}</p>
+                    <p><strong>Geographic Scope:</strong> ${searchStrategy.geographical_scope || 'N/A'}</p>
+                    <p><strong>Quality Indicators:</strong> ${searchStrategy.quality_indicators?.join(', ') || 'None'}</p>
+                    <p><strong>Search Complexity:</strong> ${searchStrategy.search_complexity || 'N/A'}</p>
+                </div>
+            `;
+
+            // Display search context (backwards compatible)
+            const searchContext = results.search_context || {};
             document.getElementById('contextSection').innerHTML = `
-                <h3 class="font-semibold text-pink-800 mb-2">Search Context</h3>
+                <h3 class="font-semibold text-pink-800 mb-2">🌐 Search Context</h3>
                 <div class="text-sm text-pink-700 space-y-1">
-                    <p><strong>Resource Preferences:</strong> ${context.resource_preferences?.join(', ') || 'None'}</p>
-                    <p><strong>Urgency:</strong> ${context.urgency || 'N/A'}</p>
-                    <p><strong>Scope:</strong> ${context.scope || 'N/A'}</p>
+                    <p><strong>Resource Preferences:</strong> ${searchContext.resource_preferences?.join(', ') || 'None'}</p>
+                    <p><strong>Urgency:</strong> ${searchContext.urgency || 'N/A'}</p>
+                    <p><strong>Scope:</strong> ${searchContext.scope || 'N/A'}</p>
+                    ${results.multilingual_considerations ? `
+                        <p><strong>Cultural Context:</strong> ${results.multilingual_considerations.cultural_context?.join(', ') || 'None'}</p>
+                        <p><strong>Preserve Original:</strong> ${results.multilingual_considerations.preserve_original_terms?.join(', ') || 'None'}</p>
+                    ` : ''}
                 </div>
             `;
 
@@ -1768,402 +1809,170 @@
             }
         }
 
-        // Auto-check health on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            checkHealth();
-        });
-
-        // User Authentication and Profile Management
-        let currentUser = null;
-
+        // Authentication functions
         function checkAuthenticationStatus() {
-            // Check if user is logged in and update UI accordingly
-            const token = localStorage.getItem('auth_token');
-            const userData = localStorage.getItem('user_data');
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const userMode = localStorage.getItem('userMode');
             
-            if (token && userData) {
-                try {
-                    currentUser = JSON.parse(userData);
-                    
-                    // Verify token is still valid
-                    fetch('/api/auth/verify', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            currentUser = data.user;
-                            localStorage.setItem('user_data', JSON.stringify(currentUser));
-                            showUserInterface();
-                        } else {
-                            // Token is invalid
-                            logout(false);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Token verification error:', error);
-                        logout(false);
-                    });
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    logout(false);
-                }
+            if (token && userData && userMode === 'authenticated') {
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showUserInfo(JSON.parse(userData));
+                    } else {
+                        // Token invalid, show login buttons
+                        showLoginButtons();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying token:', error);
+                    showLoginButtons();
+                });
             } else {
-                showGuestInterface();
+                // No authentication, show login buttons
+                showLoginButtons();
             }
         }
-
-        function showUserInterface() {
-            // Show logged in user interface
-            const guestSection = document.getElementById('guestSection');
-            const userSection = document.getElementById('userSection');
-            const userWelcome = document.getElementById('userWelcome');
-            const userRole = document.getElementById('userRole');
-            const userInitials = document.getElementById('userInitials');
+        
+        function showLoginButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
             
-            if (currentUser) {
-                guestSection.classList.add('hidden');
-                userSection.classList.remove('hidden');
-                
-                userWelcome.textContent = `Welcome, ${currentUser.first_name}`;
-                userRole.textContent = currentUser.role || currentUser.organization || 'User';
-                
-                // Set user initials
-                const initials = (currentUser.first_name[0] + currentUser.last_name[0]).toUpperCase();
-                userInitials.textContent = initials;
+            if (authButtons && userInfo) {
+                authButtons.style.display = 'flex';
+                userInfo.style.display = 'none';
+                console.log('Login buttons displayed');
             }
         }
-
-        function showGuestInterface() {
-            // Show guest user interface
-            const guestSection = document.getElementById('guestSection');
-            const userSection = document.getElementById('userSection');
-            
-            guestSection.classList.remove('hidden');
-            userSection.classList.add('hidden');
-            currentUser = null;
-        }
-
-        function toggleUserMenu() {
-            // Toggle user dropdown menu
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('hidden');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const userMenuButton = document.getElementById('userMenuButton');
-            const dropdown = document.getElementById('userDropdown');
-            
-            if (!userMenuButton.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
-        async function logout(showMessage = true) {
-            // Logout user
+        
+        function showUserInfo(userData) {
             try {
-                const token = localStorage.getItem('auth_token');
+                const authButtons = document.getElementById('authButtons');
+                const userInfo = document.getElementById('userInfo');
+                const userProfile = document.getElementById('userProfile');
                 
-                if (token) {
-                    // Call logout endpoint to track the logout
-                    await fetch('/api/auth/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
+                if (!authButtons || !userInfo || !userProfile) {
+                    console.error('Required DOM elements not found for user info');
+                    return;
                 }
                 
-                // Clear local storage
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_data');
+                authButtons.style.display = 'none';
+                userInfo.style.display = 'flex';
                 
-                // Update UI
-                showGuestInterface();
+                // Get full name from profile
+                const firstName = userData.profile?.first_name || '';
+                const lastName = userData.profile?.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
                 
-                if (showMessage) {
-                    showTemporaryMessage('Logged out successfully', 'success');
-                }
+                // Generate initials
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
                 
-            } catch (error) {
-                console.error('Logout error:', error);
-                // Still clear local storage even if API call fails
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_data');
-                showGuestInterface();
-            }
-        }
-
-        async function showProfile() {
-            // Show user profile modal
-            if (!currentUser) return;
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                const response = await fetch('/api/user/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const user = data.user;
-                    const statusDiv = document.getElementById('systemStatus');
-                    
-                    statusDiv.innerHTML = `
-                        <div class="p-6 bg-blue-50 text-blue-800 rounded-lg">
-                            <h3 class="text-xl font-semibold mb-4">👤 User Profile</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
-                                    <p><strong>Username:</strong> ${user.username}</p>
-                                    <p><strong>Email:</strong> ${user.email}</p>
-                                    <p><strong>Role:</strong> ${user.role || 'Not specified'}</p>
-                                </div>
-                                <div>
-                                    <p><strong>Organization:</strong> ${user.organization || 'Not specified'}</p>
-                                    <p><strong>Department:</strong> ${user.department || 'Not specified'}</p>
-                                    <p><strong>Country:</strong> ${user.country || 'Not specified'}</p>
-                                    <p><strong>Member Since:</strong> ${new Date(user.created_at).toLocaleDateString()}</p>
-                                </div>
-                            </div>
-                            
-                            ${user.research_interests && user.research_interests.length > 0 ? `
-                                <div class="mt-4">
-                                    <p class="font-semibold mb-2">Research Interests:</p>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${user.research_interests.map(interest => 
-                                            `<span class="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs">${interest}</span>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            <div class="mt-4 pt-4 border-t border-blue-200">
-                                <p class="font-semibold mb-2">Activity Stats:</p>
-                                <div class="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                        <div class="text-lg font-bold">${user.interaction_stats?.total_searches || 0}</div>
-                                        <div class="text-xs">Searches</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-lg font-bold">${user.interaction_stats?.total_feedback_given || 0}</div>
-                                        <div class="text-xs">Feedback Given</div>
-                                    </div>
-                                    <div>
-                                        <div class="text-lg font-bold">${user.interaction_stats?.total_login_count || 0}</div>
-                                        <div class="text-xs">Logins</div>
-                                    </div>
-                                </div>
+                // Create profile picture element
+                const profilePictureHtml = `
+                    <div class="w-8 h-8 relative">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-0.5">
+                            <img id="userMenuProfilePicture" src="" alt="Profile Picture" class="w-full h-full rounded-full object-cover hidden bg-white">
+                            <div id="userMenuInitials" class="w-full h-full bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                ${initials}
                             </div>
                         </div>
-                    `;
-                    
-                    // Hide user menu
-                    document.getElementById('userDropdown').classList.add('hidden');
-                } else {
-                    showTemporaryMessage('Failed to load profile', 'error');
-                }
+                    </div>
+                `;
                 
+                userProfile.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <a href="/dashboard" class="flex items-center space-x-2 hover:bg-blue-700 px-2 py-1 rounded transition-colors">
+                            ${profilePictureHtml}
+                            <span class="text-sm font-medium text-white">${fullName}</span>
+                        </a>
+                        <button onclick="logout()" class="text-xs text-blue-200 hover:text-white transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                `;
+                
+                // Load profile picture in user menu
+                loadUserMenuProfilePicture(userData.user_id);
+                console.log('User info displayed successfully for:', fullName);
             } catch (error) {
-                console.error('Error loading profile:', error);
-                showTemporaryMessage('Error loading profile', 'error');
+                console.error('Error in showUserInfo:', error);
+                // Fallback to login buttons
+                showLoginButtons();
             }
         }
 
-        async function showRecommendations() {
-            // Show personalized recommendations
-            if (!currentUser) return;
-            
+        async function loadUserMenuProfilePicture(userId) {
+            if (!userId) return;
+
             try {
-                const token = localStorage.getItem('auth_token');
-                const response = await fetch('/api/user/recommendations', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.src = imageUrl;
+                        profilePicture.classList.remove('hidden');
+                        initials.classList.add('hidden');
                     }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const recommendations = data.recommendations;
-                    const statusDiv = document.getElementById('systemStatus');
-                    
-                    statusDiv.innerHTML = `
-                        <div class="p-6 bg-green-50 text-green-800 rounded-lg">
-                            <h3 class="text-xl font-semibold mb-4">⭐ Personalized Recommendations</h3>
-                            
-                            ${recommendations.suggested_topics && recommendations.suggested_topics.length > 0 ? `
-                                <div class="mb-4">
-                                    <h4 class="font-semibold mb-2">Suggested Topics:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${recommendations.suggested_topics.map(topic => 
-                                            `<button onclick="setSearchQuery('${topic}')" class="bg-green-200 hover:bg-green-300 text-green-800 px-3 py-1 rounded-full text-sm transition-colors cursor-pointer">${topic}</button>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            ${recommendations.preferred_resource_types && recommendations.preferred_resource_types.length > 0 ? `
-                                <div class="mb-4">
-                                    <h4 class="font-semibold mb-2">Your Preferred Resource Types:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${recommendations.preferred_resource_types.map(type => 
-                                            `<span class="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs">${type}</span>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            ${recommendations.personalized_search_suggestions && recommendations.personalized_search_suggestions.length > 0 ? `
-                                <div class="mb-4">
-                                    <h4 class="font-semibold mb-2">Personalized Search Suggestions:</h4>
-                                    <div class="space-y-2">
-                                        ${recommendations.personalized_search_suggestions.map(suggestion => 
-                                            `<div class="bg-white p-3 rounded border">
-                                                <button onclick="setSearchQuery('${suggestion}')" class="text-left text-green-700 hover:text-green-900 transition-colors">
-                                                    🔍 ${suggestion}
-                                                </button>
-                                            </div>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            ${recommendations.research_interests && recommendations.research_interests.length > 0 ? `
-                                <div>
-                                    <h4 class="font-semibold mb-2">Your Research Interests:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        ${recommendations.research_interests.map(interest => 
-                                            `<span class="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs">${interest}</span>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                    
-                    // Hide user menu
-                    document.getElementById('userDropdown').classList.add('hidden');
                 } else {
-                    showTemporaryMessage('Failed to load recommendations', 'error');
+                    // No profile picture, keep showing initials
+                    console.log('No profile picture found for user');
                 }
-                
             } catch (error) {
-                console.error('Error loading recommendations:', error);
-                showTemporaryMessage('Error loading recommendations', 'error');
+                console.error('Error loading user menu profile picture:', error);
+                // Keep showing initials on error
             }
         }
-
-        async function showAnalytics() {
-            // Show user analytics
-            if (!currentUser) return;
-            
-            try {
-                const token = localStorage.getItem('auth_token');
-                const response = await fetch('/api/user/analytics', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    const analytics = data.analytics;
-                    const statusDiv = document.getElementById('systemStatus');
-                    
-                    statusDiv.innerHTML = `
-                        <div class="p-6 bg-purple-50 text-purple-800 rounded-lg">
-                            <h3 class="text-xl font-semibold mb-4">📊 Your Analytics</h3>
-                            
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <div class="bg-white p-4 rounded-lg text-center">
-                                    <div class="text-2xl font-bold text-purple-600">${analytics.total_interactions || 0}</div>
-                                    <div class="text-sm">Total Interactions</div>
-                                </div>
-                                <div class="bg-white p-4 rounded-lg text-center">
-                                    <div class="text-2xl font-bold text-blue-600">${analytics.search_count || 0}</div>
-                                    <div class="text-sm">Searches</div>
-                                </div>
-                                <div class="bg-white p-4 rounded-lg text-center">
-                                    <div class="text-2xl font-bold text-green-600">${analytics.feedback_count || 0}</div>
-                                    <div class="text-sm">Feedback Given</div>
-                                </div>
-                                <div class="bg-white p-4 rounded-lg text-center">
-                                    <div class="text-2xl font-bold text-orange-600">${analytics.user_stats?.total_login_count || 0}</div>
-                                    <div class="text-sm">Logins</div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h4 class="font-semibold mb-2">Account Information:</h4>
-                                <div class="bg-white p-3 rounded">
-                                    <p><strong>Member Since:</strong> ${analytics.member_since ? new Date(analytics.member_since).toLocaleDateString() : 'N/A'}</p>
-                                    <p><strong>Last Active:</strong> ${analytics.last_active ? new Date(analytics.last_active).toLocaleDateString() : 'N/A'}</p>
-                                </div>
-                            </div>
-                            
-                            ${analytics.recent_activity && analytics.recent_activity.length > 0 ? `
-                                <div>
-                                    <h4 class="font-semibold mb-2">Recent Activity:</h4>
-                                    <div class="bg-white p-3 rounded max-h-40 overflow-y-auto">
-                                        ${analytics.recent_activity.slice(0, 5).map(activity => `
-                                            <div class="flex justify-between text-sm py-1 border-b border-gray-100 last:border-b-0">
-                                                <span>${activity.interaction_type}</span>
-                                                <span class="text-gray-500">${new Date(activity.timestamp).toLocaleDateString()}</span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                    
-                    // Hide user menu
-                    document.getElementById('userDropdown').classList.add('hidden');
-                } else {
-                    showTemporaryMessage('Failed to load analytics', 'error');
-                }
-                
-            } catch (error) {
-                console.error('Error loading analytics:', error);
-                showTemporaryMessage('Error loading analytics', 'error');
-            }
+        
+        function logout() {
+            clearAuthData();
+            showLoginButtons();
+            showTemporaryMessage('Logged out successfully', 'success');
+        }
+        
+        function clearAuthData() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
         }
 
-        // Enhance existing functions to include user context
-        function getAuthHeaders() {
-            // Get authorization headers if user is logged in
-            const token = localStorage.getItem('auth_token');
-            return token ? { 'Authorization': `Bearer ${token}` } : {};
-        }
-
-        function getSessionData() {
-            // Get session data for tracking
-            return {
-                session_id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                user_agent: navigator.userAgent,
-                timestamp: new Date().toISOString()
-            };
-        }
-
-        // Initialize authentication status on page load
         document.addEventListener('DOMContentLoaded', function() {
-            checkHealth();
-            checkAuthenticationStatus();
+            // Check authentication status on page load
+            try {
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in authentication check:', error);
+                // Fallback: show login buttons
+                showLoginButtons();
+            }
         });
+        
+        // Immediate check in case DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            // DOM is still loading, wait for DOMContentLoaded
+        } else {
+            // DOM is already loaded
+            try {
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in immediate authentication check:', error);
+                showLoginButtons();
+            }
+        }
     </script>
 </body>
 </html> 

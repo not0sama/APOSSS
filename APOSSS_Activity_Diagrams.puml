@@ -1,0 +1,1258 @@
+@startuml APOSSS Activity Diagrams
+!theme cerulean-outline
+title APOSSS System Activity Diagrams
+note top : AI-Powered Open-Science Semantic Search System\nComprehensive Activity Diagrams Collection
+
+' ==============================================================================
+' USER AUTHENTICATION & MANAGEMENT WORKFLOWS
+' ==============================================================================
+
+@startuml UserRegistration
+title User Registration Process
+|User|
+start
+:Access registration page;
+:Fill registration form|
+note right
+  - Username
+  - Email
+  - Password
+  - First/Last Name
+  - Academic Fields
+  - Organization
+end note
+:Submit registration data;
+|System|
+:Validate required fields;
+if (All required fields present?) then (no)
+  |User|
+  :Receive validation error;
+  stop
+endif
+:Check if user already exists;
+if (User exists?) then (yes)
+  |User|
+  :Receive "User already exists" error;
+  stop
+endif
+:Hash password with bcrypt;
+:Generate unique user ID;
+:Create user document with profile and preferences;
+:Insert user into MongoDB;
+:Create initial user preferences;
+:Generate JWT token;
+:Send verification email;
+|User|
+:Receive success response with user data;
+stop
+@enduml
+
+@startuml UserLogin
+title User Login Process
+|User|
+start
+:Enter credentials;
+note right : Email/Username + Password
+:Submit login request;
+|System|
+:Find user by email/username;
+if (User exists?) then (no)
+  |User|
+  :Receive "User not found" error;
+  stop
+endif
+:Verify password with bcrypt;
+if (Password valid?) then (no)
+  |User|
+  :Receive "Invalid credentials" error;
+  stop
+endif
+:Generate JWT token;
+:Update last login timestamp;
+:Increment login count;
+:Create user session;
+:Track login interaction;
+|User|
+:Receive success with token and user data;
+stop
+@enduml
+
+@startuml SocialAuthenticationGoogle
+title Google OAuth Authentication Flow
+|User|
+start
+:Click "Login with Google";
+|System|
+:Generate secure state token;
+:Redirect to Google OAuth URL;
+note right
+  - client_id
+  - redirect_uri
+  - scope: openid email profile
+  - state token
+end note
+|User|
+:Authorize on Google;
+|System|
+:Receive redirect with auth code;
+:Validate state token;
+if (State valid?) then (no)
+  |User|
+  :Receive security error;
+  stop
+endif
+:Exchange auth code for access token;
+:Fetch user info from Google;
+note right
+  - Email
+  - Name
+  - Picture
+  - Verified status
+end note
+:Check if user exists by email;
+if (User exists?) then (yes)
+  :Link Google account to existing user;
+else (no)
+  :Create new user from Google data;
+  :Set email as verified;
+  :Generate unique username;
+endif
+:Generate JWT token;
+:Create user session;
+:Track OAuth login;
+|User|
+:Receive success with token;
+stop
+@enduml
+
+@startuml PasswordManagement
+title Password Change Process
+|User|
+start
+:Request password change;
+|System|
+:Authenticate current user;
+if (User authenticated?) then (no)
+  |User|
+  :Receive authentication error;
+  stop
+endif
+|User|
+:Provide current password;
+|System|
+:Validate current password;
+if (Current password valid?) then (no)
+  |User|
+  :Receive "Invalid current password" error;
+  stop
+endif
+|User|
+:Provide new password;
+|System|
+:Validate new password requirements;
+if (New password valid?) then (no)
+  |User|
+  :Receive password requirements error;
+  stop
+endif
+:Hash new password with bcrypt;
+:Update password in database;
+:Invalidate existing sessions;
+:Generate new JWT token;
+:Track password change interaction;
+|User|
+:Receive success response;
+stop
+@enduml
+
+@startuml EmailVerification
+title Email Verification Workflow
+|System|
+start
+:Generate 6-digit verification code;
+:Store code with expiry (10 minutes);
+:Get user email and name;
+:Compose verification email;
+:Send email via SMTP;
+if (Email sent successfully?) then (no)
+  |User|
+  :Receive email sending error;
+  stop
+endif
+|User|
+:Receive success message;
+:Check email and find verification code;
+:Enter verification code;
+|System|
+:Validate code format;
+:Check code in database;
+if (Code valid and not expired?) then (no)
+  |User|
+  :Receive "Invalid or expired code" error;
+  stop
+endif
+:Mark email as verified;
+:Delete verification code;
+:Update user profile;
+:Track verification interaction;
+|User|
+:Receive success response;
+stop
+@enduml
+
+' ==============================================================================
+' SEARCH & QUERY PROCESSING WORKFLOWS
+' ==============================================================================
+
+@startuml CompleteSearchProcess
+title Complete Search Process (End-to-End)
+|User|
+start
+:Enter search query;
+:Submit search request;
+|System|
+:Get current user context;
+fork
+  :Track search interaction;
+fork again
+  :Clean and validate query;
+  :Send query to LLM Processor;
+  partition "LLM Processing" {
+    :Detect language;
+    :Correct spelling;
+    :Extract entities;
+    :Generate keywords;
+    :Detect intent;
+    :Identify academic fields;
+  }
+  :Validate LLM response;
+end fork
+:Extract search parameters;
+partition "Multi-Database Search" {
+  fork
+    :Search Academic Library;
+  fork again
+    :Search Experts System;
+  fork again
+    :Search Research Papers;
+  fork again
+    :Search Laboratories;
+  fork again
+    :Search Funding Database;
+  end fork
+}
+:Aggregate search results;
+:Standardize result format;
+partition "Ranking Process" {
+  fork
+    :Calculate heuristic scores;
+  fork again
+    :Calculate TF-IDF scores;
+  fork again
+    :Calculate intent scores;
+  fork again
+    :Calculate embedding scores;
+  fork again
+    :Calculate personalization scores;
+  end fork
+  :Apply ranking mode (hybrid/traditional/LTR);
+  :Sort results by final scores;
+  :Categorize by relevance (High/Medium/Low);
+}
+:Format response with metadata;
+|User|
+:Receive ranked search results;
+stop
+@enduml
+
+@startuml QueryProcessingEnhancement
+title Query Processing & LLM Enhancement
+|System|
+start
+:Receive raw user query;
+:Clean query (remove noise, normalize);
+:Build comprehensive LLM prompt;
+note right
+  Include instructions for:
+  - Language detection
+  - Spelling correction
+  - Intent detection
+  - Entity extraction
+  - Keyword generation
+  - Academic field mapping
+end note
+:Send to Gemini-2.0-flash LLM;
+:Parse JSON response from LLM;
+if (Valid JSON response?) then (no)
+  partition "Fallback Processing" {
+    :Create basic fallback response;
+    :Extract simple keywords;
+    :Set default intent;
+    :Log processing error;
+  }
+else (yes)
+  :Validate response structure;
+  :Enhance with backward compatibility;
+  :Add processing metadata;
+endif
+:Return structured query data;
+note right
+  Enhanced query includes:
+  - Corrected text
+  - Detected entities
+  - Generated keywords
+  - Intent classification
+  - Academic fields
+  - Language info
+end note
+stop
+@enduml
+
+@startuml MultiDatabaseSearch
+title Multi-Database Search Execution
+start
+:Receive processed query parameters;
+:Extract search keywords and filters;
+partition "Parallel Database Queries" {
+  fork
+    partition "Academic Library Search" {
+      :Connect to Academic Library DB;
+      :Search books collection;
+      :Search journals collection;
+      :Search projects collection;
+      :Aggregate academic results;
+    }
+  fork again
+    partition "Experts System Search" {
+      :Connect to Experts System DB;
+      :Search experts collection;
+      :Search certificates collection;
+      :Link certificates to experts;
+      :Aggregate expert results;
+    }
+  fork again
+    partition "Research Papers Search" {
+      :Connect to Research Papers DB;
+      :Search articles collection;
+      :Search conferences collection;
+      :Search theses collection;
+      :Aggregate paper results;
+    }
+  fork again
+    partition "Laboratories Search" {
+      :Connect to Laboratories DB;
+      :Search equipment collection;
+      :Search materials collection;
+      :Check availability status;
+      :Aggregate lab results;
+    }
+  fork again
+    partition "Funding Search" {
+      :Connect to Funding DB;
+      :Search research projects;
+      :Search institutions;
+      :Search funding records;
+      :Fix broken institution IDs;
+      :Aggregate funding results;
+    }
+  end fork
+}
+:Merge all database results;
+:Remove duplicates;
+:Standardize result format;
+:Add search metadata;
+:Return aggregated results;
+stop
+@enduml
+
+@startuml HybridSearchStrategy
+title Hybrid Search Strategy (Semantic + Keyword)
+start
+:Receive processed query;
+:Check if pre-built index available;
+if (FAISS index available?) then (yes)
+  fork
+    partition "Semantic Search" {
+      :Build enhanced query with LLM data;
+      :Generate query embedding;
+      :Search FAISS index;
+      :Get top 100 semantic matches;
+      :Extract similarity scores;
+    }
+  fork again
+    partition "Traditional Keyword Search" {
+      :Build MongoDB queries;
+      :Execute across all databases;
+      :Apply text search and regex;
+      :Get keyword-based results;
+    }
+  end fork
+  partition "Result Merging" {
+    :Create result mappings by ID;
+    :Prioritize hybrid matches (in both searches);
+    :Add semantic-only results;
+    :Add keyword-only results;
+    :Merge similarity scores;
+    :Mark search source (hybrid/semantic/traditional);
+  }
+else (no)
+  :Fall back to traditional search only;
+  :Log pre-index unavailable;
+endif
+:Return merged results with metadata;
+stop
+@enduml
+
+' ==============================================================================
+' RANKING & AI/ML WORKFLOWS  
+' ==============================================================================
+
+@startuml MultiAlgorithmRanking
+title Multi-Algorithm Ranking Process
+start
+:Receive search results and processed query;
+:Initialize ranking components;
+fork
+  partition "Heuristic Ranking" {
+    :Calculate keyword match scores;
+    :Apply field-specific bonuses;
+    :Check exact phrase matches;
+    :Apply recency bonuses;
+    :Calculate availability bonuses;
+  }
+fork again
+  partition "TF-IDF Scoring" {
+    :Build document corpus;
+    :Vectorize query and documents;
+    :Calculate cosine similarity;
+    :Normalize TF-IDF scores;
+  }
+fork again
+  partition "Intent Alignment" {
+    :Map query intent to resource types;
+    :Calculate field alignment scores;
+    :Apply intent confidence weighting;
+    :Boost matching resource types;
+  }
+fork again
+  partition "Embedding Similarity" {
+    :Generate real-time embeddings;
+    :Calculate semantic similarity;
+    :Apply caching for performance;
+    :Normalize similarity scores;
+  }
+fork again
+  partition "Personalization" {
+    :Analyze user interaction history;
+    :Calculate type preferences;
+    :Apply author preferences;
+    :Consider complexity preferences;
+    :Generate query similarity boost;
+  }
+end fork
+:Combine scores based on ranking mode;
+if (Ranking mode?) then (traditional)
+  :Weight all scores equally (20% each);
+elseif (ltr_only)
+  :Use pure LTR model scoring;
+else (hybrid)
+  :Combine 70% LTR + 30% traditional;
+endif
+:Sort results by final scores;
+:Categorize by relevance levels;
+:Add score breakdown to results;
+stop
+@enduml
+
+@startuml LearningToRankWorkflow
+title Learning-to-Rank (LTR) Training & Prediction
+start
+:Collect user feedback data;
+:Filter feedback with sufficient quality;
+if (Enough training data?) then (no)
+  :Return "Insufficient data" message;
+  stop
+endif
+partition "Feature Engineering" {
+  :Extract textual features (BM25, n-grams);
+  :Extract metadata features (recency, authority);
+  :Extract LLM features (intent, entities);
+  :Extract user features (CTR, ratings);
+  :Extract current ranking scores;
+  :Create feature matrix (50+ features);
+}
+partition "Model Training" {
+  :Split data (80% train, 20% validation);
+  :Create XGBoost ranking datasets;
+  :Set ranking-specific parameters;
+  :Train XGBoost model;
+  :Evaluate with NDCG metric;
+  :Calculate feature importance;
+}
+:Save trained model;
+:Update model statistics;
+:Log training completion;
+note right : Model ready for prediction
+partition "Prediction Process" {
+  :Extract features for new results;
+  :Apply trained model;
+  :Generate ranking scores;
+  :Sort by predicted relevance;
+}
+stop
+@enduml
+
+@startuml FeedbackCollection
+title User Feedback Collection Process
+|User|
+start
+:View search results;
+:Provide feedback;
+note right
+  - Rating (1-5 stars)
+  - Thumbs up/down
+  - Text comments
+end note
+:Submit feedback;
+|System|
+:Validate feedback data;
+if (Valid feedback?) then (no)
+  |User|
+  :Receive validation error;
+  stop
+endif
+:Enhance with metadata;
+note right
+  - Timestamp
+  - User session
+  - Query context
+  - Result details
+end note
+fork
+  :Store in MongoDB collection;
+fork again
+  :Store in backup file (JSONL);
+end fork
+:Track user interaction;
+:Update user statistics;
+:Generate feedback analytics;
+|User|
+:Receive success confirmation;
+stop
+@enduml
+
+@startuml IndexBuilding
+title FAISS Index Building Process
+start
+:Initialize index builder;
+:Check for existing progress;
+partition "Document Fetching" {
+  fork
+    :Fetch Academic Library docs;
+  fork again
+    :Fetch Experts System docs;
+  fork again
+    :Fetch Research Papers docs;
+  fork again
+    :Fetch Laboratories docs;
+  end fork
+  :Standardize document formats;
+  :Save progress checkpoints;
+}
+partition "Embedding Generation" {
+  :Initialize sentence transformer model;
+  :Process documents in batches (100);
+  while (More documents?) is (yes)
+    :Extract document text;
+    :Generate embeddings;
+    :Add to FAISS index;
+    :Cache document metadata;
+    :Update progress;
+  endwhile (no)
+}
+:Save FAISS index to disk;
+:Save document cache;
+:Generate index statistics;
+:Log completion status;
+stop
+@enduml
+
+@startuml SystemHealthMonitoring
+title System Health Monitoring Workflow
+start
+:Receive health check request;
+fork
+  partition "Database Connections" {
+    :Test Academic Library connection;
+    :Test Experts System connection;
+    :Test Research Papers connection;
+    :Test Laboratories connection;
+    :Test Funding database connection;
+    :Test APOSSS database connection;
+  }
+fork again
+  partition "Component Status" {
+    :Check LLM processor status;
+    :Check embedding ranker status;
+    :Check LTR model status;
+    :Check FAISS index status;
+    :Check cache systems status;
+  }
+fork again
+  partition "Performance Metrics" {
+    :Measure response times;
+    :Check memory usage;
+    :Monitor CPU utilization;
+    :Check disk space;
+    :Measure cache hit rates;
+  }
+end fork
+:Aggregate health status;
+:Generate health report;
+if (All systems healthy?) then (yes)
+  :Return OK status;
+else (no)
+  :Return warning/error status;
+  :Log system issues;
+endif
+stop
+@enduml
+
+@startuml UserPreferencesManagement
+title User Preferences Management
+|User|
+start
+:Access preferences page;
+|System|
+:Load current preferences;
+|User|
+:View preference categories;
+partition "Preference Categories" {
+  :Search preferences|
+  note right
+    - Resource types
+    - Databases
+    - Language
+    - Results per page
+  end note
+  :Notification preferences|
+  note right
+    - Email notifications
+    - Search alerts
+    - Feedback requests
+  end note
+  :Privacy settings|
+  note right
+    - Profile visibility
+    - Interaction tracking
+    - Personalization
+  end note
+  :UI preferences|
+  note right
+    - Theme
+    - Display language
+  end note
+}
+:Modify preferences;
+|System|
+:Validate preference values;
+if (Valid preferences?) then (no)
+  |User|
+  :See validation errors;
+  stop
+endif
+:Update preferences in database;
+:Apply immediate UI changes;
+:Track preference change;
+|User|
+:See success message;
+stop
+@enduml
+
+@startuml BookmarkManagement
+title Bookmark System Workflow
+|User|
+start
+:View search result;
+:Click bookmark toggle;
+|System|
+:Check if result already bookmarked;
+if (Already bookmarked?) then (yes)
+  :Remove from bookmarks;
+  :Update bookmark count (-1);
+  |User|
+  :See "Removed" message;
+else (no)
+  |System|
+  :Add to bookmarks;
+  :Store bookmark metadata;
+  note right
+    - Result ID
+    - Title
+    - Type
+    - Bookmark timestamp
+    - Tags (if any)
+  end note
+  :Update bookmark count (+1);
+  |User|
+  :See "Added" message;
+endif
+|System|
+:Track bookmark interaction;
+|User|
+:See updated bookmark icon;
+stop
+@enduml
+
+@startuml ErrorHandlingRecovery
+title Error Handling & Recovery Process
+start
+:System component encounters error;
+:Log error details;
+:Determine error severity;
+if (Critical error?) then (yes)
+  partition "Critical Error Handling" {
+    :Activate circuit breaker;
+    :Switch to fallback mode;
+    :Notify administrators;
+    :Return graceful error response;
+  }
+elseif (Recoverable error?) then (yes)
+  partition "Recovery Attempt" {
+    :Retry operation (max 3 times);
+    if (Retry successful?) then (yes)
+      :Log recovery success;
+      :Continue normal operation;
+    else (no)
+      :Switch to degraded mode;
+      :Log persistent failure;
+    endif
+  }
+else (minor)
+  partition "Minor Error Handling" {
+    :Log warning;
+    :Continue with default values;
+    :Monitor for error patterns;
+  }
+endif
+:Update system health metrics;
+:Return appropriate response;
+stop
+@enduml
+
+' ==============================================================================
+' ADVANCED FEATURES & PERSONALIZATION WORKFLOWS
+' ==============================================================================
+
+@startuml PersonalizationEngine
+title Personalization Engine Workflow
+|User|
+start
+:Submit search request;
+|System|
+:Receive user search request;
+:Get user interaction history;
+if (User has history?) then (no)
+  :Use default preferences;
+  :Apply anonymous personalization;
+else (yes)
+  partition "Behavior Analysis" {
+    :Analyze search patterns;
+    :Extract preferred resource types;
+    :Identify favorite academic fields;
+    :Calculate author preferences;
+    :Determine complexity preferences;
+    :Analyze temporal patterns;
+  }
+  partition "Preference Generation" {
+    :Generate type preference weights;
+    :Calculate field affinity scores;
+    :Compute recency preferences;
+    :Generate query similarity boosts;
+    :Create personalization profile;
+  }
+endif
+:Apply personalization to ranking;
+:Adjust result ordering;
+:Store updated preferences;
+:Track personalization effectiveness;
+|User|
+:Receive personalized results;
+stop
+@enduml
+
+@startuml MultilingualSupport
+title Multilingual Support Process
+|User|
+start
+:Submit query in any language;
+|System|
+:Receive user query;
+:Detect query language using LLM;
+if (Language is English?) then (yes)
+  :Proceed with original query;
+else (no)
+  partition "Translation Process" {
+    :Correct spelling in original language;
+    :Translate to English using LLM;
+    :Preserve important original terms;
+    :Handle cultural context;
+    :Generate alternative romanizations;
+  }
+endif
+:Extract keywords from both languages;
+:Build enhanced search query;
+:Execute multilingual search;
+|User|
+:Receive results with language context;
+stop
+@enduml
+
+@startuml RealTimeSimilarity
+title Real-time Similarity Calculation
+start
+:Receive similarity request;
+:Check embedding cache;
+fork
+  partition "Query Processing" {
+    :Build enhanced query text;
+    if (Query cached?) then (yes)
+      :Retrieve cached embedding;
+    else (no)
+      :Generate query embedding;
+      :Cache for future use;
+    endif
+  }
+fork again
+  partition "Document Processing" {
+    while (More documents?) is (yes)
+      :Extract document text;
+      if (Document cached?) then (yes)
+        :Retrieve cached embedding;
+      else (no)
+        :Generate document embedding;
+        :Cache for future use;
+      endif
+    endwhile (no)
+  }
+end fork
+:Calculate cosine similarities;
+:Normalize similarity scores;
+:Return similarity rankings;
+stop
+@enduml
+
+@startuml KnowledgeGraphConstruction
+title Knowledge Graph Construction Workflow
+start
+:Receive search results;
+:Initialize NetworkX graph;
+partition "Node Creation" {
+  while (More results?) is (yes)
+    :Identify result type;
+    if (Paper/Article?) then (yes)
+      :Add paper node;
+      :Extract authors;
+      :Extract keywords;
+      :Extract citations;
+    elseif (Expert?) then (yes)
+      :Add expert node;
+      :Extract expertise areas;
+      :Extract affiliations;
+    elseif (Equipment?) then (yes)
+      :Add equipment node;
+      :Extract specifications;
+      :Extract location;
+    endif
+  endwhile (no)
+}
+partition "Edge Creation" {
+  :Create authorship edges;
+  :Create citation edges;
+  :Create collaboration edges;
+  :Create keyword associations;
+  :Create institutional affiliations;
+}
+:Calculate PageRank scores;
+:Compute authority metrics;
+:Generate connection strengths;
+:Return graph features;
+stop
+@enduml
+
+' ==============================================================================
+' ANALYTICS & REPORTING WORKFLOWS
+' ==============================================================================
+
+@startuml UsageAnalyticsCollection
+title Usage Analytics Collection Workflow
+start
+:User performs system action;
+:Capture action metadata;
+note right
+  - User ID
+  - Action type
+  - Timestamp
+  - Session info
+  - Performance metrics
+end note
+partition "Data Categorization" {
+  if (Search action?) then (yes)
+    :Track search patterns;
+    :Record query complexity;
+    :Monitor result interactions;
+  elseif (Feedback action?) then (yes)
+    :Track rating patterns;
+    :Record satisfaction metrics;
+    :Monitor engagement levels;
+  elseif (Navigation action?) then (yes)
+    :Track page flows;
+    :Record time spent;
+    :Monitor feature usage;
+  endif
+}
+:Store in analytics database;
+:Update real-time dashboards;
+:Trigger automated reports;
+stop
+@enduml
+
+@startuml FeedbackAnalytics
+title Feedback Analytics Process
+start
+:Collect all user feedback;
+:Filter by time period;
+:Group by analysis dimensions;
+partition "Statistical Analysis" {
+  :Calculate average ratings;
+  :Compute satisfaction trends;
+  :Identify rating patterns;
+  :Analyze comment sentiment;
+  :Track improvement metrics;
+}
+partition "Insight Generation" {
+  :Identify problem areas;
+  :Detect quality issues;
+  :Find successful patterns;
+  :Generate recommendations;
+  :Create improvement priorities;
+}
+:Generate analytics reports;
+:Update performance dashboards;
+:Notify system administrators;
+stop
+@enduml
+
+@startuml PerformanceMonitoring
+title Performance Monitoring Workflow
+start
+:Start performance monitoring;
+:Initialize metric collectors;
+fork
+  partition "Response Time Monitoring" {
+    :Track search query times;
+    :Monitor LLM response times;
+    :Measure database query times;
+    :Record embedding calculation times;
+  }
+fork again
+  partition "Resource Monitoring" {
+    :Monitor CPU usage;
+    :Track memory consumption;
+    :Monitor disk I/O;
+    :Check network latency;
+  }
+fork again
+  partition "System Health Monitoring" {
+    :Check component availability;
+    :Monitor error rates;
+    :Track cache hit ratios;
+    :Monitor queue depths;
+  }
+end fork
+:Aggregate performance metrics;
+:Compare against thresholds;
+if (Performance degraded?) then (yes)
+  :Trigger alerts;
+  :Log performance issues;
+  :Activate auto-scaling;
+else (no)
+  :Continue normal monitoring;
+endif
+:Update performance dashboards;
+:Generate periodic reports;
+stop
+@enduml
+
+' ==============================================================================
+' INTEGRATION & API WORKFLOWS
+' ==============================================================================
+
+@startuml ExternalServiceIntegration
+title External Service Integration Workflow
+start
+:Receive API request;
+:Validate request parameters;
+:Authenticate service call;
+if (Valid authentication?) then (no)
+  :Return authentication error;
+  stop
+endif
+partition "Service Selection" {
+  if (LLM service?) then (yes)
+    partition "Gemini API Integration" {
+      :Prepare Gemini request;
+      :Apply safety settings;
+      :Send to Google AI;
+      :Handle response/errors;
+      :Parse structured output;
+    }
+  elseif (OAuth service?) then (yes)
+    partition "OAuth Provider Integration" {
+      :Generate authorization URL;
+      :Handle callback;
+      :Exchange code for token;
+      :Fetch user profile;
+      :Map to internal format;
+    }
+  elseif (Email service?) then (yes)
+    partition "SMTP Integration" {
+      :Compose email message;
+      :Configure SMTP settings;
+      :Send email;
+      :Handle delivery status;
+      :Log email activity;
+    }
+  endif
+}
+:Process service response;
+:Transform to internal format;
+:Return processed result;
+stop
+@enduml
+
+@startuml APIRequestProcessing
+title API Request Processing Workflow
+start
+:Receive HTTP request;
+:Parse request headers and body;
+:Validate request format;
+if (Valid format?) then (no)
+  :Return 400 Bad Request;
+  stop
+endif
+:Check rate limiting;
+if (Rate limit exceeded?) then (yes)
+  :Return 429 Too Many Requests;
+  stop
+endif
+:Authenticate request;
+if (Authentication required?) then (yes)
+  if (Valid authentication?) then (no)
+    :Return 401 Unauthorized;
+    stop
+  endif
+endif
+:Route to appropriate handler;
+:Process business logic;
+:Handle any errors gracefully;
+:Format response;
+:Add response headers;
+:Return HTTP response;
+stop
+@enduml
+
+@startuml FundingIntegration
+title Funding Integration Workflow
+start
+:User searches for funding opportunities;
+:Query funding database;
+:Search research projects;
+:Search institutions;
+:Search funding records;
+partition "Data Processing" {
+  :Fix broken institution IDs;
+  :Validate funding amounts;
+  :Parse deadline dates;
+  :Extract eligibility criteria;
+  :Categorize funding types;
+}
+partition "Matching & Ranking" {
+  :Match with user research areas;
+  :Calculate eligibility scores;
+  :Apply deadline urgency;
+  :Rank by relevance;
+  :Add application complexity;
+}
+:Format funding recommendations;
+:Add application guidelines;
+:Include contact information;
+:Return funding opportunities;
+stop
+@enduml
+
+' ==============================================================================
+' DATA PROCESSING & MAINTENANCE WORKFLOWS
+' ==============================================================================
+
+@startuml BatchProcessing
+title Batch Processing Workflow
+start
+:Initialize batch processor;
+:Load processing configuration;
+:Check system resources;
+partition "Batch Job Selection" {
+  if (Index rebuild?) then (yes)
+    :Process document embeddings;
+    :Rebuild FAISS index;
+    :Update cache systems;
+  elseif (Model retraining?) then (yes)
+    :Collect training data;
+    :Extract features;
+    :Train LTR model;
+    :Validate performance;
+  elseif (Data cleanup?) then (yes)
+    :Clean old sessions;
+    :Archive old feedback;
+    :Optimize database indexes;
+  endif
+}
+:Monitor progress;
+:Handle interruptions gracefully;
+:Log batch completion;
+:Update system status;
+:Schedule next batch;
+stop
+@enduml
+
+@startuml DatabaseMigration
+title Database Migration & Synchronization
+start
+:Initialize migration process;
+:Validate source and target schemas;
+:Create migration plan;
+partition "Data Migration" {
+  :Export source data;
+  :Transform data format;
+  :Validate data integrity;
+  :Import to target database;
+  :Verify migration success;
+}
+partition "Index Migration" {
+  :Rebuild search indexes;
+  :Update FAISS embeddings;
+  :Refresh cache systems;
+  :Validate index integrity;
+}
+:Test system functionality;
+:Switch to new database;
+:Monitor for issues;
+:Archive old database;
+stop
+@enduml
+
+@startuml CacheManagement
+title Cache Management Process
+start
+:Monitor cache performance;
+:Check cache hit rates;
+:Analyze cache usage patterns;
+if (Cache performance degraded?) then (yes)
+  partition "Cache Optimization" {
+    :Identify cold cache entries;
+    :Remove expired entries;
+    :Compact cache storage;
+    :Redistribute hot entries;
+    :Adjust cache sizes;
+  }
+elseif (Cache warming needed?) then (yes)
+  partition "Cache Warming" {
+    :Identify popular queries;
+    :Pre-generate embeddings;
+    :Pre-calculate similarities;
+    :Load frequent documents;
+    :Update cache statistics;
+  }
+else (maintenance)
+  partition "Routine Maintenance" {
+    :Clean expired entries;
+    :Update cache metrics;
+    :Backup cache data;
+    :Verify cache integrity;
+  }
+endif
+:Update cache configuration;
+:Monitor cache health;
+:Generate cache reports;
+stop
+@enduml
+
+@startuml ModelDeployment
+title Model Training & Deployment Process
+start
+:Collect sufficient training data;
+:Validate data quality;
+if (Data quality sufficient?) then (no)
+  :Request more feedback;
+  :Improve data collection;
+  stop
+endif
+partition "Model Training" {
+  :Prepare training datasets;
+  :Extract comprehensive features;
+  :Split train/validation sets;
+  :Train XGBoost model;
+  :Evaluate model performance;
+  :Calculate feature importance;
+}
+if (Model performance acceptable?) then (no)
+  :Adjust hyperparameters;
+  :Engineer new features;
+  :Retry training;
+else (yes)
+  partition "Model Deployment" {
+    :Save trained model;
+    :Create model backup;
+    :Update model metadata;
+    :Deploy to production;
+    :Monitor deployment;
+  }
+endif
+:Update model statistics;
+:Schedule next training;
+stop
+@enduml
+
+@startuml ContinuousLearning
+title Continuous Learning Workflow
+start
+:Monitor user feedback continuously;
+:Accumulate feedback data;
+if (Sufficient new feedback?) then (yes)
+  :Extract learning signals;
+  :Update training dataset;
+  :Retrain ranking models;
+  :Evaluate improvement;
+  if (Improvement detected?) then (yes)
+    :Deploy updated model;
+    :Track performance gains;
+  else (no)
+    :Keep existing model;
+    :Log training attempt;
+  endif
+else (no)
+  :Continue monitoring;
+endif
+:Analyze learning patterns;
+:Identify improvement opportunities;
+:Schedule next learning cycle;
+stop
+@enduml
+
+note bottom
+  APOSSS Activity Diagrams - Part 2
+  Advanced Features, Analytics, Integration & Data Processing
+  Total: 42 comprehensive activity diagrams covering all system workflows
+end note
+
+@enduml 

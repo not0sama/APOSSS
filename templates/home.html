@@ -1,0 +1,2793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libyan Open Science - Research Repository</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@heroicons/v2/24/outline/esm/index.js"></script>
+    <style>
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #4a5568;
+            --container-bg: rgba(255, 255, 255, 0.7);
+            --container-border: rgba(255, 255, 255, 0.3);
+            --input-bg: #ffffff;
+            --input-border: #e2e8f0;
+            --button-bg: rgba(255, 255, 255, 0.9);
+            --button-hover: #f1f3f4;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            
+            /* Aurora colors for light theme - original values */
+            --aurora-white: rgba(255, 255, 255, 1);
+            --aurora-transparent: rgba(255, 255, 255, 0);
+            --aurora-blue-500: #3b82f6;
+            --aurora-indigo-300: #a5b4fc;
+            --aurora-blue-300: #93c5fd;
+            --aurora-violet-200: #ddd6fe;
+            --aurora-blue-400: #60a5fa;
+            --aurora-purple-400: #c084fc;
+            --aurora-cyan-300: #7dd3fc;
+
+            --search-btn-bg: #f1f3f4;
+            --search-btn-hover-bg: #e9ecef;
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #F8F9FA;
+            --text-secondary: #a0aec0;
+            --container-bg: rgba(18, 18, 18, 0.7);
+            --container-border: rgba(255, 255, 255, 0.1);
+            --input-bg: #1a1a1a;
+            --input-border: #2d3748;
+            --button-bg: rgba(18, 18, 18, 0.9);
+            --button-hover: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --glass-bg: rgba(18, 18, 18, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            
+            /* Aurora colors for dark theme - original values */
+            --aurora-white: rgba(0, 0, 0, 1);
+            --aurora-transparent: rgba(0, 0, 0, 0);
+            --aurora-blue-500: #3b82f6;
+            --aurora-indigo-300: #a5b4fc;
+            --aurora-blue-300: #93c5fd;
+            --aurora-violet-200: #ddd6fe;
+            --aurora-blue-400: #60a5fa;
+            --aurora-purple-400: #c084fc;
+            --aurora-cyan-300: #7dd3fc;
+
+            --search-btn-bg: #2d3748;
+            --search-btn-hover-bg: #374151;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 17px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            transition: background 0.3s ease;
+        }
+        
+        /* Aurora Background */
+        .aurora-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .aurora-container {
+            position: absolute;
+            inset: -10px;
+            pointer-events: none;
+            will-change: transform;
+            
+            --aurora-stripes: repeating-linear-gradient(100deg, var(--aurora-white) 0%, var(--aurora-white) 7%, var(--aurora-transparent) 10%, var(--aurora-transparent) 12%, var(--aurora-white) 16%);
+            --aurora-gradient: repeating-linear-gradient(100deg, var(--aurora-blue-500) 10%, var(--aurora-indigo-300) 15%, var(--aurora-blue-300) 20%, var(--aurora-violet-200) 25%, var(--aurora-blue-400) 30%);
+            
+            background-image: var(--aurora-stripes), var(--aurora-gradient);
+            background-size: 300%, 200%;
+            background-position: 50% 50%;
+            filter: blur(10px) invert(1);
+            opacity: 0.5;
+
+            mask-image: radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%);
+            animation: aurora-pan 60s linear infinite;
+        }
+        
+        .aurora-container::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: var(--aurora-stripes), var(--aurora-gradient);
+            background-size: 200%, 100%;
+            background-attachment: fixed;
+            mix-blend-mode: difference;
+        }
+        
+        [data-theme="dark"] .aurora-container {
+            filter: blur(10px) invert(0);
+        }
+
+        @keyframes aurora-pan {
+            from { background-position: 0% 50%, 0% 50%; }
+            to { background-position: 200% 50%, 200% 50%; }
+        }
+
+        /* Enhanced glass effect with aurora backdrop */
+        .search-container {
+            backdrop-filter: blur(20px) saturate(200%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 
+                0 8px 32px var(--shadow-color),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 60px rgba(147, 197, 253, 0.15);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+        }
+
+        [data-theme="dark"] .search-container {
+            background: rgba(18, 18, 18, 0.8);
+            box-shadow: 
+                0 8px 32px var(--shadow-color),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 60px rgba(99, 168, 255, 0.15);
+        }
+        
+        .filter-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px) saturate(180%);
+            background: linear-gradient(
+                135deg,
+                var(--glass-bg) 0%,
+                var(--glass-bg-strong) 100%
+            );
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--glass-highlight);
+            opacity: 0.5;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(
+                135deg,
+                var(--glass-bg-strong) 0%,
+                var(--glass-highlight) 50%,
+                var(--glass-bg-strong) 100%
+            );
+            box-shadow: 
+                0 15px 35px var(--glass-shadow),
+                0 6px 15px var(--glass-shadow),
+                inset 0 2px 0 var(--glass-highlight);
+            border-color: var(--glass-border-strong);
+        }
+        
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        }
+        
+        .search-btn {
+            background: var(--search-btn-bg);
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            background: var(--search-btn-hover-bg);
+        }
+
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+        }
+
+        /* Language toggle as icon button */
+        .language-toggle-icon {
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .language-toggle-icon:hover {
+            color: #3b82f6;
+            background: var(--button-hover);
+        }
+
+        /* The switch - the box around the slider */
+        .switch {
+          display: block;
+          --width-of-switch: 3.5em;
+          --height-of-switch: 2em;
+          /* size of sliding icon -- sun and moon */
+          --size-of-icon: 1.4em;
+          /* it is like a inline-padding of switch */
+          --slider-offset: 0.3em;
+          position: relative;
+          width: var(--width-of-switch);
+          height: var(--height-of-switch);
+        }
+
+        /* Hide default HTML checkbox */
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        /* The slider */
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #f4f4f5;
+          transition: .4s;
+          border-radius: 30px;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: var(--size-of-icon,1.4em);
+          width: var(--size-of-icon,1.4em);
+          border-radius: 20px;
+          left: var(--slider-offset,0.3em);
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(40deg,#ff0080,#ff8c00 70%);
+          transition: .4s;
+        }
+
+        input:checked + .slider {
+          background-color: #303136;
+        }
+
+        input:checked + .slider:before {
+          left: calc(100% - (var(--size-of-icon,1.4em) + var(--slider-offset,0.3em)));
+          background: #303136;
+          /* change the value of second inset in box-shadow to change the angle and direction of the moon  */
+          box-shadow: inset -3px -2px 5px -2px #8983f7, inset -10px -4px 0 0 #a3dafb;
+        }
+
+        /* Input styles */
+        input, textarea, select {
+            background: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Search input and button positioning */
+        .search-input-ltr {
+            padding-right: 4rem !important;
+            padding-left: 1.5rem !important;
+        }
+
+        .search-input-rtl {
+            padding-left: 4rem !important;
+            padding-right: 1.5rem !important;
+        }
+
+        .search-btn-ltr {
+            right: 0.5rem;
+            left: auto;
+        }
+
+        .search-btn-rtl {
+            left: 0.5rem;
+            right: auto;
+        }
+
+        /* Text color overrides */
+        .text-themed-primary { color: var(--text-primary) !important; }
+        .text-themed-secondary { color: var(--text-secondary) !important; }
+        .bg-themed-button { background: var(--button-bg) !important; }
+        .hover-themed-button:hover { background: var(--button-hover) !important; }
+
+        /* Interactive Search Button Styles */
+        .interactive-search-btn {
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            color: var(--text-primary);
+            transition: all 0.3s ease-in-out;
+            backdrop-filter: blur(10px) saturate(180%);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .interactive-search-btn:hover {
+            background: var(--button-hover);
+            border-color: #3b82f6;
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        /* Contract animation classes */
+        .interactive-search-btn.contracting {
+            width: 48px !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn.contracting .search-hover-content {
+            opacity: 0 !important;
+            transform: translateX(12px) !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn.contracting .search-background {
+            width: 0 !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn.loading {
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+
+        .interactive-search-btn.loading > *:not(#searchSpinner) {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .interactive-search-btn.loading #searchSpinner {
+            opacity: 1 !important;
+            z-index: 30;
+            transition: opacity 0.2s ease-in-out 0.1s; /* Fade in slightly after button fades out */
+        }
+
+        .interactive-search-btn .search-icon-container {
+            color: var(--text-secondary);
+            transition: all 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .interactive-search-btn .search-hover-content {
+            color: white !important;
+            z-index: 20;
+        }
+
+        .interactive-search-btn .search-hover-content svg {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn .search-hover-content span {
+            color: white !important;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .interactive-search-btn:hover .search-hover-content svg {
+            transform: scale(1.2);
+        }
+
+        .interactive-search-btn:hover .search-hover-content span {
+            transform: scale(1.1);
+            font-weight: 600;
+        }
+
+        .interactive-search-btn .search-background {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #3b82f6 100%);
+        }
+
+        [data-theme="dark"] .interactive-search-btn .search-background {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 350px;
+            backdrop-filter: blur(32px) saturate(180%) brightness(110%);
+            background: linear-gradient(
+                180deg,
+                var(--glass-bg-strong) 0%,
+                var(--glass-bg) 30%,
+                var(--glass-bg) 70%,
+                var(--glass-bg-strong) 100%
+            );
+            border-right: 2px solid transparent;
+            border-image: linear-gradient(
+                180deg,
+                var(--glass-border-strong),
+                var(--glass-border),
+                var(--glass-border-strong)
+            ) 1;
+            box-shadow: 
+                15px 0 35px var(--glass-shadow),
+                5px 0 15px var(--glass-shadow),
+                inset -2px 0 0 var(--glass-highlight),
+                inset 1px 0 0 var(--glass-border);
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 30;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: var(--glass-highlight);
+            opacity: 0.6;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        /* Main content wrapper that moves with sidebar */
+        .main-wrapper {
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 0;
+        }
+
+        .main-wrapper.sidebar-open {
+            margin-left: 350px;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+
+        .sidebar-toggle:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+
+        .sidebar-toggle.open {
+            left: 370px;
+        }
+
+        .sidebar-toggle svg {
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-toggle.open svg {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-content {
+            padding: 2rem 1.5rem;
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-item {
+            backdrop-filter: blur(8px) saturate(180%);
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            background: var(--button-hover);
+        }
+
+        .sidebar-item-content {
+            padding-right: 2rem; /* Space for delete button */
+        }
+
+        .sidebar-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            line-height: 1.3;
+            word-wrap: break-word;
+        }
+
+        .sidebar-item-meta {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .sidebar-delete-btn {
+            position: absolute;
+            top: 50%;
+            right: 0.75rem;
+            transform: translateY(-50%);
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            border: none;
+            background: var(--text-secondary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+        }
+
+        .sidebar-delete-btn:hover {
+            background: #ef4444;
+            opacity: 1;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .sidebar-delete-btn svg {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
+
+        .sidebar-empty {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 2rem 1rem;
+        }
+
+        /* Sidebar tabs */
+        .sidebar-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--container-border);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: #3b82f6;
+            background: var(--button-hover);
+        }
+
+        .sidebar-tab:hover:not(.active) {
+            color: var(--text-primary);
+            background: var(--button-bg);
+        }
+
+        .sidebar-tab-content {
+            display: none;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .sidebar-tab-content.active {
+            display: block;
+        }
+
+        /* Custom scrollbar for sidebar content */
+        .sidebar-tab-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-tab-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-tab-content::-webkit-scrollbar-thumb {
+            background: var(--container-border);
+            border-radius: 3px;
+        }
+
+        .sidebar-tab-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* User Menu Dropdown */
+        .user-menu {
+            position: relative;
+            z-index: 9999;
+        }
+
+        .user-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 12rem;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 0;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+            position: relative;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        .user-menu-item:hover {
+            background: var(--button-hover);
+            color: #3b82f6;
+        }
+
+        .user-menu-separator {
+            height: 1px;
+            background: var(--container-border);
+            margin: 0.5rem 0;
+        }
+        
+        .LDR {
+            --uib-size: 40px;
+            --uib-color: #3b82f6;
+            --uib-speed: 1.5s;
+            --uib-dot-size: calc(var(--uib-size) * 0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: calc(var(--uib-size) * 0.64);
+            width: calc(var(--uib-size) * 0.64);
+        }
+
+        /* Theme-specific loader colors */
+        [data-theme="dark"] .LDR {
+            --uib-color: #60a5fa;
+        }
+
+        @keyframes jump {
+            0%,
+            100% {
+            transform: translateY(120%);
+            }
+
+            50% {
+            transform: translateY(-120%);
+            }
+        }
+
+        .dot {
+            --uib-d1: -0.48;
+            --uib-d2: -0.4;
+            --uib-d3: -0.32;
+            --uib-d4: -0.24;
+            --uib-d5: -0.16;
+            --uib-d6: -0.08;
+            --uib-d7: -0;
+            position: absolute;
+            bottom: calc(var(--uib-bottom) + var(--uib-dot-size) / 2);
+            right: calc(var(--uib-right) + var(--uib-dot-size) / 2);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: var(--uib-dot-size);
+            width: var(--uib-dot-size);
+            animation: jump var(--uib-speed) ease-in-out infinite;
+            opacity: var(--uib-scale);
+            will-change: transform;
+            backface-visibility: hidden;
+        }
+
+        .dot::before {
+            content: '';
+            height: 100%;
+            width: 100%;
+            background-color: var(--uib-color);
+            border-radius: 50%;
+            transform: scale(var(--uib-scale));
+            transition: background-color 0.3s ease;
+        }
+
+        .dot:nth-child(1) {
+            --uib-bottom: 24%;
+            --uib-right: -35%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d1));
+        }
+        .dot:nth-child(2) {
+            --uib-bottom: 16%;
+            --uib-right: -6%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d2));
+        }
+        .dot:nth-child(3) {
+            --uib-bottom: 8%;
+            --uib-right: 23%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d3));
+        }
+        .dot:nth-child(4) {
+            --uib-bottom: -1%;
+            --uib-right: 51%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d4));
+        }
+        .dot:nth-child(5) {
+            --uib-bottom: 38%;
+            --uib-right: -17.5%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d2));
+        }
+        .dot:nth-child(6) {
+            --uib-bottom: 30%;
+            --uib-right: 10%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d3));
+        }
+        .dot:nth-child(7) {
+            --uib-bottom: 22%;
+            --uib-right: 39%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d4));
+        }
+        .dot:nth-child(8) {
+            --uib-bottom: 14%;
+            --uib-right: 67%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d5));
+        }
+        .dot:nth-child(9) {
+            --uib-bottom: 53%;
+            --uib-right: -0.8%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d3));
+        }
+        .dot:nth-child(10) {
+            --uib-bottom: 44.5%;
+            --uib-right: 27%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d4));
+        }
+        .dot:nth-child(11) {
+            --uib-bottom: 36%;
+            --uib-right: 55.7%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d5));
+        }
+        .dot:nth-child(12) {
+            --uib-bottom: 28.7%;
+            --uib-right: 84.3%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d6));
+        }
+        .dot:nth-child(13) {
+            --uib-bottom: 66.8%;
+            --uib-right: 15%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d4));
+        }
+        .dot:nth-child(14) {
+            --uib-bottom: 58.8%;
+            --uib-right: 43%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d5));
+        }
+        .dot:nth-child(15) {
+            --uib-bottom: 50%;
+            --uib-right: 72%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d6));
+        }
+        .dot:nth-child(16) {
+            --uib-bottom: 42%;
+            --uib-right: 100%;
+            animation-delay: calc(var(--uib-speed) * var(--uib-d7));
+        }
+
+        .dot:nth-child(3) {
+            --uib-scale: 0.98;
+        }
+        .dot:nth-child(2),
+        .dot:nth-child(8) {
+            --uib-scale: 0.96;
+        }
+        .dot:nth-child(1),
+        .dot:nth-child(7) {
+            --uib-scale: 0.94;
+        }
+        .dot:nth-child(6),
+        .dot:nth-child(12) {
+            --uib-scale: 0.92;
+        }
+        .dot:nth-child(5),
+        .dot:nth-child(11) {
+            --uib-scale: 0.9;
+        }
+        .dot:nth-child(10),
+        .dot:nth-child(16) {
+            --uib-scale: 0.88;
+        }
+        .dot:nth-child(9),
+        .dot:nth-child(15) {
+            --uib-scale: 0.86;
+        }
+        .dot:nth-child(14) {
+            --uib-scale: 0.84;
+        }
+        .dot:nth-child(13) {
+            --uib-scale: 0.82;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 300px;
+            }
+            
+            .sidebar-toggle.open {
+                left: 320px;
+            }
+
+            .main-wrapper.sidebar-open {
+                margin-left: 300px;
+            }
+        }
+
+        /* Enhance content visibility over aurora */
+        header, main, footer {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative">
+    <!-- Aurora Background -->
+    <div class="aurora-background">
+        <div class="aurora-container"></div>
+    </div>
+    
+    <!-- Header -->
+    <header class="relative z-10 bg-transparent">
+        <div class="container mx-auto px-6 py-6">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <!-- Theme-aware SVG Logo with PNG fallback -->
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <img 
+                            id="headerLogo"
+                            src="/static/images/logo-light.svg" 
+                            alt="Libyan Open Science Logo"
+                            class="w-full h-full object-contain"
+                            onerror="this.onerror=null; this.src='/static/images/logo.png';"
+                        >
+                    </div>
+                    <div>
+                        <h1 class="text-themed-primary text-xl font-bold" data-translate="site-title">Libyan Open Science</h1>
+                        <p class="text-themed-secondary text-sm" data-translate="site-subtitle">Advanced Research Search</p>
+                    </div>
+                </div>
+                
+                <!-- Authentication Buttons -->
+                <div class="flex items-center space-x-4">
+                    <!-- Language Toggle Icon -->
+                    <span id="languageToggle" class="material-symbols-outlined language-toggle-icon" title="Switch Language">globe</span>
+                    
+                    <!-- Theme Toggle Switch -->
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggleInput">
+                        <span class="slider"></span>
+                    </label>
+                    
+                    <!-- User Info (when authenticated) -->
+                    <div id="userInfo" class="user-menu" style="display: none;">
+                        <div id="userProfile">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Login/Signup Buttons (shown when not authenticated) -->
+                    <div id="authButtons" class="flex space-x-3">
+                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2" data-translate="sign-in">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors font-medium shadow-lg" data-translate="sign-up">
+                            Sign Up
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Toggle Button -->
+    <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-themed-primary">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+                    <div class="sidebar-content">
+            <!-- Sidebar Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-themed-primary" data-translate="quick-access">Quick Access</h2>
+                <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-themed-primary">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Sidebar Tabs -->
+            <div class="sidebar-tabs">
+                <div class="sidebar-tab active" onclick="switchSidebarTab('history')" id="historyTab">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 inline mr-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span data-translate="history">History</span>
+                </div>
+                <div class="sidebar-tab" onclick="switchSidebarTab('bookmarks')" id="bookmarksTab">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 inline mr-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                    </svg>
+                    <span data-translate="bookmarks">Bookmarks</span>
+                </div>
+            </div>
+
+            <!-- Tab Contents -->
+            <!-- Search History Tab -->
+            <div class="sidebar-tab-content active" id="historyContent">
+                <div id="sidebarHistory">
+                    <div class="sidebar-empty">No search history yet</div>
+                </div>
+            </div>
+
+            <!-- Bookmarks Tab -->
+            <div class="sidebar-tab-content" id="bookmarksContent">
+                <div id="sidebarBookmarks">
+                    <div class="sidebar-empty">No bookmarks yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper" id="mainWrapper">
+        <!-- Main Content -->
+        <main class="relative z-1 flex-1 flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-4xl">
+            <!-- Hero Section -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl md:text-7xl font-bold text-themed-primary mb-6 leading-tight">
+                    <span data-translate="main-title">A Free, Open-source</span><br>
+                    <span class="text-blue-600" data-translate="main-subtitle">Research repository</span>
+                </h1>
+                <p class="text-xl text-themed-secondary mb-8 max-w-2xl mx-auto" data-translate="main-description">
+                    AI-Powered Search • Powered by Experts
+                </p>
+            </div>
+
+            <!-- Search Container -->
+            <div class="search-container rounded-2xl p-8 shadow-2xl">
+                <!-- Search Input -->
+                <div class="relative mb-6">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search for researches, experts, and more"
+                            data-translate="search-placeholder"
+                            class="w-full py-4 text-lg rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all search-input-ltr"
+                        >
+                        <div id="searchBtn" class="absolute top-1/2 -translate-y-1/2 search-btn-ltr">
+                            <!-- Interactive search button will be created here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button 
+                        class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
+                        data-filter="experts"
+                        onmousedown="onFilterMouseDown(this)"
+                        onmouseup="onFilterMouseUp(this)"
+                        onmouseleave="onFilterMouseLeave(this)"
+                        ontouchstart="onFilterMouseDown(this)"
+                        ontouchend="onFilterMouseUp(this)"
+                    >
+                        <span class="material-symbols-outlined">how_to_reg</span>
+                        <span data-translate="experts">Experts</span>
+                    </button>
+                    
+                    <button 
+                        class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
+                        data-filter="labs"
+                        onmousedown="onFilterMouseDown(this)"
+                        onmouseup="onFilterMouseUp(this)"
+                        onmouseleave="onFilterMouseLeave(this)"
+                        ontouchstart="onFilterMouseDown(this)"
+                        ontouchend="onFilterMouseUp(this)"
+                    >
+                        <span class="material-symbols-outlined">biotech</span>
+                        <span data-translate="labs">Labs</span>
+                    </button>
+                    
+                    <button 
+                        class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
+                        data-filter="library"
+                        onmousedown="onFilterMouseDown(this)"
+                        onmouseup="onFilterMouseUp(this)"
+                        onmouseleave="onFilterMouseLeave(this)"
+                        ontouchstart="onFilterMouseDown(this)"
+                        ontouchend="onFilterMouseUp(this)"
+                    >
+                        <span class="material-symbols-outlined">book_ribbon</span>
+                        <span data-translate="library">Library</span>
+                    </button>
+                    
+                    <button 
+                        class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
+                        data-filter="funding"
+                        onmousedown="onFilterMouseDown(this)"
+                        onmouseup="onFilterMouseUp(this)"
+                        onmouseleave="onFilterMouseLeave(this)"
+                        ontouchstart="onFilterMouseDown(this)"
+                        ontouchend="onFilterMouseUp(this)"
+                    >
+                        <span class="material-symbols-outlined">payments</span>
+                        <span data-translate="funding">Funding</span>
+                    </button>
+                    
+                    <button 
+                        class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
+                        data-filter="papers"
+                        onmousedown="onFilterMouseDown(this)"
+                        onmouseup="onFilterMouseUp(this)"
+                        onmouseleave="onFilterMouseLeave(this)"
+                        ontouchstart="onFilterMouseDown(this)"
+                        ontouchend="onFilterMouseUp(this)"
+                    >
+                        <span class="material-symbols-outlined">docs</span>
+                        <span data-translate="papers">Papers</span>
+                    </button>
+                </div>
+
+                <!-- Quick Search Examples -->
+                <div class="mt-8 text-center">
+                    <p class="text-themed-secondary text-sm mb-3" data-translate="try-searching">Try searching for:</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button onclick="setSearchQuery('reducing carbon emissions in cars')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="Carbon-emissions">
+                            Carbon emissions in cars
+                        </button>
+                        <button onclick="setSearchQuery('renewable energy storage solutions')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="renewable-energy">
+                            renewable energy storage
+                        </button>
+                        <button onclick="setSearchQuery('machine learning for medical diagnosis')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="medical-diagnosis">
+                            ML for medical diagnosis
+                        </button>
+                        <button onclick="setSearchQuery('IoT sensors for agriculture')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="IoT-agriculture">
+                            IoT in agriculture
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 text-center py-8">
+        <div class="container mx-auto px-6">
+            <p class="text-themed-secondary text-sm" data-translate="copyright">
+                © 2025 Libyan Open Science
+            </p>
+        </div>
+    </footer>
+    </div> <!-- End Main Content Wrapper -->
+
+    <script>
+        let selectedFilters = new Set();
+        
+        // Translations
+        const translations = {
+            en: {
+                // Header
+                'site-title': 'Libyan Open Science',
+                'site-subtitle': 'Advanced Research Search',
+                'sign-in': 'Sign In',
+                'sign-up': 'Sign Up',
+                
+                // Main content
+                'main-title': 'A Free, Open-source',
+                'main-subtitle': 'Research repository',
+                'main-description': 'AI-Powered Search • Powered by Experts',
+                'search-placeholder': 'Search for researches, experts, and more',
+                
+                // Filter buttons
+                'experts': 'Experts',
+                'labs': 'Labs',
+                'library': 'Library',
+                'funding': 'Funding',
+                'papers': 'Papers',
+                
+                // Quick search
+                'try-searching': 'Try searching for:',
+                'Carbon-emissions': 'Carbon emissions in cars',
+                'renewable-energy': 'renewable energy storage',
+                'medical-diagnosis': 'ML for medical diagnosis',
+                'IoT-agriculture': 'IoT in agriculture',
+                
+                // Sidebar
+                'quick-access': 'Quick Access',
+                'history': 'History',
+                'bookmarks': 'Bookmarks',
+                'no-history': 'No search history yet',
+                'no-bookmarks': 'No bookmarks yet',
+                'sign-in-bookmarks': 'Sign in to view bookmarks',
+                
+                // User menu
+                'profile': 'Profile',
+                'dashboard': 'Dashboard',
+                'developer-portal': 'Developer Portal',
+                'dark-mode': 'Dark Mode',
+                'light-mode': 'Light Mode',
+                'logout': 'Logout',
+                
+                // Footer
+                'copyright': '© 2025 Libyan Open Science'
+            },
+            ar: {
+                // Header
+                'site-title': 'منصة العلم المفتوح الليبية',
+                'site-subtitle': 'بحث علمي متقدم',
+                'sign-in': 'تسجيل الدخول',
+                'sign-up': 'إنشاء حساب',
+                
+                // Main content
+                'main-title': 'مستودع أبحاث مجاني',
+                'main-subtitle': 'ومفتوح المصدر',
+                'main-description': 'بحث مدعوم بالذكاء الاصطناعي • مدعوم بالخبراء',
+                'search-placeholder': 'ابحث عن الأبحاث والخبراء والمزيد',
+                
+                // Filter buttons
+                'experts': 'الخبراء',
+                'labs': 'المختبرات',
+                'library': 'المكتبة',
+                'funding': 'التمويل',
+                'papers': 'الأوراق البحثية',
+                
+                // Quick search
+                'try-searching': 'جرب البحث عن:',
+                'Carbon-emissions': 'إنبعاثات الكربون في السيارات',
+                'renewable-energy': 'تخزين الطاقة المتجددة',
+                'medical-diagnosis': 'تعلم الآلة للتشخيص الطبي',
+                'IoT-agriculture': 'الأجهزة الذكية للزراعة',
+                
+                // Sidebar
+                'quick-access': 'الوصول السريع',
+                'history': 'التاريخ',
+                'bookmarks': 'المفضلة',
+                'no-history': 'لا يوجد تاريخ بحث بعد',
+                'no-bookmarks': 'لا توجد مفضلة بعد',
+                'sign-in-bookmarks': 'قم بتسجيل الدخول لعرض المفضلة',
+                
+                // User menu
+                'profile': 'الملف الشخصي',
+                'dashboard': 'لوحة التحكم',
+                'developer-portal': 'بوابة المطور',
+                'dark-mode': 'الوضع المظلم',
+                'light-mode': 'الوضع المضيء',
+                'logout': 'تسجيل الخروج',
+                
+                // Footer
+                'copyright': '© 2025 العلوم المفتوحة الليبية'
+            }
+        };
+        
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.checked = theme === 'dark';
+            }
+
+            const headerLogo = document.getElementById('headerLogo');
+            
+            if (theme === 'dark') {
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-dark.svg';
+                }
+            } else {
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-light.svg';
+                }
+            }
+            
+            // Save to database if user is authenticated
+            saveThemePreference(theme);
+        }
+
+        async function saveThemePreference(theme) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            theme_preference: theme
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving theme preference:', error);
+                }
+            }
+        }
+
+        async function loadUserThemePreference() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('/api/user/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success && data.preferences.theme_preference) {
+                        setTheme(data.preferences.theme_preference);
+                    }
+                } catch (error) {
+                    console.error('Error loading theme preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('themeToggleInput').addEventListener('change', function(e) {
+            setTheme(e.target.checked ? 'dark' : 'light');
+        });
+        
+        // Language management
+        function initializeLanguage() {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+            loadUserLanguagePreference();
+        }
+
+        function setLanguage(language) {
+            document.documentElement.setAttribute('lang', language);
+            localStorage.setItem('language', language);
+            
+            const languageToggle = document.getElementById('languageToggle');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            if (language === 'ar') {
+                if (languageToggle) languageToggle.title = 'Switch to English';
+                
+                // Switch to RTL positioning for search elements
+                if (searchInput) {
+                    searchInput.classList.remove('search-input-ltr');
+                    searchInput.classList.add('search-input-rtl');
+                }
+                if (searchBtn) {
+                    searchBtn.classList.remove('search-btn-ltr');
+                    searchBtn.classList.add('search-btn-rtl');
+                }
+            } else {
+                if (languageToggle) languageToggle.title = 'التبديل إلى العربية';
+                
+                // Switch to LTR positioning for search elements
+                if (searchInput) {
+                    searchInput.classList.remove('search-input-rtl');
+                    searchInput.classList.add('search-input-ltr');
+                }
+                if (searchBtn) {
+                    searchBtn.classList.remove('search-btn-rtl');
+                    searchBtn.classList.add('search-btn-ltr');
+                }
+            }
+            
+            // Apply translations
+            applyTranslations(language);
+            
+            // Update interactive search button text
+            updateSearchButtonText(language);
+            
+            // Save to database if user is authenticated
+            saveLanguagePreference(language);
+        }
+
+        function applyTranslations(language) {
+            const trans = translations[language];
+            
+            // Apply translations to all elements with data-translate attribute
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (trans[key]) {
+                    if (element.tagName === 'INPUT' && element.type !== 'submit') {
+                        element.placeholder = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                    
+                    // Apply minimal RTL styling only for longer text content in Arabic
+                    if (language === 'ar' && trans[key].length > 10) {
+                        element.style.direction = 'rtl';
+                    } else {
+                        element.style.direction = '';
+                    }
+                }
+            });
+        }
+
+        function updateSearchButtonText(language) {
+            // Update the interactive search button text
+            const searchButton = document.getElementById('searchBtnElement');
+            if (searchButton) {
+                const hoverText = searchButton.querySelector('.search-hover-content span');
+                if (hoverText) {
+                    hoverText.textContent = language === 'ar' ? 'بحث' : 'Search';
+                }
+            }
+        }
+
+        async function saveLanguagePreference(language) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            display_language: language
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving language preference:', error);
+                }
+            }
+        }
+
+        async function loadUserLanguagePreference() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('/api/user/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success && data.preferences.ui_preferences && data.preferences.ui_preferences.display_language) {
+                        setLanguage(data.preferences.ui_preferences.display_language);
+                    }
+                } catch (error) {
+                    console.error('Error loading language preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const newLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            setLanguage(newLanguage);
+        });
+        
+        // Filter button hold functionality
+        let filterHoldTimer = null;
+        let filterHoldTarget = null;
+        let isFilterHolding = false;
+        
+        function onFilterMouseDown(button) {
+            filterHoldTarget = button;
+            isFilterHolding = true;
+            
+            // Add visual feedback for holding
+            button.style.transform = 'scale(0.95)';
+            button.style.transition = 'transform 0.1s ease';
+            
+            // Start timer for hold action (2.5 seconds)
+            filterHoldTimer = setTimeout(() => {
+                if (isFilterHolding && filterHoldTarget === button) {
+                    redirectToSubsystem(button.dataset.filter);
+                }
+            }, 2500);
+        }
+        
+        function onFilterMouseUp(button) {
+            if (filterHoldTimer) {
+                clearTimeout(filterHoldTimer);
+                filterHoldTimer = null;
+            }
+            
+            // Remove visual feedback
+            button.style.transform = '';
+            
+            // If it was a quick click (not a hold), toggle the filter
+            if (isFilterHolding && filterHoldTarget === button) {
+                toggleFilter(button);
+            }
+            
+            isFilterHolding = false;
+            filterHoldTarget = null;
+        }
+        
+        function onFilterMouseLeave(button) {
+            if (filterHoldTimer) {
+                clearTimeout(filterHoldTimer);
+                filterHoldTimer = null;
+            }
+            
+            // Remove visual feedback
+            button.style.transform = '';
+            
+            isFilterHolding = false;
+            filterHoldTarget = null;
+        }
+        
+        function toggleFilter(button) {
+            const filter = button.dataset.filter;
+            
+            if (selectedFilters.has(filter)) {
+                selectedFilters.delete(filter);
+                button.classList.remove('active');
+            } else {
+                selectedFilters.add(filter);
+                button.classList.add('active');
+            }
+        }
+        
+        function redirectToSubsystem(filter) {
+            // Map filters to their respective subsystem URLs
+            const subsystemUrls = {
+                'experts': '/experts',
+                'labs': '/labs',
+                'library': '/library',
+                'funding': '/funding',
+                'papers': '/papers'
+            };
+            
+            const url = subsystemUrls[filter];
+            if (url) {
+                // Show feedback message
+                showTemporaryMessage(`Redirecting to ${filter} subsystem...`, 'info');
+                
+                // Small delay for user feedback, then redirect
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 500);
+            }
+        }
+        
+        function setSearchQuery(query) {
+            document.getElementById('searchInput').value = query;
+        }
+        
+        function createInteractiveSearchButton() {
+            const button = document.createElement('button');
+            button.id = 'searchBtnElement';
+            button.onclick = performSearch;
+            button.className = 'interactive-search-btn group relative w-12 h-12 cursor-pointer overflow-hidden rounded-full p-2 text-center font-semibold hover:w-32 transition-all duration-300 ease-in-out';
+            
+            // Initial search icon
+            const iconSpan = document.createElement('span');
+            iconSpan.id = 'searchIcon';
+            iconSpan.className = 'search-icon-container absolute inset-0 flex items-center justify-center transition-all duration-300 group-hover:translate-x-12 group-hover:opacity-0';
+            iconSpan.innerHTML = `
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            `;
+            
+            // Hover content (magnifier + "Search" text)
+            const hoverDiv = document.createElement('div');
+            hoverDiv.className = 'search-hover-content absolute top-0 z-10 flex h-full w-full translate-x-12 items-center justify-center gap-3 opacity-0 transition-all duration-300 group-hover:-translate-x-1 group-hover:opacity-100';
+            
+            const magnifierIcon = document.createElement('div');
+            magnifierIcon.className = 'flex items-center justify-center';
+            magnifierIcon.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            `;
+            magnifierIcon.style.width = '20px';
+            magnifierIcon.style.height = '20px';
+            
+            const hoverText = document.createElement('span');
+            hoverText.className = 'text-sm font-medium';
+            hoverText.style.color = 'white';
+            hoverText.textContent = 'Search';
+            
+            hoverDiv.appendChild(magnifierIcon);
+            hoverDiv.appendChild(hoverText);
+            
+            // Background slide effect
+            const backgroundDiv = document.createElement('div');
+            backgroundDiv.className = 'search-background absolute top-0 left-0 h-full w-0 rounded-full transition-all duration-300 group-hover:w-full';
+            
+            // Loading spinner (hidden by default)
+            const spinnerDiv = document.createElement('div');
+            spinnerDiv.id = 'searchSpinner';
+            spinnerDiv.className = 'LDR absolute flex items-center justify-center hidden';
+            spinnerDiv.style.zIndex = '25';
+            spinnerDiv.innerHTML = `
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            `;
+            
+            // Add translation support for the "Search" text
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            if (currentLanguage === 'ar') {
+                hoverText.textContent = 'بحث';
+            }
+            
+            button.appendChild(backgroundDiv);
+            button.appendChild(iconSpan);
+            button.appendChild(hoverDiv);
+            button.appendChild(spinnerDiv);
+            
+            return button;
+        }
+        
+        function initializeSearchButton() {
+            const searchBtnContainer = document.getElementById('searchBtn');
+            if (searchBtnContainer) {
+                const interactiveButton = createInteractiveSearchButton();
+                searchBtnContainer.appendChild(interactiveButton);
+            }
+        }
+        
+        function showLoading(show) {
+            const btn = document.getElementById('searchBtnElement');
+            const spinner = document.getElementById('searchSpinner');
+            
+            if (show) {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('hover:w-32');
+                    btn.classList.add('contracting');
+                    
+                    setTimeout(() => {
+                        btn.classList.add('loading');
+                        if (spinner) {
+                            spinner.classList.remove('hidden');
+                            // Explicitly center the spinner
+                            spinner.style.top = '50%';
+                            spinner.style.left = '50%';
+                            spinner.style.transform = 'translate(-50%, -50%)';
+                        }
+                    }, 300);
+                }
+            } else {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('contracting', 'loading');
+                    btn.classList.add('hover:w-32');
+                }
+                if (spinner) {
+                    spinner.classList.add('hidden');
+                    // Reset styles
+                    spinner.style.top = '';
+                    spinner.style.left = '';
+                    spinner.style.transform = '';
+                }
+            }
+        }
+        
+        function showTemporaryMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+        
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                showTemporaryMessage('Please enter a search query', 'error');
+                return;
+            }
+            
+            // Convert selected filters to database names
+            const filterToDatabase = {
+                'experts': 'experts_system',
+                'labs': 'laboratories', 
+                'library': 'academic_library',
+                'funding': 'funding_system',
+                'papers': 'research_papers'
+            };
+            
+            const selectedDatabases = Array.from(selectedFilters).map(filter => filterToDatabase[filter]);
+            
+            showLoading(true);
+            
+            try {
+                const searchData = {
+                    query: query,
+                    ranking_mode: 'hybrid'
+                    // Note: database_filters removed - frontend now handles all filtering
+                };
+                
+                // Add auth headers if available
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(searchData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store search results and redirect to results page
+                    sessionStorage.setItem('searchResults', JSON.stringify(data));
+                    sessionStorage.setItem('searchQuery', query);
+                    sessionStorage.setItem('selectedFilters', JSON.stringify(Array.from(selectedFilters)));
+                    
+                    // Save search to history immediately and wait for completion
+                    try {
+                        await saveSearchToHistory(query, Array.from(selectedFilters));
+                        console.log('History saved successfully, redirecting...');
+                    } catch (historyError) {
+                        console.error('Error saving history, but continuing with search:', historyError);
+                    }
+                    
+                    // Small delay to ensure localStorage write completes
+                    setTimeout(() => {
+                        window.location.href = '/results';
+                    }, 100);
+                } else {
+                    throw new Error(data.error || 'Search failed');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showTemporaryMessage('Search failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Handle Enter key in search input
+        document.getElementById('searchInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // Authentication functions
+        function checkAuthenticationStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const userMode = localStorage.getItem('userMode');
+            
+            console.log('Checking auth status:', { 
+                hasToken: !!token, 
+                hasUserData: !!userData, 
+                userMode: userMode,
+                tokenPreview: token ? token.substring(0, 20) + '...' : null
+            });
+            
+            if (token && userData && userMode === 'authenticated') {
+                console.log('Auth data found, verifying token...');
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Token verification response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Token verification result:', data);
+                    if (data.success) {
+                        console.log('Token valid, showing user info');
+                        showUserInfo(JSON.parse(userData));
+                        loadUserThemePreference();
+                    } else {
+                        console.log('Token invalid, showing login buttons');
+                        showLoginButtons();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying token:', error);
+                    showLoginButtons();
+                });
+            } else {
+                console.log('Missing auth data, showing login buttons');
+                showLoginButtons();
+            }
+        }
+        
+        function showLoginButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (authButtons && userInfo) {
+                authButtons.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        }
+        
+        // User Menu Implementation
+        
+        function showUserInfo(userData) {
+            try {
+                const authButtons = document.getElementById('authButtons');
+                const userInfo = document.getElementById('userInfo');
+                const userProfile = document.getElementById('userProfile');
+                
+                if (!authButtons || !userInfo || !userProfile) return;
+                
+                authButtons.style.display = 'none';
+                userInfo.style.display = 'block';
+                
+                const firstName = userData.profile?.first_name || '';
+                const lastName = userData.profile?.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                // Create profile picture element
+                const profilePictureHtml = `
+                    <div class="w-8 h-8 relative">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-0.5">
+                            <img id="userMenuProfilePicture" src="" alt="Profile Picture" class="w-full h-full rounded-full object-cover hidden bg-white">
+                            <div id="userMenuInitials" class="w-full h-full bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                ${initials}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Create the user menu HTML
+                userProfile.innerHTML = `
+                    <button onclick="toggleUserMenu(event)" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
+                        ${profilePictureHtml}
+                        <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="user-menu-dropdown" id="userMenuDropdown">
+                        <button onclick="goToProfile(event)" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                            <span data-translate="profile">Profile</span>
+                        </button>
+                        <button onclick="goToDashboard(event)" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                            </svg>
+                            <span data-translate="dashboard">Dashboard</span>
+                        </button>
+                        <button onclick="goToDeveloperPortal(event)" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                            </svg>
+                            <span data-translate="developer-portal">Developer Portal</span>
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="toggleTheme(event)" class="user-menu-item" id="themeToggleMenuItem">
+                            <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                            </svg>
+                            <span id="themeTextMenu">Dark Mode</span>
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="logout(event)" class="user-menu-item text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            </svg>
+                            <span data-translate="logout">Logout</span>
+                        </button>
+                    </div>
+                `;
+                                
+                // Update theme menu item
+                updateThemeMenuItem();
+                
+                // Load profile picture in user menu
+                loadUserMenuProfilePicture(userData.user_id);
+                
+            } catch (error) {
+                console.error('Error in showUserInfo:', error);
+                showLoginButtons();
+            }
+        }
+
+        async function loadUserMenuProfilePicture(userId) {
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.src = imageUrl;
+                        profilePicture.classList.remove('hidden');
+                        initials.classList.add('hidden');
+                    }
+                } else {
+                    // No profile picture, keep showing initials
+                    console.log('No profile picture found for user');
+                }
+            } catch (error) {
+                console.error('Error loading user menu profile picture:', error);
+                // Keep showing initials on error
+            }
+        }
+        
+        function toggleUserMenu(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            
+            const dropdown = document.getElementById('userMenuDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        function toggleTheme(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateThemeMenuItem();
+        }
+
+        function updateThemeMenuItem() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const themeIcon = document.getElementById('themeIconMenu');
+            const themeText = document.getElementById('themeTextMenu');
+            
+            if (themeIcon && themeText) {
+                if (currentTheme === 'dark') {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
+                    themeText.textContent = 'Dark Mode';
+                }
+            }
+        }
+
+        function goToProfile(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            window.location.href = '/profile';
+        }
+
+        function goToDashboard(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            window.location.href = '/user-dashboard';
+        }
+
+        function goToDeveloperPortal(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            window.location.href = '/dev';
+        }
+
+        function logout(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
+            showLoginButtons();
+            showTemporaryMessage('Logged out successfully', 'success');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenu && dropdown && dropdown.classList.contains('show')) {
+                // Check if click is outside the user menu
+                if (!userMenu.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }, true); // Use capture phase to handle before other handlers
+        
+        function getCurrentUser() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        async function saveSearchToHistory(query, filters) {
+            const currentUser = getCurrentUser();
+            console.log('saveSearchToHistory called from home:', { query, filters, currentUser });
+            
+            if (!query || query.trim() === '') {
+                console.log('Empty query, skipping history save');
+                return;
+            }
+            
+            if (currentUser) {
+                // Save to database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    console.log('Saving search to history from home:', { query, filters, hasToken: !!token });
+                    
+                    const response = await fetch('/api/user/history', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: query,
+                            filters: filters,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    console.log('History save response from home:', data);
+                    
+                    if (!data.success) {
+                        console.error('Failed to save search to history:', data.error);
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error saving search to history:', error);
+                    throw error;
+                }
+            } else {
+                // Save to localStorage for anonymous users
+                console.log('Saving search to local storage for anonymous user');
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    console.log('Current localStorage history:', localHistory);
+                    
+                    // Check if this exact search already exists recently (within last hour)
+                    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+                    const existingSearch = localHistory.find(item => 
+                        item.query === query && item.timestamp > oneHourAgo
+                    );
+                    
+                    if (!existingSearch) {
+                        const historyItem = {
+                            _id: Date.now().toString(), // Simple ID for local storage
+                            query: query,
+                            filters: filters || [],
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        localHistory.unshift(historyItem); // Add to beginning
+                        
+                        // Keep only last 50 searches
+                        if (localHistory.length > 50) {
+                            localHistory.splice(50);
+                        }
+                        
+                        localStorage.setItem('searchHistory', JSON.stringify(localHistory));
+                        console.log('Search saved to local storage:', historyItem);
+                        console.log('Updated localStorage history:', localHistory);
+                        
+                        // Verify the save worked
+                        const verifyHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                        console.log('Verification - localStorage now contains:', verifyHistory);
+                    } else {
+                        console.log('Search already exists in recent history, skipping save');
+                    }
+                } catch (error) {
+                    console.error('Error saving search to local storage:', error);
+                    throw error;
+                }
+            }
+        }
+        
+        async function showBookmarks() {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayBookmarksModal(data.bookmarks);
+                } else {
+                    throw new Error(data.error || 'Failed to load bookmarks');
+                }
+            } catch (error) {
+                console.error('Error loading bookmarks:', error);
+                showTemporaryMessage('Error loading bookmarks: ' + error.message, 'error');
+            }
+        }
+        
+        async function showHistory() {
+            const currentUser = getCurrentUser();
+            
+            if (currentUser) {
+                // Load from database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/user/history', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        displayHistoryModal(data.history);
+                    } else {
+                        throw new Error(data.error || 'Failed to load history');
+                    }
+                } catch (error) {
+                    console.error('Error loading history:', error);
+                    showTemporaryMessage('Error loading history: ' + error.message, 'error');
+                }
+            } else {
+                // Load from localStorage for anonymous users
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    console.log('Loading local history:', localHistory);
+                    displayHistoryModal(localHistory);
+                } catch (error) {
+                    console.error('Error loading local history:', error);
+                    showTemporaryMessage('Error loading history: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function displayBookmarksModal(bookmarks) {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.id = 'bookmarksModal';
+            
+            const bookmarksList = bookmarks.length > 0 ? bookmarks.map(bookmark => `
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-themed-primary mb-1">${bookmark.title}</h4>
+                            <div class="text-sm text-themed-secondary mb-2">
+                                <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs mr-2">
+                                    ${bookmark.type}
+                                </span>
+                                <span class="text-xs">${formatDate(bookmark.created_at)}</span>
+                            </div>
+                        </div>
+                        <button onclick="removeBookmark('${bookmark.result_id}')" class="text-red-500 hover:text-red-700 ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="searchFromBookmark('${bookmark.title}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                        Search similar results
+                    </button>
+                </div>
+            `).join('') : '<p class="text-themed-secondary text-center py-8">No bookmarks yet</p>';
+            
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                    <div class="p-6 border-b" style="border-color: var(--container-border);">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-themed-primary">Your Bookmarks</h3>
+                            <button onclick="closeModal('bookmarksModal')" class="text-themed-secondary hover:text-themed-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-96">
+                        ${bookmarksList}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeModal('bookmarksModal');
+                }
+            });
+        }
+        
+        function displayHistoryModal(history) {
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            overlay.id = 'historyModal';
+            
+            const historyList = history.length > 0 ? history.map(item => `
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-themed-primary mb-1">"${item.query}"</h4>
+                            <div class="text-sm text-themed-secondary mb-2">
+                                <span class="text-xs">${formatDate(item.timestamp)}</span>
+                                ${item.filters && item.filters.length > 0 ? `
+                                    <div class="mt-1">
+                                        ${item.filters.map(filter => `
+                                            <span class="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs mr-1">
+                                                ${filter}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <button onclick="removeFromHistory('${item._id}')" class="text-red-500 hover:text-red-700 ml-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="searchFromHistory('${item.query}', '${JSON.stringify(item.filters || []).replace(/'/g, '&apos;')}')" class="text-blue-600 hover:text-blue-800 text-sm">
+                        Search again
+                    </button>
+                </div>
+            `).join('') : '<p class="text-themed-secondary text-center py-8">No search history yet</p>';
+            
+            overlay.innerHTML = `
+                <div class="bg-themed-card rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                    <div class="p-6 border-b" style="border-color: var(--container-border);">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-themed-primary">Search History</h3>
+                            <button onclick="closeModal('historyModal')" class="text-themed-secondary hover:text-themed-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-96">
+                        ${historyList}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeModal('historyModal');
+                }
+            });
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        async function removeBookmark(resultId) {
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks/remove', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ result_id: resultId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Bookmark removed', 'success');
+                    closeModal('bookmarksModal');
+                    // Refresh bookmarks
+                    setTimeout(() => showBookmarks(), 500);
+                } else {
+                    throw new Error(data.error || 'Failed to remove bookmark');
+                }
+            } catch (error) {
+                console.error('Error removing bookmark:', error);
+                showTemporaryMessage('Error removing bookmark: ' + error.message, 'error');
+            }
+        }
+        
+        async function removeFromHistory(historyId) {
+            const currentUser = getCurrentUser();
+            
+            if (currentUser) {
+                // Remove from database for logged-in users
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/user/history/remove', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ history_id: historyId })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showTemporaryMessage('History item removed', 'success');
+                        closeModal('historyModal');
+                        // Refresh history
+                        setTimeout(() => showHistory(), 500);
+                    } else {
+                        throw new Error(data.error || 'Failed to remove history item');
+                    }
+                } catch (error) {
+                    console.error('Error removing history item:', error);
+                    showTemporaryMessage('Error removing history item: ' + error.message, 'error');
+                }
+            } else {
+                // Remove from localStorage for anonymous users
+                try {
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    const updatedHistory = localHistory.filter(item => item._id !== historyId);
+                    localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+                    
+                    showTemporaryMessage('History item removed', 'success');
+                    closeModal('historyModal');
+                    // Refresh history
+                    setTimeout(() => showHistory(), 500);
+                } catch (error) {
+                    console.error('Error removing local history item:', error);
+                    showTemporaryMessage('Error removing history item: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function searchFromBookmark(title) {
+            document.getElementById('searchInput').value = title;
+            closeModal('bookmarksModal');
+            performSearch();
+        }
+        
+        function searchFromHistory(query, filtersJson) {
+            document.getElementById('searchInput').value = query;
+            closeModal('historyModal');
+            
+            // Restore filters if any
+            try {
+                const filters = JSON.parse(filtersJson);
+                selectedFilters.clear();
+                filters.forEach(filter => {
+                    selectedFilters.add(filter);
+                    const filterBtn = document.querySelector(`[data-filter="${filter}"]`);
+                    if (filterBtn) {
+                        filterBtn.classList.add('active');
+                    }
+                });
+            } catch (e) {
+                // Ignore filter parsing errors
+            }
+            
+            performSearch();
+        }
+        
+        // Sidebar functionality
+        let sidebarOpen = false;
+        let currentSidebarTab = 'history';
+        let sidebarScrollPositions = {
+            history: 0,
+            bookmarks: 0
+        };
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const mainWrapper = document.getElementById('mainWrapper');
+            
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                sidebar.classList.add('open');
+                toggle.classList.add('open');
+                mainWrapper.classList.add('sidebar-open');
+                loadSidebarContent();
+            } else {
+                sidebar.classList.remove('open');
+                toggle.classList.remove('open');
+                mainWrapper.classList.remove('sidebar-open');
+                // Save scroll positions when closing
+                saveCurrentScrollPosition();
+            }
+            
+            // Save sidebar state
+            localStorage.setItem('sidebarOpen', sidebarOpen.toString());
+        }
+        
+        function switchSidebarTab(tabName) {
+            // Save current scroll position before switching
+            saveCurrentScrollPosition();
+            
+            // Update tab states
+            document.querySelectorAll('.sidebar-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.sidebar-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activate new tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            document.getElementById(tabName + 'Content').classList.add('active');
+            
+            currentSidebarTab = tabName;
+            
+            // Load content for the new tab if needed
+            if (tabName === 'history') {
+                loadSidebarHistory();
+            } else if (tabName === 'bookmarks') {
+                loadSidebarBookmarks();
+            }
+            
+            // Restore scroll position after a short delay
+            setTimeout(() => {
+                restoreScrollPosition(tabName);
+            }, 100);
+        }
+        
+        function saveCurrentScrollPosition() {
+            const activeContent = document.querySelector('.sidebar-tab-content.active');
+            if (activeContent) {
+                sidebarScrollPositions[currentSidebarTab] = activeContent.scrollTop;
+            }
+        }
+        
+        function restoreScrollPosition(tabName) {
+            const content = document.getElementById(tabName + 'Content');
+            if (content && sidebarScrollPositions[tabName]) {
+                content.scrollTop = sidebarScrollPositions[tabName];
+            }
+        }
+        
+        function loadSidebarContent() {
+            // Load content for the current active tab
+            if (currentSidebarTab === 'history') {
+                loadSidebarHistory();
+            } else if (currentSidebarTab === 'bookmarks') {
+                loadSidebarBookmarks();
+            }
+        }
+        
+        async function loadSidebarHistory() {
+            const historyContainer = document.getElementById('sidebarHistory');
+            const currentUser = getCurrentUser();
+            
+            try {
+                let history = [];
+                
+                if (currentUser) {
+                    // Load from database for logged-in users
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/user/history', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        history = data.history; // Show all history
+                    }
+                } else {
+                    // Load from localStorage for anonymous users
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    history = localHistory; // Show all history
+                }
+                
+                if (history.length > 0) {
+                    historyContainer.innerHTML = history.map(item => `
+                        <div class="sidebar-item" onclick="searchFromSidebar('${item.query.replace(/'/g, '\\\'')}')" title="Click to search again">
+                            <div class="sidebar-item-content">
+                                <div class="sidebar-item-title">"${truncateText(item.query, 50)}"</div>
+                                <div class="sidebar-item-meta">${formatDate(item.timestamp)}</div>
+                            </div>
+                            <button onclick="event.stopPropagation(); removeSidebarHistory('${item._id}')" class="sidebar-delete-btn" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                    historyContainer.innerHTML = `<div class="sidebar-empty">${translations[currentLanguage]['no-history']}</div>`;
+                }
+            } catch (error) {
+                console.error('Error loading sidebar history:', error);
+                historyContainer.innerHTML = '<div class="sidebar-empty">Error loading history</div>';
+            }
+        }
+        
+        async function loadSidebarBookmarks() {
+            const bookmarksContainer = document.getElementById('sidebarBookmarks');
+            const currentUser = getCurrentUser();
+            
+            if (!currentUser) {
+                const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                bookmarksContainer.innerHTML = `<div class="sidebar-empty">${translations[currentLanguage]['sign-in-bookmarks']}</div>`;
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.bookmarks.length > 0) {
+                    const bookmarks = data.bookmarks; // Show all bookmarks
+                    bookmarksContainer.innerHTML = bookmarks.map(bookmark => `
+                        <div class="sidebar-item" onclick="searchFromSidebar('${bookmark.title.replace(/'/g, '\\\'')}')" title="Click to search similar">
+                            <div class="sidebar-item-content">
+                                <div class="sidebar-item-title">${truncateText(bookmark.title, 50)}</div>
+                                <div class="sidebar-item-meta">
+                                    <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs mr-1">
+                                        ${bookmark.type}
+                                    </span>
+                                    ${formatDate(bookmark.created_at)}
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); removeSidebarBookmark('${bookmark.result_id}')" class="sidebar-delete-btn" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+                    bookmarksContainer.innerHTML = `<div class="sidebar-empty">${translations[currentLanguage]['no-bookmarks']}</div>`;
+                }
+            } catch (error) {
+                console.error('Error loading sidebar bookmarks:', error);
+                bookmarksContainer.innerHTML = '<div class="sidebar-empty">Error loading bookmarks</div>';
+            }
+        }
+        
+        function searchFromSidebar(query) {
+            document.getElementById('searchInput').value = query;
+            toggleSidebar(); // Close sidebar
+            performSearch();
+        }
+        
+        async function removeSidebarHistory(historyId) {
+            const currentUser = getCurrentUser();
+            
+            try {
+                if (currentUser) {
+                    // Remove from database for logged-in users
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch('/api/user/history/remove', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            history_id: historyId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to remove from history');
+                    }
+                } else {
+                    // Remove from localStorage for anonymous users
+                    const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                    const updatedHistory = localHistory.filter(item => item._id !== historyId);
+                    localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+                }
+                
+                // Refresh only the sidebar history without triggering popups
+                loadSidebarHistory();
+                
+            } catch (error) {
+                console.error('Error removing from history:', error);
+                showTemporaryMessage('Error removing from history: ' + error.message, 'error');
+            }
+        }
+        
+        async function removeSidebarBookmark(resultId) {
+            const currentUser = getCurrentUser();
+            
+            if (!currentUser) {
+                showTemporaryMessage('Authentication required', 'error');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/bookmarks/remove', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        result_id: resultId
+                    })
+                });
+                
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to remove bookmark');
+                }
+                
+                // Refresh only the sidebar bookmarks without triggering popups
+                loadSidebarBookmarks();
+                
+            } catch (error) {
+                console.error('Error removing bookmark:', error);
+                showTemporaryMessage('Error removing bookmark: ' + error.message, 'error');
+            }
+        }
+        
+        function truncateText(text, maxLength) {
+            if (!text || text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+        
+        function initializeSidebar() {
+            // Restore sidebar state from localStorage
+            const savedState = localStorage.getItem('sidebarOpen');
+            if (savedState === 'true') {
+                sidebarOpen = false; // Set to false so toggleSidebar will open it
+                toggleSidebar();
+            }
+        }
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                initializeTheme();
+                initializeLanguage();
+                initializeSidebar();
+                initializeSearchButton();
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in initialization:', error);
+                showLoginButtons();
+            }
+        });
+    </script>
+</body>
+</html> 

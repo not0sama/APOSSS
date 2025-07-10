@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Libyan Open Science</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=globe" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #4a5568;
+            --container-bg: #ffffff;
+            --container-border: #e2e8f0;
+            --input-bg: #ffffff;
+            --input-border: #e2e8f0;
+            --button-bg: rgba(255, 255, 255, 0.9);
+            --button-hover: #f1f3f4;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+            --header-bg: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --bg-secondary-rgb: 233, 236, 239;
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #F8F9FA;
+            --text-secondary: #a0aec0;
+            --container-bg: #1a1a1a;
+            --container-border: #2d3748;
+            --input-bg: #1a1a1a;
+            --input-border: #2d3748;
+            --button-bg: rgba(18, 18, 18, 0.9);
+            --button-hover: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --card-bg: #1a1a1a;
+            --header-bg: #1a1a1a;
+            --glass-bg: rgba(18, 18, 18, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg-secondary-rgb: 26, 26, 26;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 17px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 24
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            background: var(--button-bg);
+            border: 1px solid var(--container-border);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+        }
+
+        /* Language toggle as icon button */
+        .language-toggle-icon {
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .language-toggle-icon:hover {
+            color: #3b82f6;
+            background: var(--button-hover);
+        }
+
+        /* The switch - the box around the slider */
+        .switch {
+          display: block;
+          --width-of-switch: 3.5em;
+          --height-of-switch: 2em;
+          /* size of sliding icon -- sun and moon */
+          --size-of-icon: 1.4em;
+          /* it is like a inline-padding of switch */
+          --slider-offset: 0.3em;
+          position: relative;
+          width: var(--width-of-switch);
+          height: var(--height-of-switch);
+        }
+
+        /* Hide default HTML checkbox */
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        /* The slider */
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #f4f4f5;
+          transition: .4s;
+          border-radius: 30px;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: var(--size-of-icon,1.4em);
+          width: var(--size-of-icon,1.4em);
+          border-radius: 20px;
+          left: var(--slider-offset,0.3em);
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(40deg,#ff0080,#ff8c00 70%);
+          transition: .4s;
+        }
+
+        input:checked + .slider {
+          background-color: #303136;
+        }
+
+        input:checked + .slider:before {
+          left: calc(100% - (var(--size-of-icon,1.4em) + var(--slider-offset,0.3em)));
+          background: #303136;
+          /* change the value of second inset in box-shadow to change the angle and direction of the moon  */
+          box-shadow: inset -3px -2px 5px -2px #8983f7, inset -10px -4px 0 0 #a3dafb;
+        }
+
+        /* Input styles */
+        input, textarea, select {
+            background: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--text-primary) !important;
+            transition: all 0.3s ease;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Card styles */
+        .card {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 16px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px var(--shadow-color);
+            transform: translateY(-1px);
+        }
+
+        /* Header styles */
+        .header {
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--container-border);
+            transition: all 0.3s ease;
+        }
+
+        /* Text color overrides */
+        .text-themed-primary { color: var(--text-primary) !important; }
+        .text-themed-secondary { color: var(--text-secondary) !important; }
+        .bg-themed-card { background: var(--card-bg) !important; }
+        .bg-themed-header { background: var(--header-bg) !important; }
+
+        /* User Menu Dropdown */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 12rem;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 0;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .user-menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-menu-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+
+        .user-menu-item:hover {
+            background: var(--button-hover);
+            color: #3b82f6;
+        }
+
+        .user-menu-separator {
+            height: 1px;
+            background: var(--container-border);
+            margin: 0.5rem 0;
+        }
+
+        /* Profile Picture Styles */
+        .profile-picture-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-picture {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--container-border);
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .profile-picture-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+
+        .profile-picture-container:hover .profile-picture-overlay {
+            opacity: 1;
+        }
+
+        .profile-picture-text {
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Professional Layout Styles */
+        .profile-section {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .profile-section:hover {
+            box-shadow: 0 12px 40px var(--shadow-color);
+            transform: translateY(-2px);
+        }
+
+        .section-header {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                transparent 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            animation: liquidFlow 8s ease-in-out infinite;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin: 0.5rem 0 0 0;
+            position: relative;
+            z-index: 1;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            backdrop-filter: blur(8px) saturate(160%);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(29, 78, 216, 0.9));
+            backdrop-filter: blur(12px) saturate(180%);
+            color: white;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, rgba(29, 78, 216, 0.9), rgba(30, 64, 175, 0.9));
+        }
+
+        .btn-secondary {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 4px 16px var(--shadow-color);
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--container-border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .profile-header-modern {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.8) 0%, 
+                rgba(118, 75, 162, 0.8) 100%);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 2rem;
+            border-radius: 1rem 1rem 0 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+        }
+
+        .profile-header-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                transparent 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            animation: liquidFlow 10s ease-in-out infinite;
+        }
+
+        .profile-info {
+            position: relative;
+            z-index: 1;
+        }
+
+        .academic-field-tag {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--container-border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Glass Theme Section Header */
+        .glass-section-header {
+            position: relative;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            padding: 2rem;
+            border-radius: 1rem 1rem 0 0;
+            overflow: hidden;
+        }
+
+        .glass-section-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                transparent 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            animation: liquidFlow 6s ease-in-out infinite;
+        }
+
+        @keyframes liquidFlow {
+            0%, 100% { transform: translateX(-100%) skewX(-15deg); }
+            50% { transform: translateX(100%) skewX(15deg); }
+        }
+
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        .particle:nth-child(1) {
+            left: 10%;
+            animation-delay: 0s;
+            animation-duration: 12s;
+        }
+
+        .particle:nth-child(2) {
+            left: 20%;
+            animation-delay: 2s;
+            animation-duration: 14s;
+        }
+
+        .particle:nth-child(3) {
+            left: 30%;
+            animation-delay: 4s;
+            animation-duration: 16s;
+        }
+
+        .particle:nth-child(4) {
+            left: 40%;
+            animation-delay: 6s;
+            animation-duration: 13s;
+        }
+
+        .particle:nth-child(5) {
+            left: 50%;
+            animation-delay: 8s;
+            animation-duration: 15s;
+        }
+
+        .particle:nth-child(6) {
+            left: 60%;
+            animation-delay: 10s;
+            animation-duration: 11s;
+        }
+
+        .particle:nth-child(7) {
+            left: 70%;
+            animation-delay: 12s;
+            animation-duration: 17s;
+        }
+
+        .particle:nth-child(8) {
+            left: 80%;
+            animation-delay: 14s;
+            animation-duration: 12s;
+        }
+
+        .particle:nth-child(9) {
+            left: 90%;
+            animation-delay: 16s;
+            animation-duration: 14s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Tab System */
+        .tab-container {
+            position: relative;
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+        }
+
+        .tab-buttons {
+            display: flex;
+            backdrop-filter: blur(8px) saturate(160%);
+            background: rgba(var(--bg-secondary-rgb, 233, 236, 239), 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            padding: 0.25rem;
+            margin-bottom: 2rem;
+        }
+
+        [data-theme="dark"] .tab-buttons {
+            background: rgba(26, 26, 26, 0.4);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-radius: 0.375rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-button.active {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            border: 1px solid var(--glass-border);
+        }
+
+        .tab-button:hover:not(.active) {
+            color: var(--text-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Read-only field styles */
+        .form-input[readonly] {
+            backdrop-filter: blur(8px) saturate(160%);
+            background: rgba(var(--bg-secondary-rgb, 233, 236, 239), 0.4) !important;
+            border: 1px solid var(--glass-border) !important;
+            cursor: default;
+        }
+
+        [data-theme="dark"] .form-input[readonly] {
+            background: rgba(26, 26, 26, 0.4) !important;
+        }
+
+        .form-input[readonly]:focus {
+            box-shadow: none !important;
+            border-color: var(--glass-border) !important;
+        }
+
+        .edit-toggle-btn {
+            backdrop-filter: blur(12px) saturate(180%);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .edit-toggle-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .edit-toggle-btn.editing {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+            color: white;
+            border-color: rgba(16, 185, 129, 0.3);
+            backdrop-filter: blur(12px) saturate(180%);
+        }
+
+        .edit-toggle-btn.editing:hover {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.9), rgba(4, 120, 87, 0.9));
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="header shadow-md">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-8 h-8 flex items-center justify-center">
+                            <img 
+                                id="headerLogo"
+                                src="/static/images/logo-light.svg" 
+                                alt="Libyan Open Science Logo"
+                                class="w-full h-full object-contain"
+                                onerror="this.onerror=null; this.src='/static/images/logo.png';"
+                            >
+                        </div>
+                        <span class="text-xl font-bold text-themed-primary" data-translate="site-title">Libyan Open Science</span>
+                    </a>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex items-center space-x-6">
+                    <!-- Language Toggle Icon -->
+                    <span id="languageToggle" class="material-symbols-outlined language-toggle-icon" title="Switch Language">globe</span>
+                    
+                    <!-- Theme Toggle Switch -->
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggleInput">
+                        <span class="slider"></span>
+                    </label>
+
+                    <!-- User Info (when authenticated) -->
+                    <div id="userInfo" class="user-menu" style="display: none;">
+                        <div id="userProfile" class="relative">
+                            <!-- This will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Login/Signup Buttons (shown when not authenticated) -->
+                    <div id="authButtons" class="flex space-x-3">
+                        <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2" data-translate="sign-in">
+                            Sign In
+                        </a>
+                        <a href="/signup" class="bg-blue-600 text-white hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors font-medium shadow-lg" data-translate="sign-up">
+                            Sign Up
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Email Verification Notification -->
+    <div id="emailVerificationBanner" class="bg-yellow-500 text-white px-6 py-3 text-center" style="display: none;">
+        <div class="container mx-auto flex items-center justify-center space-x-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span data-translate="email-not-verified">Your email address is not verified.</span>
+            <button onclick="showEmailVerificationPopup()" class="bg-white text-yellow-600 px-4 py-1 rounded-lg font-medium hover:bg-yellow-50 transition-colors" data-translate="verify-now">
+                Verify Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Email Verification Popup -->
+    <div id="emailVerificationPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display: none;">
+        <div class="bg-themed-card rounded-lg max-w-md w-full overflow-hidden">
+            <div class="p-6 border-b" style="border-color: var(--container-border);">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-themed-primary" data-translate="verify-email">Verify Your Email</h3>
+                    <button onclick="closeEmailVerificationPopup()" class="text-themed-secondary hover:text-themed-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-blue-600">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                    </div>
+                    <p class="text-themed-secondary mb-4" data-translate="verification-sent">
+                        We've sent a 6-digit verification code to your email address.
+                    </p>
+                    <p class="text-sm text-themed-secondary" id="verificationEmailAddress"></p>
+                </div>
+                
+                <form id="emailVerificationForm" class="space-y-4">
+                    <div class="form-group">
+                        <label class="form-label text-center block mb-4" data-translate="enter-verification-code">
+                            Enter the 6-digit verification code
+                        </label>
+                        <div class="flex justify-center space-x-2 mb-4">
+                            <input type="text" id="digit1" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit2')" onkeydown="moveToPrev(this, null)">
+                            <input type="text" id="digit2" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit3')" onkeydown="moveToPrev(this, 'digit1')">
+                            <input type="text" id="digit3" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit4')" onkeydown="moveToPrev(this, 'digit2')">
+                            <input type="text" id="digit4" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit5')" onkeydown="moveToPrev(this, 'digit3')">
+                            <input type="text" id="digit5" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, 'digit6')" onkeydown="moveToPrev(this, 'digit4')">
+                            <input type="text" id="digit6" class="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" maxlength="1" onkeyup="moveToNext(this, null)" onkeydown="moveToPrev(this, 'digit5')">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary w-full" id="verifyCodeBtn">
+                        <span data-translate="verify-email-button">Verify Email</span>
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <button onclick="resendVerificationCode()" class="text-blue-600 hover:text-blue-800 text-sm" id="resendBtn" data-translate="resend-code">
+                        Resend Code
+                    </button>
+                    <div id="resendTimer" class="text-sm text-themed-secondary mt-2" style="display: none;">
+                        <span data-translate="resend-timer">Resend available in</span> <span id="timerSeconds">60</span> <span data-translate="seconds">seconds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-6 py-8 max-w-7xl">
+        <!-- Profile Header -->
+        <div class="profile-section mb-8">
+            <div class="profile-header-modern">
+                <div class="flex items-center space-x-6">
+                    <div class="profile-picture-container">
+                        <img id="profilePicture" src="" alt="Profile Picture" class="profile-picture" style="display: none;">
+                        <div id="profileAvatar" class="profile-picture flex items-center justify-center text-3xl font-bold text-blue-600 bg-blue-100">
+                            <!-- Avatar initials will be populated by JavaScript -->
+                        </div>
+                        <div class="profile-picture-overlay" onclick="triggerProfilePictureUpload()">
+                            <div class="profile-picture-text">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 mx-auto mb-1">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                                </svg>
+                                <span data-translate="change-photo">Change Photo</span>
+                            </div>
+                        </div>
+                        <input type="file" id="profilePictureInput" accept="image/*" style="display: none;" onchange="handleProfilePictureUpload(event)">
+                    </div>
+                    <div class="profile-info flex-1">
+                        <h1 id="profileName" class="text-3xl font-bold mb-2">
+                            <!-- Name will be populated by JavaScript -->
+                        </h1>
+                        <p id="profileEmail" class="text-white text-opacity-90 mb-3 text-lg">
+                            <!-- Email will be populated by JavaScript -->
+                        </p>
+                        <div class="flex items-center space-x-4">
+                            <span id="profileRole" class="inline-block bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-medium">
+                                <!-- Role will be populated by JavaScript -->
+                            </span>
+                            <span id="profileJoinDate" class="text-white text-opacity-80 text-sm">
+                                <!-- Join date will be populated by JavaScript -->
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Information with Tabs -->
+        <div class="profile-section mb-8">
+            <div class="glass-section-header">
+                <div class="floating-particles">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                </div>
+                <div class="profile-info relative z-10">
+                    <h2 class="text-2xl font-bold mb-2 text-themed-primary" data-translate="profile-information">Profile Information</h2>
+                    <p class="text-themed-secondary" data-translate="manage-details">Manage your personal and academic details</p>
+                </div>
+            </div>
+            
+            <div class="tab-container p-6">
+                <!-- Tab Buttons -->
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="switchTab('personal')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                        </svg>
+                        <span data-translate="personal-information">Personal Information</span>
+                    </button>
+                    <button class="tab-button" onclick="switchTab('academic')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                        </svg>
+                        <span data-translate="academic-information">Academic Information</span>
+                    </button>
+                </div>
+
+                <!-- Personal Information Tab -->
+                <div id="personalTab" class="tab-content active">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-themed-primary" data-translate="personal-details">Personal Details</h3>
+                        <button id="personalEditBtn" class="edit-toggle-btn" onclick="toggleEdit('personal')">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                            </svg>
+                            <span data-translate="edit">Edit</span>
+                        </button>
+                    </div>
+                    
+                    <form id="personalInfoForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label for="firstName" class="form-label" data-translate="first-name">First Name</label>
+                                <input type="text" id="firstName" name="firstName" class="form-input" placeholder="Enter your first name" data-translate="first-name-placeholder" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName" class="form-label" data-translate="last-name">Last Name</label>
+                                <input type="text" id="lastName" name="lastName" class="form-input" placeholder="Enter your last name" data-translate="last-name-placeholder" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="username" class="form-label" data-translate="username">Username</label>
+                            <input type="text" id="username" name="username" class="form-input" placeholder="Choose a unique username" data-translate="username-placeholder" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email" class="form-label" data-translate="email-address">Email Address</label>
+                            <input type="email" id="email" name="email" class="form-input" placeholder="your.email@example.com" data-translate="email-placeholder" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="institution" class="form-label" data-translate="institution">Institution</label>
+                            <input type="text" id="institution" name="institution" class="form-input" placeholder="University, Company, or Organization" data-translate="institution-placeholder" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="role" class="form-label" data-translate="professional-role">Professional Role</label>
+                            <select id="role" name="role" class="form-input" disabled>
+                                <option value="" data-translate="select-role">Select your role</option>
+                                <option value="student" data-translate="student">Student</option>
+                                <option value="researcher" data-translate="researcher">Researcher</option>
+                                <option value="professor" data-translate="professor">Professor</option>
+                                <option value="industry" data-translate="industry-professional">Industry Professional</option>
+                                <option value="other" data-translate="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bio" class="form-label" data-translate="professional-bio">Professional Bio</label>
+                            <textarea id="bio" name="bio" rows="4" class="form-input" placeholder="Tell us about your background, interests, and professional experience..." data-translate="bio-placeholder" readonly></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary" id="personalSaveBtn" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75a.75.75 0 01.75-.75h7.5a.75.75 0 01.75.75z" />
+                            </svg>
+                            <span data-translate="save-personal-info">Save Personal Information</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Academic Information Tab -->
+                <div id="academicTab" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-themed-primary" data-translate="academic-details">Academic Details</h3>
+                        <button id="academicEditBtn" class="edit-toggle-btn" onclick="toggleEdit('academic')">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                            </svg>
+                            <span data-translate="edit">Edit</span>
+                        </button>
+                    </div>
+                    
+                    <form id="academicInfoForm" class="space-y-6">
+                        <div class="form-group">
+                            <label for="academicFields" class="form-label" data-translate="academic-fields">Academic Fields</label>
+                            <div id="academicFieldsContainer" class="mb-3">
+                                <!-- Academic fields will be populated dynamically -->
+                            </div>
+                            <div class="flex gap-2" id="addFieldContainer" style="display: none;">
+                                <input type="text" id="newAcademicField" placeholder="Add academic field (e.g., Computer Science, Biology)" data-translate="add-field-placeholder" class="form-input flex-1">
+                                <button type="button" onclick="addAcademicField()" class="btn-secondary px-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="researchInterests" class="form-label" data-translate="research-interests">Research Interests</label>
+                            <textarea id="researchInterests" name="researchInterests" rows="4" class="form-input" placeholder="Describe your current research interests, areas of study, or topics you're passionate about..." data-translate="research-interests-placeholder" readonly></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="publications" class="form-label" data-translate="publications-works">Publications & Works</label>
+                            <textarea id="publications" name="publications" rows="4" class="form-input" placeholder="List your publications, papers, projects, or other academic works..." data-translate="publications-placeholder" readonly></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary" id="academicSaveBtn" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                            </svg>
+                            <span data-translate="save-academic-info">Save Academic Information</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="profile-section mt-8">
+            <div class="section-header">
+                <h2 class="section-title" data-translate="account-settings">Account Settings</h2>
+                <p class="section-subtitle" data-translate="manage-account">Manage your account security and preferences</p>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Change Password -->
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-semibold text-themed-primary" data-translate="password-security">Password Security</h3>
+                        <form id="passwordForm" class="space-y-4">
+                            <div class="form-group">
+                                <label for="currentPassword" class="form-label" data-translate="current-password">Current Password</label>
+                                <input type="password" id="currentPassword" name="currentPassword" class="form-input" placeholder="Enter current password" data-translate="current-password-placeholder">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword" class="form-label" data-translate="new-password">New Password</label>
+                                <input type="password" id="newPassword" name="newPassword" class="form-input" placeholder="Enter new password" data-translate="new-password-placeholder">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword" class="form-label" data-translate="confirm-password">Confirm New Password</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Confirm new password" data-translate="confirm-password-placeholder">
+                            </div>
+                            <button type="submit" class="btn-primary bg-gradient-to-r from-orange-500 to-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 inline mr-2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                                <span data-translate="update-password">Update Password</span>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Account Actions -->
+                    <div class="space-y-6">
+                        <h3 class="text-lg font-semibold text-themed-primary" data-translate="account-management">Account Management</h3>
+                        <div class="space-y-3">
+                            <button onclick="exportUserData()" class="btn-secondary w-full flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                </svg>
+                                <span data-translate="export-data">Export My Data</span>
+                            </button>
+                            <button onclick="deleteProfilePicture()" class="btn-secondary w-full flex items-center justify-center gap-2 text-yellow-600 border-yellow-300 hover:bg-yellow-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                                </svg>
+                                <span data-translate="remove-profile-picture">Remove Profile Picture</span>
+                            </button>
+                            <button onclick="deleteAccount()" class="btn-secondary w-full flex items-center justify-center gap-2 text-red-600 border-red-300 hover:bg-red-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                </svg>
+                                <span data-translate="delete-account">Delete Account</span>
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6 p-4 rounded-lg border" style="background: var(--bg-secondary); border-color: var(--container-border);">
+                            <h4 class="font-semibold text-themed-primary mb-2" data-translate="account-status">Account Status</h4>
+                            <div id="accountStatus" class="text-sm text-themed-secondary">
+                                <!-- Account status will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentUser = null;
+        
+        // Translations
+        const translations = {
+            en: {
+                // Header
+                'site-title': 'Libyan Open Science',
+                'sign-in': 'Sign In',
+                'sign-up': 'Sign Up',
+                
+                // Profile header
+                'change-photo': 'Change Photo',
+                'profile-information': 'Profile Information',
+                'manage-details': 'Manage your personal and academic details',
+                
+                // Tabs
+                'personal-information': 'Personal Information',
+                'academic-information': 'Academic Information',
+                
+                // Personal details
+                'personal-details': 'Personal Details',
+                'edit': 'Edit',
+                'first-name': 'First Name',
+                'first-name-placeholder': 'Enter your first name',
+                'last-name': 'Last Name',
+                'last-name-placeholder': 'Enter your last name',
+                'username': 'Username',
+                'username-placeholder': 'Choose a unique username',
+                'email-address': 'Email Address',
+                'email-placeholder': 'your.email@example.com',
+                'institution': 'Institution',
+                'institution-placeholder': 'University, Company, or Organization',
+                'professional-role': 'Professional Role',
+                'select-role': 'Select your role',
+                'student': 'Student',
+                'researcher': 'Researcher',
+                'professor': 'Professor',
+                'industry-professional': 'Industry Professional',
+                'other': 'Other',
+                'professional-bio': 'Professional Bio',
+                'bio-placeholder': 'Tell us about your background, interests, and professional experience...',
+                'save-personal-info': 'Save Personal Information',
+                
+                // Academic details
+                'academic-details': 'Academic Details',
+                'academic-fields': 'Academic Fields',
+                'add-field-placeholder': 'Add academic field (e.g., Computer Science, Biology)',
+                'research-interests': 'Research Interests',
+                'research-interests-placeholder': 'Describe your current research interests, areas of study, or topics you\'re passionate about...',
+                'publications-works': 'Publications & Works',
+                'publications-placeholder': 'List your publications, papers, projects, or other academic works...',
+                'save-academic-info': 'Save Academic Information',
+                
+                // Account settings
+                'account-settings': 'Account Settings',
+                'manage-account': 'Manage your account security and preferences',
+                'password-security': 'Password Security',
+                'current-password': 'Current Password',
+                'current-password-placeholder': 'Enter current password',
+                'new-password': 'New Password',
+                'new-password-placeholder': 'Enter new password',
+                'confirm-password': 'Confirm New Password',
+                'confirm-password-placeholder': 'Confirm new password',
+                'update-password': 'Update Password',
+                'account-management': 'Account Management',
+                'export-data': 'Export My Data',
+                'remove-profile-picture': 'Remove Profile Picture',
+                'delete-account': 'Delete Account',
+                'account-status': 'Account Status',
+                
+                // Email verification
+                'email-not-verified': 'Your email address is not verified.',
+                'verify-now': 'Verify Now',
+                'verify-email': 'Verify Your Email',
+                'verification-sent': 'We\'ve sent a 6-digit verification code to your email address.',
+                'enter-verification-code': 'Enter the 6-digit verification code',
+                'verify-email-button': 'Verify Email',
+                'resend-code': 'Resend Code',
+                'resend-timer': 'Resend available in',
+                'seconds': 'seconds'
+            },
+            ar: {
+                // Header
+                'site-title': 'منصة العلم المفتوح الليبية',
+                'sign-in': 'تسجيل الدخول',
+                'sign-up': 'إنشاء حساب',
+                
+                // Profile header
+                'change-photo': 'تغيير الصورة',
+                'profile-information': 'معلومات الملف الشخصي',
+                'manage-details': 'إدارة تفاصيلك الشخصية والأكاديمية',
+                
+                // Tabs
+                'personal-information': 'المعلومات الشخصية',
+                'academic-information': 'المعلومات الأكاديمية',
+                
+                // Personal details
+                'personal-details': 'التفاصيل الشخصية',
+                'edit': 'تعديل',
+                'first-name': 'الاسم الأول',
+                'first-name-placeholder': 'أدخل اسمك الأول',
+                'last-name': 'اسم العائلة',
+                'last-name-placeholder': 'أدخل اسم العائلة',
+                'username': 'اسم المستخدم',
+                'username-placeholder': 'اختر اسم مستخدم فريد',
+                'email-address': 'عنوان البريد الإلكتروني',
+                'email-placeholder': 'your.email@example.com',
+                'institution': 'المؤسسة',
+                'institution-placeholder': 'الجامعة أو الشركة أو المنظمة',
+                'professional-role': 'الدور المهني',
+                'select-role': 'اختر دورك',
+                'student': 'طالب',
+                'researcher': 'باحث',
+                'professor': 'أستاذ',
+                'industry-professional': 'محترف صناعي',
+                'other': 'أخرى',
+                'professional-bio': 'السيرة المهنية',
+                'bio-placeholder': 'أخبرنا عن خلفيتك واهتماماتك وخبرتك المهنية...',
+                'save-personal-info': 'حفظ المعلومات الشخصية',
+                
+                // Academic details
+                'academic-details': 'التفاصيل الأكاديمية',
+                'academic-fields': 'المجالات الأكاديمية',
+                'add-field-placeholder': 'إضافة مجال أكاديمي (مثل علوم الحاسوب، الأحياء)',
+                'research-interests': 'الاهتمامات البحثية',
+                'research-interests-placeholder': 'اوصف اهتماماتك البحثية الحالية ومجالات دراستك أو المواضيع التي تشغفك...',
+                'publications-works': 'المنشورات والأعمال',
+                'publications-placeholder': 'اذكر منشوراتك وأوراقك ومشاريعك أو أعمالك الأكاديمية الأخرى...',
+                'save-academic-info': 'حفظ المعلومات الأكاديمية',
+                
+                // Account settings
+                'account-settings': 'إعدادات الحساب',
+                'manage-account': 'إدارة أمان حسابك وتفضيلاتك',
+                'password-security': 'أمان كلمة المرور',
+                'current-password': 'كلمة المرور الحالية',
+                'current-password-placeholder': 'أدخل كلمة المرور الحالية',
+                'new-password': 'كلمة المرور الجديدة',
+                'new-password-placeholder': 'أدخل كلمة المرور الجديدة',
+                'confirm-password': 'تأكيد كلمة المرور الجديدة',
+                'confirm-password-placeholder': 'أكد كلمة المرور الجديدة',
+                'update-password': 'تحديث كلمة المرور',
+                'account-management': 'إدارة الحساب',
+                'export-data': 'تصدير بياناتي',
+                'remove-profile-picture': 'إزالة صورة الملف الشخصي',
+                'delete-account': 'حذف الحساب',
+                'account-status': 'حالة الحساب',
+                
+                // Email verification
+                'email-not-verified': 'عنوان بريدك الإلكتروني غير مؤكد.',
+                'verify-now': 'تأكيد الآن',
+                'verify-email': 'تأكيد بريدك الإلكتروني',
+                'verification-sent': 'لقد أرسلنا رمز تحقق مكون من 6 أرقام إلى عنوان بريدك الإلكتروني.',
+                'enter-verification-code': 'أدخل رمز التحقق المكون من 6 أرقام',
+                'verify-email-button': 'تأكيد البريد الإلكتروني',
+                'resend-code': 'إعادة إرسال الرمز',
+                'resend-timer': 'إعادة الإرسال متاحة خلال',
+                'seconds': 'ثانية'
+            }
+        };
+        
+        // Language management
+        function initializeLanguage() {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            setLanguage(savedLanguage);
+            loadUserLanguagePreference();
+        }
+
+        function setLanguage(language) {
+            document.documentElement.setAttribute('lang', language);
+            localStorage.setItem('language', language);
+            
+            const languageToggle = document.getElementById('languageToggle');
+            if (language === 'ar') {
+                if (languageToggle) languageToggle.title = 'Switch to English';
+            } else {
+                if (languageToggle) languageToggle.title = 'التبديل إلى العربية';
+            }
+            
+            // Apply translations
+            applyTranslations(language);
+            
+            // Save to database if user is authenticated
+            saveLanguagePreference(language);
+        }
+
+        function applyTranslations(language) {
+            const trans = translations[language];
+            
+            // Apply translations to all elements with data-translate attribute
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (trans[key]) {
+                    if (element.tagName === 'INPUT' && element.type !== 'submit') {
+                        element.placeholder = trans[key];
+                    } else if (element.tagName === 'OPTION') {
+                        element.textContent = trans[key];
+                    } else {
+                        element.textContent = trans[key];
+                    }
+                    
+                    // Apply minimal RTL styling only for longer text content in Arabic
+                    if (language === 'ar' && trans[key].length > 10) {
+                        element.style.direction = 'rtl';
+                    } else {
+                        element.style.direction = '';
+                    }
+                }
+            });
+        }
+
+        async function saveLanguagePreference(language) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            display_language: language
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving language preference:', error);
+                }
+            }
+        }
+
+        async function loadUserLanguagePreference() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('/api/user/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success && data.preferences.ui_preferences && data.preferences.ui_preferences.display_language) {
+                        setLanguage(data.preferences.ui_preferences.display_language);
+                    }
+                } catch (error) {
+                    console.error('Error loading language preference:', error);
+                }
+            }
+        }
+
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            const currentLanguage = document.documentElement.getAttribute('lang') || 'en';
+            const newLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            setLanguage(newLanguage);
+        });
+
+        document.getElementById('themeToggleInput').addEventListener('change', function(e) {
+            const newTheme = e.target.checked ? 'dark' : 'light';
+            setTheme(newTheme);
+        });
+        
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.checked = theme === 'dark';
+            }
+            
+            const headerLogo = document.getElementById('headerLogo');
+            
+            if (theme === 'dark') {
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-dark.svg';
+                }
+            } else {
+                if (headerLogo) {
+                    headerLogo.src = '/static/images/logo-light.svg';
+                }
+            }
+            
+            // Save to database if user is authenticated
+            saveThemePreference(theme);
+        }
+
+        async function saveThemePreference(theme) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    await fetch('/api/user/preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            theme_preference: theme
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error saving theme preference:', error);
+                }
+            }
+        }
+
+        async function loadUserThemePreference() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('/api/user/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success && data.preferences.theme_preference) {
+                        setTheme(data.preferences.theme_preference);
+                    }
+                } catch (error) {
+                    console.error('Error loading theme preference:', error);
+                }
+            }
+        }
+
+        // Authentication functions
+        function checkAuthenticationStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            const userMode = localStorage.getItem('userMode');
+            
+            console.log('Authentication check:', {
+                hasToken: !!token,
+                hasUserData: !!userData,
+                userMode: userMode
+            });
+            
+            if (token && userData && userMode === 'authenticated') {
+                // Verify token is still valid
+                fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Token verification result:', data);
+                    if (data.success) {
+                        currentUser = JSON.parse(userData);
+                        console.log('Current user loaded:', currentUser.email);
+                        showUserInfo(currentUser);
+                        loadUserProfile();
+                        loadUserThemePreference();
+                    } else {
+                        console.error('Token verification failed:', data.error);
+                        showLoginButtons();
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying token:', error);
+                    showLoginButtons();
+                    window.location.href = '/login';
+                });
+            } else {
+                console.log('Missing authentication data, redirecting to login');
+                showLoginButtons();
+                window.location.href = '/login';
+            }
+        }
+        
+        function showLoginButtons() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (authButtons && userInfo) {
+                authButtons.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        }
+        
+        function showUserInfo(userData) {
+            try {
+                const authButtons = document.getElementById('authButtons');
+                const userInfo = document.getElementById('userInfo');
+                const userProfile = document.getElementById('userProfile');
+                
+                if (!authButtons || !userInfo || !userProfile) {
+                    console.error('Required DOM elements not found for user info');
+                    return;
+                }
+                
+                authButtons.style.display = 'none';
+                userInfo.style.display = 'block';
+                
+                const firstName = userData.profile?.first_name || '';
+                const lastName = userData.profile?.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim() || userData.username || 'User';
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                // Create profile picture element
+                const profilePictureHtml = `
+                    <div class="w-8 h-8 relative">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-0.5">
+                            <img id="userMenuProfilePicture" src="" alt="Profile Picture" class="w-full h-full rounded-full object-cover hidden bg-white">
+                            <div id="userMenuInitials" class="w-full h-full bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                ${initials}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                userProfile.innerHTML = `
+                    <button onclick="toggleUserMenu()" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
+                        ${profilePictureHtml}
+                        <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    <div class="user-menu-dropdown" id="userMenuDropdown">
+                        <button onclick="goToProfile()" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                            </svg>
+                            Profile
+                        </button>
+                        <button onclick="goToDashboard()" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                            </svg>
+                            Dashboard
+                        </button>
+                        <button onclick="goToDeveloperPortal()" class="user-menu-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                            </svg>
+                            Developer Portal
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="toggleTheme()" class="user-menu-item" id="themeToggleMenuItem">
+                            <svg id="themeIconMenu" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                            </svg>
+                            <span id="themeTextMenu">Dark Mode</span>
+                        </button>
+                        <div class="user-menu-separator"></div>
+                        <button onclick="logout()" class="user-menu-item text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                            </svg>
+                            Logout
+                        </button>
+                    </div>
+                `;
+                
+                updateThemeMenuItem();
+                
+                // Load profile picture in user menu
+                loadUserMenuProfilePicture(userData.user_id);
+            } catch (error) {
+                console.error('Error in showUserInfo:', error);
+                showLoginButtons();
+            }
+        }
+
+        async function loadUserMenuProfilePicture(userId) {
+            if (!userId) return;
+
+            try {
+                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.src = imageUrl;
+                        profilePicture.classList.remove('hidden');
+                        initials.classList.add('hidden');
+                    }
+                } else {
+                    // No profile picture, keep showing initials
+                    console.log('No profile picture found for user');
+                }
+            } catch (error) {
+                console.error('Error loading user menu profile picture:', error);
+                // Keep showing initials on error
+            }
+        }
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userMenuDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateThemeMenuItem();
+        }
+
+        function updateThemeMenuItem() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const themeIcon = document.getElementById('themeIconMenu');
+            const themeText = document.getElementById('themeTextMenu');
+            
+            if (themeIcon && themeText) {
+                if (currentTheme === 'dark') {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />';
+                    themeText.textContent = 'Dark Mode';
+                }
+            }
+        }
+
+        function goToProfile() {
+            // Already on profile page, just close menu
+            toggleUserMenu();
+        }
+
+        function goToDashboard() {
+            window.location.href = '/user-dashboard';
+        }
+
+        function goToDeveloperPortal() {
+            window.location.href = '/dev';
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('userMode');
+            showTemporaryMessage('Logged out successfully', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userMenuDropdown');
+            
+            if (userMenu && dropdown && !userMenu.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        function showTemporaryMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+
+        // Profile picture management
+        function triggerProfilePictureUpload() {
+            document.getElementById('profilePictureInput').click();
+        }
+
+        async function handleProfilePictureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showTemporaryMessage('Please select a valid image file (JPEG, PNG, GIF, WebP)', 'error');
+                return;
+            }
+
+            // Validate file size (5MB limit)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                showTemporaryMessage('Image too large. Maximum size is 5MB', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                showTemporaryMessage('Uploading profile picture...', 'info');
+
+                // Convert to base64
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const imageData = e.target.result;
+
+                    try {
+                        const token = localStorage.getItem('authToken');
+                        const response = await fetch('/api/user/profile-picture', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                image: imageData
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showTemporaryMessage('Profile picture updated successfully!', 'success');
+                            // Update the display
+                            loadProfilePicture();
+                        } else {
+                            throw new Error(data.error || 'Failed to upload profile picture');
+                        }
+                    } catch (error) {
+                        console.error('Error uploading profile picture:', error);
+                        showTemporaryMessage('Error uploading profile picture: ' + error.message, 'error');
+                    }
+                };
+
+                reader.readAsDataURL(file);
+
+            } catch (error) {
+                console.error('Error processing profile picture:', error);
+                showTemporaryMessage('Error processing image', 'error');
+            }
+
+            // Clear the input
+            event.target.value = '';
+        }
+
+        async function loadProfilePicture() {
+            if (!currentUser) return;
+
+            try {
+                const response = await fetch(`/api/user/profile-picture/${currentUser.user_id}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    const profilePicture = document.getElementById('profilePicture');
+                    const profileAvatar = document.getElementById('profileAvatar');
+                    
+                    profilePicture.src = imageUrl;
+                    profilePicture.style.display = 'block';
+                    profileAvatar.style.display = 'none';
+                } else {
+                    // No profile picture, show initials
+                    const profilePicture = document.getElementById('profilePicture');
+                    const profileAvatar = document.getElementById('profileAvatar');
+                    
+                    profilePicture.style.display = 'none';
+                    profileAvatar.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error loading profile picture:', error);
+            }
+        }
+
+        async function deleteProfilePicture() {
+            if (!confirm('Are you sure you want to remove your profile picture?')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/profile-picture', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showTemporaryMessage('Profile picture removed successfully', 'success');
+                    
+                    // Reset display to show initials
+                    const profilePicture = document.getElementById('profilePicture');
+                    const profileAvatar = document.getElementById('profileAvatar');
+                    
+                    profilePicture.style.display = 'none';
+                    profileAvatar.style.display = 'flex';
+                } else {
+                    throw new Error(data.error || 'Failed to remove profile picture');
+                }
+            } catch (error) {
+                console.error('Error removing profile picture:', error);
+                showTemporaryMessage('Error removing profile picture: ' + error.message, 'error');
+            }
+        }
+
+        // Profile data management
+        async function loadUserProfile() {
+            await loadUserProfileData();
+        }
+
+        async function loadUserProfileData() {
+            if (!currentUser) return;
+
+            try {
+                // Populate profile header
+                const firstName = currentUser.profile?.first_name || '';
+                const lastName = currentUser.profile?.last_name || '';
+                const fullName = `${firstName} ${lastName}`.trim() || currentUser.username || 'User';
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+
+                document.getElementById('profileAvatar').textContent = initials;
+                document.getElementById('profileName').textContent = fullName;
+                document.getElementById('profileEmail').textContent = currentUser.email || '';
+                document.getElementById('profileRole').textContent = currentUser.profile?.role || 'User';
+                
+                const joinDate = currentUser.created_at ? 
+                    new Date(currentUser.created_at).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long'
+                    }) : 'Unknown';
+                document.getElementById('profileJoinDate').textContent = `Joined ${joinDate}`;
+
+                // Load profile picture
+                loadProfilePicture();
+
+                // Populate form fields
+                document.getElementById('firstName').value = firstName;
+                document.getElementById('lastName').value = lastName;
+                document.getElementById('username').value = currentUser.username || '';
+                document.getElementById('email').value = currentUser.email || '';
+                document.getElementById('institution').value = currentUser.profile?.institution || '';
+                document.getElementById('role').value = currentUser.profile?.role || '';
+                document.getElementById('bio').value = currentUser.profile?.bio || '';
+                document.getElementById('researchInterests').value = currentUser.profile?.research_interests || '';
+                document.getElementById('publications').value = currentUser.profile?.publications || '';
+
+                // Load academic fields
+                loadAcademicFields(currentUser.profile?.academic_fields || []);
+
+                // Load account status
+                loadAccountStatus();
+                
+                // Check email verification status
+                checkEmailVerificationStatus();
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showTemporaryMessage('Error loading profile data', 'error');
+            }
+        }
+
+        // Tab switching functionality
+        function switchTab(tab) {
+            // Remove active class from all tab buttons and contents
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
+        }
+
+        // Edit functionality
+        function toggleEdit(section) {
+            const editBtn = document.getElementById(`${section}EditBtn`);
+            const saveBtn = document.getElementById(`${section}SaveBtn`);
+            const isEditing = editBtn.classList.contains('editing');
+
+            if (isEditing) {
+                // Cancel editing
+                cancelEdit(section);
+            } else {
+                // Start editing
+                startEdit(section);
+            }
+        }
+
+        function startEdit(section) {
+            const editBtn = document.getElementById(`${section}EditBtn`);
+            const saveBtn = document.getElementById(`${section}SaveBtn`);
+            
+            // Update button state
+            editBtn.classList.add('editing');
+            editBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel
+            `;
+            saveBtn.style.display = 'block';
+
+            if (section === 'personal') {
+                // Enable personal form fields
+                document.getElementById('firstName').removeAttribute('readonly');
+                document.getElementById('lastName').removeAttribute('readonly');
+                document.getElementById('username').removeAttribute('readonly');
+                document.getElementById('email').removeAttribute('readonly');
+                document.getElementById('institution').removeAttribute('readonly');
+                document.getElementById('role').removeAttribute('disabled');
+                document.getElementById('bio').removeAttribute('readonly');
+            } else if (section === 'academic') {
+                // Enable academic form fields
+                document.getElementById('researchInterests').removeAttribute('readonly');
+                document.getElementById('publications').removeAttribute('readonly');
+                document.getElementById('addFieldContainer').style.display = 'flex';
+                
+                // Enable remove buttons for academic fields
+                document.querySelectorAll('.academic-field-tag button').forEach(btn => {
+                    btn.style.display = 'inline-block';
+                });
+            }
+        }
+
+        function cancelEdit(section) {
+            const editBtn = document.getElementById(`${section}EditBtn`);
+            const saveBtn = document.getElementById(`${section}SaveBtn`);
+            
+            // Update button state
+            editBtn.classList.remove('editing');
+            editBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                Edit
+            `;
+            saveBtn.style.display = 'none';
+
+            if (section === 'personal') {
+                // Disable personal form fields and reload original values
+                document.getElementById('firstName').setAttribute('readonly', 'readonly');
+                document.getElementById('lastName').setAttribute('readonly', 'readonly');
+                document.getElementById('username').setAttribute('readonly', 'readonly');
+                document.getElementById('email').setAttribute('readonly', 'readonly');
+                document.getElementById('institution').setAttribute('readonly', 'readonly');
+                document.getElementById('role').setAttribute('disabled', 'disabled');
+                document.getElementById('bio').setAttribute('readonly', 'readonly');
+                
+                // Reload original values
+                loadUserProfileData();
+            } else if (section === 'academic') {
+                // Disable academic form fields
+                document.getElementById('researchInterests').setAttribute('readonly', 'readonly');
+                document.getElementById('publications').setAttribute('readonly', 'readonly');
+                document.getElementById('addFieldContainer').style.display = 'none';
+                
+                // Hide remove buttons for academic fields
+                document.querySelectorAll('.academic-field-tag button').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                
+                // Reload original values
+                loadUserProfileData();
+            }
+        }
+
+        function loadAcademicFields(fields) {
+            const container = document.getElementById('academicFieldsContainer');
+            container.innerHTML = '';
+
+            fields.forEach(field => {
+                addAcademicFieldElement(field);
+            });
+        }
+
+        function addAcademicField() {
+            const input = document.getElementById('newAcademicField');
+            const field = input.value.trim();
+            
+            if (field) {
+                addAcademicFieldElement(field);
+                input.value = '';
+            }
+        }
+
+        function addAcademicFieldElement(field) {
+            const container = document.getElementById('academicFieldsContainer');
+            const fieldDiv = document.createElement('span');
+            fieldDiv.className = 'academic-field-tag';
+            fieldDiv.innerHTML = `
+                ${field}
+                <button type="button" onclick="removeAcademicField(this)" class="ml-2 text-red-500 hover:text-red-700" title="Remove field" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <input type="hidden" class="academic-field-value" value="${field}">
+            `;
+            container.appendChild(fieldDiv);
+        }
+
+        function removeAcademicField(button) {
+            button.parentElement.remove();
+        }
+
+        function loadAccountStatus() {
+            const statusDiv = document.getElementById('accountStatus');
+            const joinDate = currentUser.created_at ? 
+                new Date(currentUser.created_at).toLocaleDateString() : 'Unknown';
+            const lastLogin = currentUser.last_login ? 
+                new Date(currentUser.last_login).toLocaleDateString() : 'Unknown';
+
+            statusDiv.innerHTML = `
+                <p><strong>Account Created:</strong> ${joinDate}</p>
+                <p><strong>Last Login:</strong> ${lastLogin}</p>
+                <p><strong>Email Verified:</strong> ${currentUser.email_verified ? 'Yes' : 'No'}</p>
+                <p><strong>Login Count:</strong> ${currentUser.login_count || 0}</p>
+                <p><strong>Account Status:</strong> ${currentUser.is_active ? 'Active' : 'Inactive'}</p>
+            `;
+        }
+
+        // Form submission handlers
+        document.getElementById('personalInfoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                profile: {
+                    ...currentUser.profile,
+                    first_name: document.getElementById('firstName').value,
+                    last_name: document.getElementById('lastName').value,
+                    institution: document.getElementById('institution').value,
+                    role: document.getElementById('role').value,
+                    bio: document.getElementById('bio').value
+                },
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value
+            };
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Personal information updated successfully', 'success');
+                    // Update local storage
+                    const updatedUser = { ...currentUser, ...formData };
+                    localStorage.setItem('userData', JSON.stringify(updatedUser));
+                    currentUser = updatedUser;
+                    showUserInfo(currentUser);
+                    
+                    // Exit edit mode
+                    cancelEdit('personal');
+                } else {
+                    throw new Error(data.error || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showTemporaryMessage('Error updating profile: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('academicInfoForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                profile: {
+                    ...currentUser.profile,
+                    academic_fields: Array.from(document.querySelectorAll('.academic-field-value')).map(input => input.value),
+                    research_interests: document.getElementById('researchInterests').value,
+                    publications: document.getElementById('publications').value
+                }
+            };
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Academic information updated successfully', 'success');
+                    // Update local storage
+                    const updatedUser = { ...currentUser, ...formData };
+                    localStorage.setItem('userData', JSON.stringify(updatedUser));
+                    currentUser = updatedUser;
+                    
+                    // Exit edit mode
+                    cancelEdit('academic');
+                } else {
+                    throw new Error(data.error || 'Failed to update academic information');
+                }
+            } catch (error) {
+                console.error('Error updating academic information:', error);
+                showTemporaryMessage('Error updating academic information: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showTemporaryMessage('New passwords do not match', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showTemporaryMessage('New password must be at least 6 characters long', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Password changed successfully', 'success');
+                    document.getElementById('passwordForm').reset();
+                } else {
+                    throw new Error(data.error || 'Failed to change password');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showTemporaryMessage('Error changing password: ' + error.message, 'error');
+            }
+        });
+
+        function exportUserData() {
+            // This would typically trigger a download of user data
+            showTemporaryMessage('Export functionality coming soon', 'info');
+        }
+
+        function deleteAccount() {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                showTemporaryMessage('Account deletion functionality coming soon', 'info');
+            }
+        }
+
+        // Email verification functionality
+        let resendTimer = null;
+        
+        function checkEmailVerificationStatus() {
+            if (currentUser && !currentUser.email_verified) {
+                document.getElementById('emailVerificationBanner').style.display = 'block';
+            }
+        }
+        
+        function showEmailVerificationPopup() {
+            if (!currentUser || !currentUser.email) {
+                showTemporaryMessage('No email address found', 'error');
+                return;
+            }
+            
+            // Set email address in popup
+            document.getElementById('verificationEmailAddress').textContent = currentUser.email;
+            
+            // Clear previous input
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`digit${i}`).value = '';
+            }
+            
+            // Show popup
+            document.getElementById('emailVerificationPopup').style.display = 'flex';
+            
+            // Focus first input
+            document.getElementById('digit1').focus();
+            
+            // Send verification code
+            sendVerificationCode();
+        }
+        
+        function closeEmailVerificationPopup() {
+            document.getElementById('emailVerificationPopup').style.display = 'none';
+            // Clear any timers
+            if (resendTimer) {
+                clearInterval(resendTimer);
+                resendTimer = null;
+            }
+        }
+        
+        async function sendVerificationCode() {
+            try {
+                const token = localStorage.getItem('authToken');
+                console.log('Auth token check:', token ? 'Token exists' : 'No token found');
+                
+                if (!token) {
+                    showTemporaryMessage('Please login first to verify your email', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                    return;
+                }
+                
+                const response = await fetch('/api/user/send-verification-code', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    showTemporaryMessage('Verification code sent to your email', 'success');
+                    startResendTimer();
+                } else {
+                    throw new Error(data.error || 'Failed to send verification code');
+                }
+            } catch (error) {
+                console.error('Error sending verification code:', error);
+                showTemporaryMessage('Error sending verification code: ' + error.message, 'error');
+            }
+        }
+        
+        function startResendTimer() {
+            const resendBtn = document.getElementById('resendBtn');
+            const resendTimerDiv = document.getElementById('resendTimer');
+            const timerSeconds = document.getElementById('timerSeconds');
+            
+            resendBtn.style.display = 'none';
+            resendTimerDiv.style.display = 'block';
+            
+            let seconds = 60;
+            timerSeconds.textContent = seconds;
+            
+            resendTimer = setInterval(() => {
+                seconds--;
+                timerSeconds.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(resendTimer);
+                    resendTimer = null;
+                    resendBtn.style.display = 'inline-block';
+                    resendTimerDiv.style.display = 'none';
+                }
+            }, 1000);
+        }
+        
+        function resendVerificationCode() {
+            sendVerificationCode();
+        }
+        
+        function moveToNext(current, nextId) {
+            if (current.value.length === 1) {
+                // Only allow digits
+                if (!/^[0-9]$/.test(current.value)) {
+                    current.value = '';
+                    return;
+                }
+                
+                if (nextId) {
+                    document.getElementById(nextId).focus();
+                } else {
+                    // All digits entered, try to submit
+                    submitVerificationCode();
+                }
+            }
+        }
+        
+        function moveToPrev(current, prevId) {
+            if (event.key === 'Backspace' && current.value === '' && prevId) {
+                document.getElementById(prevId).focus();
+            }
+        }
+        
+        async function submitVerificationCode() {
+            const digits = [];
+            for (let i = 1; i <= 6; i++) {
+                const digit = document.getElementById(`digit${i}`).value;
+                if (!digit) {
+                    showTemporaryMessage('Please enter all 6 digits', 'error');
+                    return;
+                }
+                digits.push(digit);
+            }
+            
+            const code = digits.join('');
+            
+            try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch('/api/user/verify-email', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        verification_code: code
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTemporaryMessage('Email verified successfully!', 'success');
+                    
+                    // Update current user data
+                    currentUser.email_verified = true;
+                    localStorage.setItem('userData', JSON.stringify(currentUser));
+                    
+                    // Hide banner and popup
+                    document.getElementById('emailVerificationBanner').style.display = 'none';
+                    closeEmailVerificationPopup();
+                    
+                    // Reload account status
+                    loadAccountStatus();
+                } else {
+                    showTemporaryMessage(data.error || 'Invalid verification code', 'error');
+                    
+                    // Clear inputs and focus first one
+                    for (let i = 1; i <= 6; i++) {
+                        document.getElementById(`digit${i}`).value = '';
+                    }
+                    document.getElementById('digit1').focus();
+                }
+            } catch (error) {
+                console.error('Error verifying email:', error);
+                showTemporaryMessage('Error verifying email: ' + error.message, 'error');
+            }
+        }
+        
+        // Email verification form submission
+        document.getElementById('emailVerificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitVerificationCode();
+        });
+        
+        // Close popup when clicking outside
+        document.getElementById('emailVerificationPopup').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEmailVerificationPopup();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                initializeTheme();
+                initializeLanguage();
+                checkAuthenticationStatus();
+            } catch (error) {
+                console.error('Error in initialization:', error);
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html> 
