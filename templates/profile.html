@@ -752,6 +752,106 @@
         .edit-toggle-btn.editing:hover {
             background: linear-gradient(135deg, rgba(5, 150, 105, 0.9), rgba(4, 120, 87, 0.9));
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            /* Header adjustments for mobile */
+            header .container {
+                padding: 1rem 1.5rem;
+            }
+            
+            /* Hide theme toggle on mobile */
+            .switch {
+                display: none;
+            }
+            
+            /* Hide language toggle on mobile */
+            .language-toggle-icon {
+                display: none;
+            }
+            
+            /* Make logo and website name smaller on mobile */
+            .logo-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            
+            .logo-container .w-8 {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+            
+            .logo-container span {
+                font-size: 0.875rem;
+            }
+            
+            /* User profile adjustments - hide name, keep only image */
+            .user-menu-profile .user-name {
+                display: none;
+            }
+            
+            .user-menu-profile .user-avatar {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            /* Main content mobile adjustments */
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .profile-card {
+                padding: 1.5rem;
+            }
+            
+            .profile-card h2 {
+                font-size: 1.25rem;
+            }
+            
+            .grid.grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .form-group {
+                margin-bottom: 1rem;
+            }
+            
+            .form-group label {
+                font-size: 0.875rem;
+            }
+            
+            .form-group input,
+            .form-group textarea {
+                font-size: 0.875rem;
+                padding: 0.5rem;
+            }
+            
+            .edit-toggle-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .profile-section {
+                padding: 1rem;
+            }
+        }
+        
+        /* Additional mobile breakpoint for very small screens */
+        @media (max-width: 480px) {
+            .profile-card {
+                padding: 1rem;
+            }
+            
+            .profile-card h2 {
+                font-size: 1.125rem;
+            }
+            
+            .main-content {
+                padding: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -759,7 +859,7 @@
     <header class="header shadow-md">
         <div class="container mx-auto px-6 py-4">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-3 logo-container">
                     <a href="/" class="flex items-center space-x-3">
                         <div class="w-8 h-8 flex items-center justify-center">
                             <img 

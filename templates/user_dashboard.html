@@ -397,6 +397,176 @@
                 opacity: 0;
             }
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            /* Header adjustments for mobile */
+            header .container {
+                padding: 1rem 1.5rem;
+            }
+            
+            /* Hide theme toggle on mobile */
+            .switch {
+                display: none;
+            }
+            
+            /* Hide language toggle on mobile */
+            .language-toggle-icon {
+                display: none;
+            }
+            
+            /* Make logo and website name smaller on mobile */
+            .logo-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            
+            .logo-container .w-8 {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+            
+            .logo-container span {
+                font-size: 0.875rem;
+            }
+            
+            /* User profile adjustments - hide name, keep only image */
+            .user-menu-profile .user-name {
+                display: none;
+            }
+            
+            .user-menu-profile .user-avatar {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            /* Main content mobile adjustments */
+            main {
+                padding: 1rem 1.5rem;
+            }
+            
+            /* Welcome section mobile */
+            .glass-section-header {
+                padding: 1.5rem;
+                text-align: center;
+            }
+            
+            .glass-section-header .flex {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .glass-section-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .glass-section-header .flex.space-x-4 {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .glass-section-header .flex.space-x-4 a {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            /* Statistics grid mobile */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-card h3 {
+                font-size: 1.25rem;
+            }
+            
+            .stat-card p {
+                font-size: 0.75rem;
+            }
+            
+            /* Charts mobile */
+            .chart-container {
+                overflow-x: auto;
+            }
+            
+            .h-64 {
+                height: 200px;
+            }
+            
+            /* Time period selector mobile */
+            .time-period-container {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .time-period-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+            
+            /* Recent activity mobile */
+            .grid.grid-cols-1.lg\\:grid-cols-2 {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .activity-item {
+                padding: 0.75rem;
+            }
+            
+            .activity-item h4 {
+                font-size: 0.875rem;
+            }
+            
+            .activity-item p {
+                font-size: 0.75rem;
+            }
+            
+            /* Buttons mobile */
+            .flex.items-center.justify-between {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+            }
+            
+            .flex.items-center.justify-between a,
+            .flex.items-center.justify-between button {
+                text-align: center;
+            }
+        }
+        
+        /* Additional mobile breakpoint for very small screens */
+        @media (max-width: 480px) {
+            /* Single column layout for stats */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .glass-section-header {
+                padding: 1rem;
+            }
+            
+            .glass-section-header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .stat-card {
+                padding: 0.75rem;
+            }
+            
+            .card {
+                margin: 0 0.5rem;
+            }
+            
+            main {
+                padding: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -404,7 +574,7 @@
     <header class="header shadow-md">
         <div class="container mx-auto px-6 py-4">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-3 logo-container">
                     <a href="/" class="flex items-center space-x-3">
                         <div class="w-8 h-8 flex items-center justify-center">
                             <img 
@@ -1005,9 +1175,9 @@
             `;
             
             userProfile.innerHTML = `
-                <button onclick="toggleUserMenu()" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
-                    ${profilePictureHtml}
-                    <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                <button onclick="toggleUserMenu()" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors user-menu-profile">
+                    <span class="user-avatar">${profilePictureHtml}</span>
+                    <span class="text-sm font-medium text-themed-primary user-name">${fullName}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                     </svg>

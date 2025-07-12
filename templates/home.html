@@ -950,6 +950,141 @@
             .main-wrapper.sidebar-open {
                 margin-left: 300px;
             }
+            
+            /* Header adjustments for mobile */
+            header .container {
+                padding: 1rem 1.5rem;
+            }
+            
+            /* Hide theme toggle on mobile */
+            .switch {
+                display: none;
+            }
+            
+            /* Hide language toggle on mobile */
+            .language-toggle-icon {
+                display: none;
+            }
+            
+            /* Make logo and website name smaller on mobile */
+            .logo-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+            
+            .logo-container .w-10 {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            .logo-container h1 {
+                font-size: 1rem;
+                line-height: 1.2;
+            }
+            
+            .logo-container p {
+                font-size: 0.75rem;
+                display: none; /* Hide subtitle on mobile */
+            }
+            
+            /* User profile adjustments - hide name, keep only image */
+            .user-menu-profile .user-name {
+                display: none;
+            }
+            
+            .user-menu-profile .user-avatar {
+                width: 2rem;
+                height: 2rem;
+            }
+            
+            /* Hero section adjustments */
+            .hero-section {
+                margin-bottom: 2rem;
+                padding: 0 1rem;
+            }
+            
+            .hero-section h1 {
+                font-size: 2rem;
+                line-height: 1.2;
+                margin-bottom: 1rem;
+            }
+            
+            .hero-section p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            /* Search container mobile adjustments */
+            .search-container {
+                padding: 1.5rem;
+                margin: 0 1rem;
+            }
+            
+            /* Filter buttons responsive */
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .filter-btn span:first-child {
+                font-size: 1rem;
+            }
+            
+            /* Quick search examples */
+            .quick-search-examples {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .quick-search-examples button {
+                width: 100%;
+                text-align: center;
+            }
+            
+            /* Main content padding */
+            main {
+                padding: 1.5rem 0;
+            }
+            
+            /* Auth buttons mobile */
+            .auth-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .auth-buttons a {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+                text-align: center;
+                min-width: 80px;
+            }
+        }
+        
+        /* Additional mobile breakpoint for very small screens */
+        @media (max-width: 480px) {
+            .hero-section h1 {
+                font-size: 1.75rem;
+            }
+            
+            .search-container {
+                padding: 1rem;
+                margin: 0 0.5rem;
+            }
+            
+            .filter-buttons {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                justify-content: center;
+            }
         }
 
         /* Enhance content visibility over aurora */
@@ -970,7 +1105,7 @@
         <div class="container mx-auto px-6 py-6">
             <div class="flex justify-between items-center">
                 <!-- Logo -->
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-3 logo-container">
                     <!-- Theme-aware SVG Logo with PNG fallback -->
                     <div class="w-10 h-10 flex items-center justify-center">
                         <img 
@@ -1006,7 +1141,7 @@
                     </div>
                     
                     <!-- Login/Signup Buttons (shown when not authenticated) -->
-                    <div id="authButtons" class="flex space-x-3">
+                    <div id="authButtons" class="flex space-x-3 auth-buttons">
                         <a href="/login" class="text-themed-secondary hover:text-blue-600 transition-colors px-4 py-2" data-translate="sign-in">
                             Sign In
                         </a>
@@ -1078,7 +1213,7 @@
         <main class="relative z-1 flex-1 flex items-center justify-center px-6 py-12">
         <div class="w-full max-w-4xl">
             <!-- Hero Section -->
-            <div class="text-center mb-12">
+            <div class="text-center mb-12 hero-section">
                 <h1 class="text-5xl md:text-7xl font-bold text-themed-primary mb-6 leading-tight">
                     <span data-translate="main-title">A Free, Open-source</span><br>
                     <span class="text-blue-600" data-translate="main-subtitle">Research repository</span>
@@ -1107,7 +1242,7 @@
                 </div>
 
                 <!-- Filter Buttons -->
-                <div class="flex flex-wrap justify-center gap-4">
+                <div class="flex flex-wrap justify-center gap-4 filter-buttons">
                     <button 
                         class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
                         data-filter="experts"
@@ -1177,7 +1312,7 @@
                 <!-- Quick Search Examples -->
                 <div class="mt-8 text-center">
                     <p class="text-themed-secondary text-sm mb-3" data-translate="try-searching">Try searching for:</p>
-                    <div class="flex flex-wrap justify-center gap-2">
+                    <div class="flex flex-wrap justify-center gap-2 quick-search-examples">
                         <button onclick="setSearchQuery('reducing carbon emissions in cars')" class="text-blue-600 hover:text-blue-800 text-sm bg-themed-button hover-themed-button px-3 py-1 rounded-full transition-colors" data-translate="Carbon-emissions">
                             Carbon emissions in cars
                         </button>
@@ -1920,9 +2055,9 @@
                 
                 // Create the user menu HTML
                 userProfile.innerHTML = `
-                    <button onclick="toggleUserMenu(event)" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors">
-                        ${profilePictureHtml}
-                        <span class="text-sm font-medium text-themed-primary">${fullName}</span>
+                    <button onclick="toggleUserMenu(event)" class="flex items-center space-x-2 hover:bg-white hover:bg-opacity-10 px-3 py-2 rounded-lg transition-colors user-menu-profile">
+                        <span class="user-avatar">${profilePictureHtml}</span>
+                        <span class="text-sm font-medium text-themed-primary user-name">${fullName}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-themed-secondary">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                         </svg>
