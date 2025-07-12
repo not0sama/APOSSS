@@ -11,8 +11,8 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from modules.embedding_ranker import EmbeddingRanker
-from modules.query_processor import QueryProcessor
 from modules.llm_processor import LLMProcessor
+from modules.query_processor import QueryProcessor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

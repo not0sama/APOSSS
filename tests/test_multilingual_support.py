@@ -6,6 +6,7 @@ import os
 import sys
 import json
 from modules.llm_processor import LLMProcessor
+from modules.query_processor import QueryProcessor
 from modules.embedding_ranker import EmbeddingRanker
 
 def test_multilingual_functionality():
@@ -26,27 +27,28 @@ def test_multilingual_functionality():
     ]
     
     try:
-        # Test LLM Processor
-        print("\n🔤 Testing LLM Processor with Multilingual Queries")
+        # Test Query Processor with LLM 
+        print("\n🔤 Testing Query Processor with Multilingual Queries")
         print("-" * 40)
         
         llm_processor = LLMProcessor()
+        query_processor = QueryProcessor(llm_processor)
         
         for language, query in test_queries:
             print(f"\n📝 Testing {language}: '{query[:50]}...'")
             
             try:
-                result = llm_processor.process_query(query)
+                result = query_processor.process_query(query)
                 if result:
-                    lang_detection = result.get('language_detection', {})
-                    translation = result.get('translation', {})
+                    lang_detection = result.get('language_analysis', {})
+                    translation = result.get('query_processing', {})
                     
                     print(f"   ✅ Detected: {lang_detection.get('language_name', 'Unknown')} "
                           f"({lang_detection.get('detected_language', 'unknown')})")
-                    print(f"   🔄 Translation needed: {translation.get('needs_translation', False)}")
+                    print(f"   🔄 Translation needed: {translation.get('translation_needed', False)}")
                     
-                    if translation.get('needs_translation'):
-                        translated = translation.get('translated_query', '')
+                    if translation.get('translation_needed'):
+                        translated = translation.get('english_translation', '')
                         print(f"   🇬🇧 Translated: '{translated[:50]}...'")
                     
                     # Show some keywords
@@ -134,15 +136,16 @@ def test_multilingual_llm_connection():
     
     try:
         llm_processor = LLMProcessor()
-        result = llm_processor.test_multilingual_connection()
+        query_processor = QueryProcessor(llm_processor)
+        result = query_processor.test_enhanced_connection()
         
         if result.get('connected'):
             print("   ✅ LLM connection successful")
             print(f"   🌐 Multilingual support: {result.get('multilingual_support', False)}")
             
-            if result.get('sample_language_detection'):
-                lang_info = result['sample_language_detection']
-                print(f"   🔤 Sample detection: {lang_info.get('language_name', 'Unknown')}")
+            if result.get('test_results'):
+                for test_result in result['test_results'][:2]:  # Show first 2 tests
+                    print(f"   🔤 Test: {test_result.get('detected_language', 'unknown')} - {'✅' if test_result.get('success') else '❌'}")
         else:
             print(f"   ❌ Connection failed: {result.get('error', 'Unknown error')}")
             
