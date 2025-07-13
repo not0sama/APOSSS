@@ -203,7 +203,33 @@ class RankingEngine:
                 ranked_results = self.ltr_ranker.rank_results(
                     original_query, results, processed_query, current_scores, user_feedback_data
                 )
-                ranking_algorithm = "Learning-to-Rank (XGBoost)"
+                
+                # Add LTR features to score breakdown for each result
+                for i, result in enumerate(ranked_results):
+                    ltr_score = result.get('ltr_score', 0.5)
+                    ltr_rank = result.get('ltr_rank', i + 1)
+                    
+                    # Store score breakdown with LTR features
+                    result['score_breakdown'] = {
+                        'ltr_score': ltr_score,
+                        'ltr_rank': ltr_rank,
+                        'ltr_features_used': len(self.ltr_ranker.feature_names) if self.ltr_ranker else 0,
+                        'ltr_model_trained': self.ltr_ranker.is_trained if self.ltr_ranker else False,
+                        'heuristic_score': heuristic_scores[i] if i < len(heuristic_scores) else 0.0,
+                        'tfidf_score': tfidf_scores[i] if i < len(tfidf_scores) else 0.0,
+                        'bm25_score': self._calculate_bm25_score(original_query, result),
+                        'intent_score': intent_scores[i] if i < len(intent_scores) else 0.0,
+                        'embedding_score': embedding_scores[i] if i < len(embedding_scores) else 0.0,
+                        'personalization_score': personalization_scores[i] if i < len(personalization_scores) else 0.0,
+                        'graph_authority': self.knowledge_graph.get_authority_score(result['id']) if self.knowledge_graph else 0.0,
+                        'graph_connection': self.knowledge_graph.get_connection_strength(result['id'], f"keyword_{original_query.lower()}") if self.knowledge_graph else 0.0,
+                        'graph_pagerank': self.knowledge_graph.get_node_pagerank(result['id']) if self.knowledge_graph else 0.0
+                    }
+                    
+                    # Set ranking score to LTR score
+                    result['ranking_score'] = ltr_score
+                
+                ranking_algorithm = ranking_mode  # Use the requested mode name
                 score_components = ["LTR Score"]
                 
             elif ranking_mode == "hybrid" and self.use_ltr and self.ltr_ranker and self.ltr_ranker.is_trained:
@@ -252,7 +278,7 @@ class RankingEngine:
                 
                 # Re-sort by combined score
                 ranked_results = sorted(ltr_results, key=lambda x: x['ranking_score'], reverse=True)
-                ranking_algorithm = "Hybrid (LTR + Traditional + Personalization)"
+                ranking_algorithm = ranking_mode  # Use the requested mode name
                 score_components = ["LTR", "Heuristic", "TF-IDF", "Intent", "Embedding", "Personalization"]
                 
             else:
@@ -290,7 +316,7 @@ class RankingEngine:
                 
                 # Sort by combined score
                 ranked_results = sorted(results, key=lambda x: x['ranking_score'], reverse=True)
-                ranking_algorithm = f"Traditional Hybrid with Personalization ({'with' if self.use_embedding else 'without'} Embedding)"
+                ranking_algorithm = ranking_mode  # Use the requested mode name
                 score_components = ["Heuristic", "TF-IDF", "Intent", "Personalization"] + (["Embedding"] if self.use_embedding else [])
             
             # Add final ranks

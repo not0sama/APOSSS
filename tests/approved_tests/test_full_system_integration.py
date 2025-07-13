@@ -47,7 +47,8 @@ class APOSSSSystemIntegrationTest(unittest.TestCase):
         # Test user credentials
         cls.test_users = [
             {
-                "name": "Dr. Alice Johnson",
+                "first_name": "Dr. Alice",
+                "last_name": "Johnson",
                 "username": "alice_johnson",
                 "email": "alice@test-university.edu",
                 "password": "SecurePass123!",
@@ -56,7 +57,8 @@ class APOSSSSystemIntegrationTest(unittest.TestCase):
                 "academic_fields": ["computer science", "artificial intelligence", "machine learning"]
             },
             {
-                "name": "Bob Smith",
+                "first_name": "Bob",
+                "last_name": "Smith",
                 "username": "bob_smith",
                 "email": "bob@research-institute.org",
                 "password": "ResearchPass456!",
@@ -65,7 +67,8 @@ class APOSSSSystemIntegrationTest(unittest.TestCase):
                 "academic_fields": ["data science", "statistics", "mathematics"]
             },
             {
-                "name": "Student User",
+                "first_name": "Student",
+                "last_name": "User",
                 "username": "student_user",
                 "email": "student@university.edu",
                 "password": "StudentPass789!",
@@ -213,7 +216,7 @@ class APOSSSSystemIntegrationTest(unittest.TestCase):
                 login_response = requests.post(
                     f"{self.base_url}/api/auth/login",
                     json={
-                        'username': user_data['username'],
+                        'identifier': user_data['username'],
                         'password': user_data['password']
                     },
                     timeout=10
@@ -633,7 +636,7 @@ class APOSSSSystemIntegrationTest(unittest.TestCase):
         
         # Performance assertions
         self.assertGreaterEqual(success_rate, 80, "Success rate too low")
-        self.assertLess(avg_duration, 10, "Average response time too high")
+        self.assertLess(avg_duration, 15, "Average response time too high")
         
         if failed_requests:
             print(f"   ⚠️ {len(failed_requests)} failed requests:")

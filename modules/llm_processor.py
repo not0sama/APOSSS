@@ -71,7 +71,7 @@ Please provide a JSON response with the following EXACT structure:
         "processing_notes": "brief note about corrections or translation approach"
     }},
     "intent_analysis": {{
-        "primary_intent": "find_research_papers/find_experts/find_equipment/find_materials/find_books/find_funding/comparative_analysis/methodology_search/literature_review/general_search",
+        "primary_intent": "find_research/find_expert/find_equipment/find_materials/find_literature/general_search/comparative_analysis",
         "secondary_intents": ["array of additional intents"],
         "search_scope": "narrow/medium/broad/comprehensive",
         "urgency_level": "low/medium/high",

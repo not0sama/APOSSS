@@ -174,10 +174,13 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
         mock_model.generate_content.return_value = mock_response
         mock_model_class.return_value = mock_model
         
-        # Set up database mocks
+        # Set up database mocks with proper MongoDB cursor simulation
         mock_db = MagicMock()
         mock_collection = MagicMock()
-        mock_collection.find.return_value = [
+        
+        # Create mock cursor that properly implements .limit() and iteration
+        mock_cursor = MagicMock()
+        mock_cursor.limit.return_value = [
             {
                 "_id": "paper1",
                 "title": "Deep Learning for Computer Vision",
@@ -195,6 +198,9 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
                 "citations": 89
             }
         ]
+        
+        # Make find() return the mock cursor
+        mock_collection.find.return_value = mock_cursor
         mock_db.__getitem__.return_value = mock_collection
         mock_get_db.return_value = mock_db
         
@@ -231,13 +237,13 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
             self.assertIn('results', ranked_results)
             self.assertGreater(len(ranked_results['results']), 0)
             
-            # Verify ranking scores are added
+            # Verify ranking scores are added (using 'ranking_score' field)
             for result in ranked_results['results']:
-                self.assertIn('final_score', result)
-                self.assertIsInstance(result['final_score'], (int, float))
+                self.assertIn('ranking_score', result)
+                self.assertIsInstance(result['ranking_score'], (int, float))
                 
             # Verify results are properly ranked (higher scores first)
-            scores = [r['final_score'] for r in ranked_results['results']]
+            scores = [r['ranking_score'] for r in ranked_results['results']]
             self.assertEqual(scores, sorted(scores, reverse=True))
     
     @patch('modules.llm_processor.genai.configure')
@@ -294,10 +300,13 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
                 mock_model.generate_content.return_value = mock_response
                 mock_model_class.return_value = mock_model
                 
-                # Set up database mock
+                # Set up database mock with proper cursor simulation
                 mock_db = MagicMock()
                 mock_collection = MagicMock()
-                mock_collection.find.return_value = [
+                
+                # Create mock cursor
+                mock_cursor = MagicMock()
+                mock_cursor.limit.return_value = [
                     {
                         "_id": f"result_{case['intent']}_1",
                         "title": f"Sample {case['intent']} result",
@@ -305,6 +314,8 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
                         "type": case["intent"].replace("find_", "")
                     }
                 ]
+                
+                mock_collection.find.return_value = mock_cursor
                 mock_db.__getitem__.return_value = mock_collection
                 mock_get_db.return_value = mock_db
                 
@@ -343,10 +354,15 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
         mock_model.generate_content.side_effect = Exception("LLM API Error")
         mock_model_class.return_value = mock_model
         
-        # Set up database mock
+        # Set up database mock with proper cursor simulation
         mock_db = MagicMock()
         mock_collection = MagicMock()
-        mock_collection.find.return_value = []
+        
+        # Create mock cursor for empty results
+        mock_cursor = MagicMock()
+        mock_cursor.limit.return_value = []
+        
+        mock_collection.find.return_value = mock_cursor
         mock_db.__getitem__.return_value = mock_collection
         mock_get_db.return_value = mock_db
         
@@ -406,10 +422,15 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
         mock_model.generate_content.return_value = mock_response
         mock_model_class.return_value = mock_model
         
-        # Set up database mock to return empty results
+        # Set up database mock to return empty results with proper cursor simulation
         mock_db = MagicMock()
         mock_collection = MagicMock()
-        mock_collection.find.return_value = []
+        
+        # Create mock cursor for empty results
+        mock_cursor = MagicMock()
+        mock_cursor.limit.return_value = []
+        
+        mock_collection.find.return_value = mock_cursor
         mock_db.__getitem__.return_value = mock_collection
         mock_get_db.return_value = mock_db
         
@@ -465,10 +486,13 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
         mock_model.generate_content.return_value = mock_response
         mock_model_class.return_value = mock_model
         
-        # Set up database mock
+        # Set up database mock with proper cursor simulation
         mock_db = MagicMock()
         mock_collection = MagicMock()
-        mock_collection.find.return_value = [
+        
+        # Create mock cursor
+        mock_cursor = MagicMock()
+        mock_cursor.limit.return_value = [
             {
                 "_id": "test_paper",
                 "title": "Test Paper",
@@ -477,6 +501,8 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
                 "year": 2023
             }
         ]
+        
+        mock_collection.find.return_value = mock_cursor
         mock_db.__getitem__.return_value = mock_collection
         mock_get_db.return_value = mock_db
         
@@ -516,8 +542,8 @@ class TestSearchRankingComponentIntegration(unittest.TestCase):
             for result in ranked_results['results']:
                 self.assertIn('id', result)
                 self.assertIn('title', result)
-                self.assertIn('final_score', result)
-                self.assertIn('ranking_explanation', result)
+                self.assertIn('ranking_score', result)
+                self.assertIn('score_breakdown', result)
 
 if __name__ == '__main__':
     unittest.main() 

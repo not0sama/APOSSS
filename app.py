@@ -896,7 +896,10 @@ def search():
         if not data or 'query' not in data:
             return jsonify({'error': 'Query is required'}), 400
         
-        user_query = data['query']
+        user_query = data['query'].strip()
+        if not user_query:
+            return jsonify({'error': 'Query cannot be empty'}), 400
+        
         ranking_mode = data.get('ranking_mode', 'hybrid')  # hybrid, ltr_only, traditional
         database_filters = data.get('database_filters', None)  # Optional database filtering
         
@@ -916,7 +919,7 @@ def search():
         processed_query = query_processor.process_query(user_query)
         
         if not processed_query:
-            return jsonify({'error': 'Failed to process query'}), 500
+            return jsonify({'error': 'Query processing failed - please try again'}), 400
         
         # Step 2: Search databases (with optional filtering)
         logger.info(f"Searching databases{' with filters: ' + str(database_filters) if database_filters else ''}...")
@@ -1333,6 +1336,49 @@ def test_db():
         
     except Exception as e:
         logger.error(f"Error in test_db endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/test-embedding', methods=['POST'])
+def test_embedding():
+    """Test endpoint for embedding system"""
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        user_query = data['query']
+        
+        if not ranking_engine or not ranking_engine.use_embedding or not ranking_engine.embedding_ranker:
+            return jsonify({'error': 'Embedding system not available'}), 500
+        
+        # Generate embedding for query
+        embedding_ranker = ranking_engine.embedding_ranker
+        query_embedding = embedding_ranker._encode_text([user_query])
+        
+        # For testing, create some sample documents
+        sample_docs = [
+            {'id': 'doc1', 'title': 'Machine Learning in Healthcare', 'description': 'Applications of ML in medical diagnosis'},
+            {'id': 'doc2', 'title': 'Neural Networks for Pattern Recognition', 'description': 'Deep learning approaches for pattern analysis'},
+            {'id': 'doc3', 'title': 'Computer Vision Applications', 'description': 'Image processing and computer vision techniques'}
+        ]
+        
+        # Calculate similarities
+        similarity_scores = embedding_ranker.calculate_realtime_similarity(
+            user_query, sample_docs, processed_query=None, use_cache=False
+        )
+        
+        return jsonify({
+            'success': True,
+            'embeddings': {
+                'query_embedding': query_embedding[0].tolist(),
+                'similarity_scores': similarity_scores
+            },
+            'query': user_query,
+            'sample_documents': len(sample_docs)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in test_embedding endpoint: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health', methods=['GET'])
