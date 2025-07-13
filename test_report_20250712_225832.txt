@@ -1,0 +1,465 @@
+APOSSS Unit Test Detailed Report
+==================================================
+Generated: 2025-07-12 22:58:32
+Total Duration: 29.89 seconds
+
+
+test_ranking_engine_unit
+------------------------
+Tests Run: 16
+Failures: 2
+Errors: 0
+Skipped: 0
+Success Rate: 87.5%
+Duration: 13.13s
+  PASSED: test_bm25_scoring (test_ranking_engine_unit.TestRankingEngine.test_bm25_scoring) (0.000s)
+  PASSED: test_categorize_by_relevance (test_ranking_engine_unit.TestRankingEngine.test_categorize_by_relevance) (0.000s)
+  PASSED: test_empty_results_handling (test_ranking_engine_unit.TestRankingEngine.test_empty_results_handling) (0.000s)
+  PASSED: test_error_handling (test_ranking_engine_unit.TestRankingEngine.test_error_handling) (0.000s)
+  PASSED: test_heuristic_scoring (test_ranking_engine_unit.TestRankingEngine.test_heuristic_scoring) (0.000s)
+  FAILED: test_hybrid_ranking_with_ltr (test_ranking_engine_unit.TestRankingEngine.test_hybrid_ranking_with_ltr) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_intent_scoring (test_ranking_engine_unit.TestRankingEngine.test_intent_scoring) (0.000s)
+  FAILED: test_ltr_only_ranking (test_ranking_engine_unit.TestRankingEngine.test_ltr_only_ranking) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_personalization_scoring (test_ranking_engine_unit.TestRankingEngine.test_personalization_scoring) (0.000s)
+  PASSED: test_ranking_consistency (test_ranking_engine_unit.TestRankingEngine.test_ranking_consistency) (0.000s)
+  PASSED: test_ranking_engine_initialization (test_ranking_engine_unit.TestRankingEngine.test_ranking_engine_initialization) (0.000s)
+  PASSED: test_score_normalization (test_ranking_engine_unit.TestRankingEngine.test_score_normalization) (0.000s)
+  PASSED: test_tfidf_scoring (test_ranking_engine_unit.TestRankingEngine.test_tfidf_scoring) (0.000s)
+  PASSED: test_traditional_hybrid_ranking (test_ranking_engine_unit.TestRankingEngine.test_traditional_hybrid_ranking) (0.000s)
+  PASSED: test_ranking_engine_component_availability (test_ranking_engine_unit.TestRankingEngineIntegration.test_ranking_engine_component_availability) (0.000s)
+  PASSED: test_ranking_engine_with_real_sklearn (test_ranking_engine_unit.TestRankingEngineIntegration.test_ranking_engine_with_real_sklearn) (0.000s)
+
+test_ltr_ranker_unit
+--------------------
+Tests Run: 21
+Failures: 0
+Errors: 10
+Skipped: 0
+Success Rate: 52.4%
+Duration: 0.05s
+  PASSED: test_empty_results_handling (test_ltr_ranker_unit.TestLTRRanker.test_empty_results_handling) (0.000s)
+  ERROR: test_feature_extraction (test_ltr_ranker_unit.TestLTRRanker.test_feature_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_feature_extraction_with_feedback (test_ltr_ranker_unit.TestLTRRanker.test_feature_extraction_with_feedback) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_feature_extractor_feedback_features (test_ltr_ranker_unit.TestLTRRanker.test_feature_extractor_feedback_features) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_ltr_ranker_unit.py", line 470, in test_feature_extractor_feedback_features
+    feedback_features = feature_extractor.e...
+  PASSED: test_feature_extractor_initialization (test_ltr_ranker_unit.TestLTRRanker.test_feature_extractor_initialization) (0.000s)
+  ERROR: test_feature_extractor_intent_features (test_ltr_ranker_unit.TestLTRRanker.test_feature_extractor_intent_features) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_ltr_ranker_unit.py", line 441, in test_feature_extractor_intent_features
+    intent_features = feature_extractor.extra...
+  ERROR: test_feature_extractor_metadata_features (test_ltr_ranker_unit.TestLTRRanker.test_feature_extractor_metadata_features) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_ltr_ranker_unit.py", line 419, in test_feature_extractor_metadata_features
+    metadata_features = feature_extractor.e...
+  PASSED: test_feature_extractor_textual_features (test_ltr_ranker_unit.TestLTRRanker.test_feature_extractor_textual_features) (0.000s)
+  ERROR: test_feature_importance (test_ltr_ranker_unit.TestLTRRanker.test_feature_importance) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_ltr_ranker_initialization (test_ltr_ranker_unit.TestLTRRanker.test_ltr_ranker_initialization) (0.000s)
+  PASSED: test_ltr_ranker_initialization_no_xgboost (test_ltr_ranker_unit.TestLTRRanker.test_ltr_ranker_initialization_no_xgboost) (0.000s)
+  PASSED: test_model_evaluation_metrics (test_ltr_ranker_unit.TestLTRRanker.test_model_evaluation_metrics) (0.000s)
+  PASSED: test_model_prediction (test_ltr_ranker_unit.TestLTRRanker.test_model_prediction) (0.000s)
+  PASSED: test_model_save_load (test_ltr_ranker_unit.TestLTRRanker.test_model_save_load) (0.000s)
+  ERROR: test_model_training (test_ltr_ranker_unit.TestLTRRanker.test_model_training) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/APOSSSenv/lib/python3.13/site-packages/pandas/core/indexes/base.py", line 3812, in get_loc
+    return self._engine.get_loc(casted...
+  ERROR: test_model_training_with_validation (test_ltr_ranker_unit.TestLTRRanker.test_model_training_with_validation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/APOSSSenv/lib/python3.13/site-packages/pandas/core/indexes/base.py", line 3812, in get_loc
+    return self._engine.get_loc(casted...
+  ERROR: test_rank_results (test_ltr_ranker_unit.TestLTRRanker.test_rank_results) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_rank_results_untrained_model (test_ltr_ranker_unit.TestLTRRanker.test_rank_results_untrained_model) (0.000s)
+  ERROR: test_training_data_validation (test_ltr_ranker_unit.TestLTRRanker.test_training_data_validation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_ltr_ranker_with_enhanced_text_features (test_ltr_ranker_unit.TestLTRRankerIntegration.test_ltr_ranker_with_enhanced_text_features) (0.000s)
+  PASSED: test_ltr_ranker_with_real_xgboost (test_ltr_ranker_unit.TestLTRRankerIntegration.test_ltr_ranker_with_real_xgboost) (0.000s)
+
+test_knowledge_graph_unit
+-------------------------
+Tests Run: 25
+Failures: 2
+Errors: 19
+Skipped: 0
+Success Rate: 16.0%
+Duration: 0.01s
+  ERROR: test_add_equipment_node (test_knowledge_graph_unit.TestKnowledgeGraph.test_add_equipment_node) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 123, in test_add_equipment_node
+    self.assertEqual(node_data['name'], self.test_equip...
+  FAILED: test_add_expert_node (test_knowledge_graph_unit.TestKnowledgeGraph.test_add_expert_node) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 98, in test_add_expert_node
+    self.assertEqual(kg.graph.number_of_nodes(), 1)
+    ~~~...
+  ERROR: test_add_institution_nodes (test_knowledge_graph_unit.TestKnowledgeGraph.test_add_institution_nodes) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 148, in test_add_institution_nodes
+    kg.add_paper('paper1', self.test_paper_data)
+   ...
+  ERROR: test_add_keyword_nodes (test_knowledge_graph_unit.TestKnowledgeGraph.test_add_keyword_nodes) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 132, in test_add_keyword_nodes
+    kg.add_paper('paper1', self.test_paper_data)
+    ~~~...
+  ERROR: test_add_paper_node (test_knowledge_graph_unit.TestKnowledgeGraph.test_add_paper_node) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 78, in test_add_paper_node
+    kg.add_paper('paper1', self.test_paper_data)
+    ~~~~~~~...
+  ERROR: test_add_relationships (test_knowledge_graph_unit.TestKnowledgeGraph.test_add_relationships) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 162, in test_add_relationships
+    kg.add_paper('paper1', self.test_paper_data)
+    ~~~...
+  ERROR: test_authority_score_calculation (test_knowledge_graph_unit.TestKnowledgeGraph.test_authority_score_calculation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 239, in test_authority_score_calculation
+    kg.add_paper('paper1', self.test_paper_dat...
+  ERROR: test_citation_relationships (test_knowledge_graph_unit.TestKnowledgeGraph.test_citation_relationships) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 183, in test_citation_relationships
+    kg.add_paper('paper1', paper1_data)
+    ~~~~~~~...
+  PASSED: test_collaboration_relationships (test_knowledge_graph_unit.TestKnowledgeGraph.test_collaboration_relationships) (0.000s)
+  ERROR: test_connection_strength_calculation (test_knowledge_graph_unit.TestKnowledgeGraph.test_connection_strength_calculation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 258, in test_connection_strength_calculation
+    kg.add_paper('paper1', self.test_paper...
+  ERROR: test_duplicate_node_handling (test_knowledge_graph_unit.TestKnowledgeGraph.test_duplicate_node_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 388, in test_duplicate_node_handling
+    kg.add_paper('paper1', self.test_paper_data)
+ ...
+  FAILED: test_empty_graph_operations (test_knowledge_graph_unit.TestKnowledgeGraph.test_empty_graph_operations) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 407, in test_empty_graph_operations
+    self.assertEqual(kg.get_related_nodes('nonexist...
+  ERROR: test_find_shortest_path (test_knowledge_graph_unit.TestKnowledgeGraph.test_find_shortest_path) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 330, in test_find_shortest_path
+    kg.add_paper('paper1', self.test_paper_data)
+    ~~...
+  ERROR: test_get_graph_statistics (test_knowledge_graph_unit.TestKnowledgeGraph.test_get_graph_statistics) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 368, in test_get_graph_statistics
+    kg.add_paper('paper1', self.test_paper_data)
+    ...
+  ERROR: test_get_node_centrality (test_knowledge_graph_unit.TestKnowledgeGraph.test_get_node_centrality) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 350, in test_get_node_centrality
+    kg.add_paper('paper1', self.test_paper_data)
+    ~...
+  ERROR: test_get_nodes_by_type (test_knowledge_graph_unit.TestKnowledgeGraph.test_get_nodes_by_type) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 306, in test_get_nodes_by_type
+    kg.add_paper('paper1', self.test_paper_data)
+    ~~~...
+  ERROR: test_get_related_nodes (test_knowledge_graph_unit.TestKnowledgeGraph.test_get_related_nodes) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 290, in test_get_related_nodes
+    kg.add_paper('paper1', self.test_paper_data)
+    ~~~...
+  ERROR: test_graph_serialization (test_knowledge_graph_unit.TestKnowledgeGraph.test_graph_serialization) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 460, in test_graph_serialization
+    kg.add_paper('paper1', self.test_paper_data)
+    ~...
+  PASSED: test_knowledge_graph_initialization (test_knowledge_graph_unit.TestKnowledgeGraph.test_knowledge_graph_initialization) (0.000s)
+  ERROR: test_large_graph_performance (test_knowledge_graph_unit.TestKnowledgeGraph.test_large_graph_performance) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 444, in test_large_graph_performance
+    kg.add_paper(f'paper{i}', paper_data)
+    ~~~~...
+  ERROR: test_malformed_data_handling (test_knowledge_graph_unit.TestKnowledgeGraph.test_malformed_data_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 425, in test_malformed_data_handling
+    kg.add_paper('paper2', None)
+    ~~~~~~~~~~~~^...
+  ERROR: test_node_pagerank_retrieval (test_knowledge_graph_unit.TestKnowledgeGraph.test_node_pagerank_retrieval) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 274, in test_node_pagerank_retrieval
+    kg.add_paper('paper1', self.test_paper_data)
+ ...
+  ERROR: test_pagerank_calculation (test_knowledge_graph_unit.TestKnowledgeGraph.test_pagerank_calculation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Users/osama/Desktop/APOSSS/tests/test_knowledge_graph_unit.py", line 221, in test_pagerank_calculation
+    kg.add_paper('paper1', self.test_paper_data)
+    ...
+  PASSED: test_knowledge_graph_algorithms (test_knowledge_graph_unit.TestKnowledgeGraphIntegration.test_knowledge_graph_algorithms) (0.000s)
+  PASSED: test_knowledge_graph_with_networkx (test_knowledge_graph_unit.TestKnowledgeGraphIntegration.test_knowledge_graph_with_networkx) (0.000s)
+
+test_embedding_ranker_unit
+--------------------------
+Tests Run: 21
+Failures: 4
+Errors: 10
+Skipped: 0
+Success Rate: 33.3%
+Duration: 16.41s
+  ERROR: test_batch_embedding_generation (test_embedding_ranker_unit.TestEmbeddingRanker.test_batch_embedding_generation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  FAILED: test_cache_management (test_embedding_ranker_unit.TestEmbeddingRanker.test_cache_management) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_cosine_similarity_calculation (test_embedding_ranker_unit.TestEmbeddingRanker.test_cosine_similarity_calculation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_document_indexing (test_embedding_ranker_unit.TestEmbeddingRanker.test_document_indexing) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_embedding_caching (test_embedding_ranker_unit.TestEmbeddingRanker.test_embedding_caching) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  FAILED: test_embedding_ranker_initialization (test_embedding_ranker_unit.TestEmbeddingRanker.test_embedding_ranker_initialization) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  FAILED: test_empty_query_handling (test_embedding_ranker_unit.TestEmbeddingRanker.test_empty_query_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_error_handling (test_embedding_ranker_unit.TestEmbeddingRanker.test_error_handling) (0.000s)
+  ERROR: test_faiss_index_creation (test_embedding_ranker_unit.TestEmbeddingRanker.test_faiss_index_creation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_index_persistence (test_embedding_ranker_unit.TestEmbeddingRanker.test_index_persistence) (0.000s)
+  ERROR: test_large_batch_processing (test_embedding_ranker_unit.TestEmbeddingRanker.test_large_batch_processing) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_memory_efficiency (test_embedding_ranker_unit.TestEmbeddingRanker.test_memory_efficiency) (0.000s)
+  PASSED: test_model_initialization (test_embedding_ranker_unit.TestEmbeddingRanker.test_model_initialization) (0.000s)
+  ERROR: test_multilingual_support (test_embedding_ranker_unit.TestEmbeddingRanker.test_multilingual_support) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  FAILED: test_no_documents_handling (test_embedding_ranker_unit.TestEmbeddingRanker.test_no_documents_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_similarity_search (test_embedding_ranker_unit.TestEmbeddingRanker.test_similarity_search) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_similarity_search_with_processed_query (test_embedding_ranker_unit.TestEmbeddingRanker.test_similarity_search_with_processed_query) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_text_embedding_generation (test_embedding_ranker_unit.TestEmbeddingRanker.test_text_embedding_generation) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_embedding_ranker_performance (test_embedding_ranker_unit.TestEmbeddingRankerIntegration.test_embedding_ranker_performance) (0.000s)
+  PASSED: test_embedding_ranker_with_real_faiss (test_embedding_ranker_unit.TestEmbeddingRankerIntegration.test_embedding_ranker_with_real_faiss) (0.000s)
+  PASSED: test_embedding_ranker_with_real_sentence_transformers (test_embedding_ranker_unit.TestEmbeddingRankerIntegration.test_embedding_ranker_with_real_sentence_transformers) (0.000s)
+
+test_enhanced_text_features_unit
+--------------------------------
+Tests Run: 21
+Failures: 0
+Errors: 9
+Skipped: 0
+Success Rate: 57.1%
+Duration: 0.01s
+  ERROR: test_bm25_scores_extraction (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_bm25_scores_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_complexity_features_extraction (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_complexity_features_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_corpus_management (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_corpus_management) (0.000s)
+  PASSED: test_document_frequency_calculation (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_document_frequency_calculation) (0.000s)
+  ERROR: test_empty_text_handling (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_empty_text_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_enhanced_text_features_initialization (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_enhanced_text_features_initialization) (0.000s)
+  ERROR: test_extract_all_features (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_extract_all_features) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_feature_normalization (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_feature_normalization) (0.000s)
+  ERROR: test_multilingual_text_handling (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_multilingual_text_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_ngram_features_extraction (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_ngram_features_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  ERROR: test_performance_with_large_text (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_performance_with_large_text) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_pos_tagging_features (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_pos_tagging_features) (0.000s)
+  ERROR: test_proximity_features_extraction (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_proximity_features_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_query_term_coverage (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_query_term_coverage) (0.000s)
+  PASSED: test_semantic_similarity_features (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_semantic_similarity_features) (0.000s)
+  ERROR: test_special_characters_handling (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_special_characters_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1426, in patched
+    return func(*newargs, **newkeywargs)
+  File "/...
+  PASSED: test_statistical_features (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_statistical_features) (0.000s)
+  PASSED: test_term_frequency_calculation (test_enhanced_text_features_unit.TestEnhancedTextFeatures.test_term_frequency_calculation) (0.000s)
+  PASSED: test_enhanced_text_features_with_real_bm25 (test_enhanced_text_features_unit.TestEnhancedTextFeaturesIntegration.test_enhanced_text_features_with_real_bm25) (0.000s)
+  PASSED: test_enhanced_text_features_with_real_nltk (test_enhanced_text_features_unit.TestEnhancedTextFeaturesIntegration.test_enhanced_text_features_with_real_nltk) (0.000s)
+  PASSED: test_enhanced_text_features_with_real_textstat (test_enhanced_text_features_unit.TestEnhancedTextFeaturesIntegration.test_enhanced_text_features_with_real_textstat) (0.000s)
+
+test_llm_processor_unit
+-----------------------
+Tests Run: 23
+Failures: 9
+Errors: 7
+Skipped: 0
+Success Rate: 30.4%
+Duration: 0.14s
+  ERROR: test_academic_classification (test_llm_processor_unit.TestLLMProcessor.test_academic_classification) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  PASSED: test_caching_functionality (test_llm_processor_unit.TestLLMProcessor.test_caching_functionality) (0.000s)
+  FAILED: test_create_query_analysis_prompt (test_llm_processor_unit.TestLLMProcessor.test_create_query_analysis_prompt) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_empty_query_handling (test_llm_processor_unit.TestLLMProcessor.test_empty_query_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  ERROR: test_entity_extraction (test_llm_processor_unit.TestLLMProcessor.test_entity_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  ERROR: test_intent_classification (test_llm_processor_unit.TestLLMProcessor.test_intent_classification) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  ERROR: test_keyword_extraction (test_llm_processor_unit.TestLLMProcessor.test_keyword_extraction) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  ERROR: test_language_detection (test_llm_processor_unit.TestLLMProcessor.test_language_detection) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  PASSED: test_llm_processor_initialization (test_llm_processor_unit.TestLLMProcessor.test_llm_processor_initialization) (0.000s)
+  PASSED: test_llm_processor_initialization_no_api_key (test_llm_processor_unit.TestLLMProcessor.test_llm_processor_initialization_no_api_key) (0.000s)
+  FAILED: test_multilingual_query_processing (test_llm_processor_unit.TestLLMProcessor.test_multilingual_query_processing) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_process_multiple_queries (test_llm_processor_unit.TestLLMProcessor.test_process_multiple_queries) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_process_query_api_error (test_llm_processor_unit.TestLLMProcessor.test_process_query_api_error) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_process_query_invalid_json (test_llm_processor_unit.TestLLMProcessor.test_process_query_invalid_json) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_process_query_success (test_llm_processor_unit.TestLLMProcessor.test_process_query_success) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  PASSED: test_query_refinement (test_llm_processor_unit.TestLLMProcessor.test_query_refinement) (0.000s)
+  PASSED: test_query_similarity (test_llm_processor_unit.TestLLMProcessor.test_query_similarity) (0.000s)
+  ERROR: test_search_strategy (test_llm_processor_unit.TestLLMProcessor.test_search_strategy) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  ERROR: test_semantic_expansion (test_llm_processor_unit.TestLLMProcessor.test_semantic_expansion) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_special_characters_in_query (test_llm_processor_unit.TestLLMProcessor.test_special_characters_in_query) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  FAILED: test_very_long_query_handling (test_llm_processor_unit.TestLLMProcessor.test_very_long_query_handling) (0.000s)
+    Error: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1891, in _inner
+    return f(*args, **kw)
+  File "/Library/Framewor...
+  PASSED: test_llm_processor_performance (test_llm_processor_unit.TestLLMProcessorIntegration.test_llm_processor_performance) (0.000s)
+  PASSED: test_llm_processor_with_real_gemini (test_llm_processor_unit.TestLLMProcessorIntegration.test_llm_processor_with_real_gemini) (0.000s)
