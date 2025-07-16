@@ -3,6 +3,7 @@
 User Management System for APOSSS
 Handles user authentication, profiles, and interaction tracking
 """
+import os
 import logging
 import hashlib
 import uuid
@@ -33,10 +34,12 @@ class UserManager:
         self.sessions_collection = None
         self.verification_codes_collection = None
         
-        # JWT secret key (in production, use environment variable)
-        self.jwt_secret = "aposss_secret_key_2024"  # Change this in production
-        self.jwt_algorithm = "HS256"
-        self.token_expiry_hours = 24
+        # JWT Configuration from environment variables
+        self.jwt_secret = os.getenv('JWT_SECRET_KEY')
+        if not self.jwt_secret:
+            raise ValueError("JWT_SECRET_KEY environment variable is required")
+        self.jwt_algorithm = os.getenv('JWT_ALGORITHM', 'HS256')
+        self.token_expiry_hours = int(os.getenv('JWT_EXPIRY_HOURS', '24'))
         
         # Initialize collections
         self._initialize_collections()
@@ -1287,41 +1290,44 @@ class UserManager:
     def _send_verification_email(self, email: str, verification_code: str, first_name: str = '') -> bool:
         """Send verification email using SMTP"""
         try:
-            # Try to import email configuration
-            try:
-                import email_config
-                smtp_server = email_config.SMTP_SERVER
-                smtp_port = email_config.SMTP_PORT
-                smtp_username = email_config.SMTP_USERNAME
-                smtp_password = email_config.SMTP_PASSWORD
-            except ImportError:
-                # Fallback to hardcoded values
-                smtp_server = "smtp.gmail.com"
-                smtp_port = 587
-                smtp_username = "osama01k2@gmail.com"
-                smtp_password = "Kwayno*2002"  # ⚠️  REPLACE WITH YOUR GMAIL APP PASSWORD
+            # Email configuration from environment variables
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', '587'))
+            smtp_use_tls = os.getenv('SMTP_USE_TLS', 'true').lower() == 'true'
+            smtp_username = os.getenv('SMTP_USERNAME')
+            smtp_password = os.getenv('SMTP_PASSWORD')
+            from_name = os.getenv('EMAIL_FROM_NAME', 'APOSSS System')
+            from_address = os.getenv('EMAIL_FROM_ADDRESS', smtp_username)
+            
+            if not smtp_username or not smtp_password:
+                logger.error("SMTP credentials not configured. Please set SMTP_USERNAME and SMTP_PASSWORD environment variables.")
+                return False
             
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = smtp_username
+            msg['From'] = f"{from_name} <{from_address}>"
             msg['To'] = email
-            msg['Subject'] = "Email Verification - Libyan Open Science"
+            msg['Subject'] = "Email Verification - APOSSS"
             
-            # Email body
+            # Email body with configurable content
             name_part = f"Hello {first_name}," if first_name else "Hello,"
+            app_name = os.getenv('APP_NAME', 'APOSSS')
+            support_email = os.getenv('EMAIL_SUPPORT_ADDRESS', smtp_username)
+            verification_expiry = os.getenv('EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS', '24')
+            
             body = f"""
 {name_part}
 
-Thank you for registering with Libyan Open Science. To complete your registration, please verify your email address by entering the following 6-digit code:
+Thank you for registering with {app_name}. To complete your registration, please verify your email address by entering the following 6-digit code:
 
 Verification Code: {verification_code}
 
-This code will expire in 15 minutes.
+This code will expire in {verification_expiry} hours.
 
-If you didn't request this verification, please ignore this email.
+If you didn't request this verification, please ignore this email or contact us at {support_email}.
 
 Best regards,
-The Libyan Open Science Team
+The {app_name} Team
 """
             
             msg.attach(MIMEText(body, 'plain'))
@@ -1475,43 +1481,46 @@ The Libyan Open Science Team
     def _send_password_reset_email(self, email: str, verification_code: str, first_name: str = '') -> bool:
         """Send password reset email using SMTP"""
         try:
-            # Try to import email configuration
-            try:
-                import email_config
-                smtp_server = email_config.SMTP_SERVER
-                smtp_port = email_config.SMTP_PORT
-                smtp_username = email_config.SMTP_USERNAME
-                smtp_password = email_config.SMTP_PASSWORD
-            except ImportError:
-                # Fallback to hardcoded values
-                smtp_server = "smtp.gmail.com"
-                smtp_port = 587
-                smtp_username = "osama01k2@gmail.com"
-                smtp_password = "Kwayno*2002"  # ⚠️  REPLACE WITH YOUR GMAIL APP PASSWORD
+            # Email configuration from environment variables
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', '587'))
+            smtp_use_tls = os.getenv('SMTP_USE_TLS', 'true').lower() == 'true'
+            smtp_username = os.getenv('SMTP_USERNAME')
+            smtp_password = os.getenv('SMTP_PASSWORD')
+            from_name = os.getenv('EMAIL_FROM_NAME', 'APOSSS System')
+            from_address = os.getenv('EMAIL_FROM_ADDRESS', smtp_username)
+            
+            if not smtp_username or not smtp_password:
+                logger.error("SMTP credentials not configured. Please set SMTP_USERNAME and SMTP_PASSWORD environment variables.")
+                return False
             
             # Create message
             msg = MIMEMultipart()
-            msg['From'] = smtp_username
+            msg['From'] = f"{from_name} <{from_address}>"
             msg['To'] = email
-            msg['Subject'] = "Password Reset - Libyan Open Science"
+            msg['Subject'] = "Password Reset - APOSSS"
             
-            # Email body
+            # Email body with configurable content
             name_part = f"Hello {first_name}," if first_name else "Hello,"
+            app_name = os.getenv('APP_NAME', 'APOSSS')
+            support_email = os.getenv('EMAIL_SUPPORT_ADDRESS', smtp_username)
+            reset_expiry = os.getenv('PASSWORD_RESET_TOKEN_EXPIRY_MINUTES', '30')
+            
             body = f"""
 {name_part}
 
-You have requested to reset your password for your Libyan Open Science account. To complete the password reset process, please use the following 6-digit verification code:
+You have requested to reset your password for your {app_name} account. To complete the password reset process, please use the following 6-digit verification code:
 
 Password Reset Code: {verification_code}
 
-This code will expire in 15 minutes for security reasons.
+This code will expire in {reset_expiry} minutes for security reasons.
 
-If you didn't request this password reset, please ignore this email and your password will remain unchanged.
+If you didn't request this password reset, please ignore this email and your password will remain unchanged. If you believe someone else requested this reset, please contact us immediately at {support_email}.
 
 For security purposes, please do not share this code with anyone.
 
 Best regards,
-The Libyan Open Science Team
+The {app_name} Team
 """
             
             msg.attach(MIMEText(body, 'plain'))

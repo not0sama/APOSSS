@@ -22,7 +22,15 @@ load_dotenv()
 
 # Initialize Flask app with static folder configuration
 app = Flask(__name__, static_folder='templates/static', static_url_path='/static')
-CORS(app)
+
+# Configure Flask app from environment variables
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(32))
+app.config['SESSION_TIMEOUT'] = int(os.getenv('SESSION_TIMEOUT_HOURS', '24')) * 3600
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_FILE_SIZE_MB', '10')) * 1024 * 1024
+
+# CORS Configuration
+cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5000').split(',')
+CORS(app, origins=cors_origins)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1530,7 +1538,7 @@ def get_user_preferences():
         
         # Get user preferences from database
         preferences_collection = db_manager.get_collection('aposss', 'user_preferences')
-        if not preferences_collection:
+        if preferences_collection is None:
             return jsonify({'error': 'Database connection failed'}), 500
         
         user_prefs = preferences_collection.find_one({'user_id': user_id})
@@ -1593,7 +1601,7 @@ def update_user_preferences():
         
         # Get user preferences collection
         preferences_collection = db_manager.get_collection('aposss', 'user_preferences')
-        if not preferences_collection:
+        if preferences_collection is None:
             return jsonify({'error': 'Database connection failed'}), 500
         
         # Prepare update data
@@ -2506,7 +2514,19 @@ def reset_password_api():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
+    # Production-ready configuration
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', '5000'))
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
     
-    app.run(host='0.0.0.0', port=port, debug=debug) 
+    # SSL Configuration for production
+    ssl_cert_path = os.getenv('SSL_CERT_PATH')
+    ssl_key_path = os.getenv('SSL_KEY_PATH')
+    
+    ssl_context = None
+    if ssl_cert_path and ssl_key_path and os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
+        ssl_context = (ssl_cert_path, ssl_key_path)
+        logger.info("SSL enabled for HTTPS connections")
+    
+    logger.info(f"Starting APOSSS server on {host}:{port} (Debug: {debug})")
+    app.run(host=host, port=port, debug=debug, ssl_context=ssl_context) 

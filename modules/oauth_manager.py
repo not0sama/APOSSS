@@ -30,13 +30,21 @@ class OAuthManager:
             'scope': 'openid email profile'
         }
         
-        # ORCID OAuth Configuration
+        # ORCID OAuth Configuration (sandbox vs production)
+        orcid_env = os.getenv('ORCID_ENVIRONMENT', 'production').lower()
+        if orcid_env == 'sandbox':
+            orcid_base = 'https://sandbox.orcid.org'
+            orcid_api_base = 'https://pub.sandbox.orcid.org/v3.0'
+        else:
+            orcid_base = 'https://orcid.org'
+            orcid_api_base = 'https://pub.orcid.org/v3.0'
+            
         self.orcid_config = {
             'client_id': os.getenv('ORCID_CLIENT_ID'),
             'client_secret': os.getenv('ORCID_CLIENT_SECRET'),
-            'authorization_base_url': 'https://orcid.org/oauth/authorize',
-            'token_url': 'https://orcid.org/oauth/token',
-            'userinfo_url': 'https://pub.orcid.org/v3.0',
+            'authorization_base_url': f'{orcid_base}/oauth/authorize',
+            'token_url': f'{orcid_base}/oauth/token',
+            'userinfo_url': orcid_api_base,
             'redirect_uri': f"{self.base_url}/api/auth/orcid/callback",
             'scope': '/authenticate'
         }

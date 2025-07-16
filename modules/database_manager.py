@@ -17,27 +17,27 @@ class DatabaseManager:
         # Database configuration
         self.db_configs = {
             'academic_library': {
-                'uri': os.getenv('MONGODB_URI_ACADEMIC_LIBRARY', 'mongodb://localhost:27017/Academic_Library'),
+                'uri': os.getenv('MONGODB_URI_ACADEMIC_LIBRARY'),
                 'collections': ['books', 'journals', 'projects']
             },
             'experts_system': {
-                'uri': os.getenv('MONGODB_URI_EXPERTS_SYSTEM', 'mongodb://localhost:27017/Experts_System'),
+                'uri': os.getenv('MONGODB_URI_EXPERTS_SYSTEM'),
                 'collections': ['experts', 'certificates']
             },
             'research_papers': {
-                'uri': os.getenv('MONGODB_URI_RESEARCH_PAPERS', 'mongodb://localhost:27017/Research_Papers'),
+                'uri': os.getenv('MONGODB_URI_RESEARCH_PAPERS'),
                 'collections': ['articles', 'conferences', 'theses']
             },
             'laboratories': {
-                'uri': os.getenv('MONGODB_URI_LABORATORIES', 'mongodb://localhost:27017/Laboratories'),
+                'uri': os.getenv('MONGODB_URI_LABORATORIES'),
                 'collections': ['equipments', 'materials']
             },
             'funding': {
-                'uri': os.getenv('MONGODB_URI_FUNDING', 'mongodb://localhost:27017/Funding'),
+                'uri': os.getenv('MONGODB_URI_FUNDING'),
                 'collections': ['research_projects', 'institutions', 'funding_records']
             },
             'aposss': {
-                'uri': os.getenv('MONGODB_URI_APOSSS', 'mongodb://localhost:27017/APOSSS'),
+                'uri': os.getenv('MONGODB_URI_APOSSS'),
                 'collections': ['user_feedback', 'users', 'user_interactions', 'user_preferences', 'user_sessions', 'user_bookmarks', 'user_search_history']
             }
         }

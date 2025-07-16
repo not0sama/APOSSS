@@ -4,6 +4,7 @@ Advanced ranking engine for APOSSS with multiple ranking algorithms
 """
 import logging
 import math
+import os
 import re
 from typing import Dict, Any, List, Optional, Tuple
 from collections import Counter, defaultdict
@@ -73,10 +74,11 @@ class RankingEngine:
             logger.warning(f"Failed to initialize knowledge graph: {e}")
             self.knowledge_graph = None
         
-        # Initialize embedding ranker
+        # Initialize embedding ranker with configurable cache directory
         if self.use_embedding:
             try:
-                self.embedding_ranker = EmbeddingRanker()
+                embedding_cache_dir = os.getenv('EMBEDDING_CACHE_DIR', 'embedding_cache')
+                self.embedding_ranker = EmbeddingRanker(cache_dir=embedding_cache_dir)
                 logger.info("Embedding ranker initialized successfully")
             except Exception as e:
                 logger.warning(f"Failed to initialize embedding ranker: {e}")
@@ -85,10 +87,11 @@ class RankingEngine:
         else:
             self.embedding_ranker = None
         
-        # Initialize LTR ranker
+        # Initialize LTR ranker with configurable model directory
         if self.use_ltr:
             try:
-                self.ltr_ranker = LTRRanker()
+                ltr_models_dir = os.getenv('LTR_MODELS_DIR', 'ltr_models')
+                self.ltr_ranker = LTRRanker(model_dir=ltr_models_dir)
                 logger.info("LTR ranker initialized successfully")
             except Exception as e:
                 logger.warning(f"Failed to initialize LTR ranker: {e}")

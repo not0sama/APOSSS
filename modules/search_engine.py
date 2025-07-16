@@ -28,8 +28,8 @@ class SearchEngine:
         # Initialize pre-built index if available
         if self.use_preindex:
             try:
-                # Check if production index exists
-                production_cache_dir = 'production_index_cache'
+                # Check if production index exists - use configurable directory
+                production_cache_dir = os.getenv('PRODUCTION_INDEX_CACHE_DIR', 'production_index_cache')
                 if os.path.exists(os.path.join(production_cache_dir, 'faiss_index.pkl')):
                     self.preindex_ranker = EmbeddingRanker(cache_dir=production_cache_dir)
                     stats = self.preindex_ranker.get_cache_stats()
