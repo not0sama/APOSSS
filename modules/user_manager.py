@@ -41,6 +41,14 @@ class UserManager:
         self.jwt_algorithm = os.getenv('JWT_ALGORITHM', 'HS256')
         self.token_expiry_hours = int(os.getenv('JWT_EXPIRY_HOURS', '24'))
         
+        # Debug: Log environment variable usage
+        logger.info("🔧 User Manager - Environment Variables Check:")
+        logger.info(f"  JWT_SECRET_KEY: {'✅ Set' if self.jwt_secret else '❌ Missing'}")
+        logger.info(f"  JWT_ALGORITHM: {self.jwt_algorithm}")
+        logger.info(f"  JWT_EXPIRY_HOURS: {self.token_expiry_hours}")
+        if self.jwt_secret:
+            logger.info(f"  JWT Secret length: {len(self.jwt_secret)} characters")
+        
         # Initialize collections
         self._initialize_collections()
         logger.info("User Manager initialized successfully")
