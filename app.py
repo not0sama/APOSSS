@@ -801,16 +801,16 @@ def get_profile_picture(user_id):
         # Get profile picture data
         picture_data = user_manager.get_profile_picture(user_id)
         
-        if not picture_data:
+        if not picture_data or 'data' not in picture_data:
             return jsonify({'error': 'Profile picture not found'}), 404
         
         # Return the image data
         return Response(
             picture_data['data'],
-            mimetype=picture_data['content_type'],
+            mimetype=picture_data.get('content_type', 'image/jpeg'),
             headers={
                 'Cache-Control': 'public, max-age=3600',  # Cache for 1 hour
-                'Content-Disposition': f'inline; filename="{picture_data["filename"]}"'
+                'Content-Disposition': f'inline; filename="{picture_data.get("filename", "profile.jpg")}"'
             }
         )
         

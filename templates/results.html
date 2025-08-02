@@ -1659,25 +1659,47 @@
             const searchResults = sessionStorage.getItem('searchResults');
             const searchQuery = sessionStorage.getItem('searchQuery');
             const selectedFilters = sessionStorage.getItem('selectedFilters');
+            const savedDisplayMode = sessionStorage.getItem('displayMode');
             
-            if (!searchResults || !searchQuery) {
+            if (!searchResults) {
                 // No search results, redirect to home
                 window.location.href = '/';
                 return;
             }
             
             const data = JSON.parse(searchResults);
-            const query = searchQuery;
+            const query = searchQuery || '';
             const filters = selectedFilters ? JSON.parse(selectedFilters) : [];
+            
+            // Set display mode if specified
+            if (savedDisplayMode) {
+                displayMode = savedDisplayMode;
+                // Clear the saved display mode to prevent affecting future searches
+                sessionStorage.removeItem('displayMode');
+            }
             
             // Populate search input
             document.getElementById('searchInput').value = query;
             
             // Update search summary with comprehensive information
             const searchSummary = document.getElementById('searchSummary');
-            const baseText = `Found ${data.search_results.total_results} results`; //for "${query}"
-            const filterNote = ``;//notes after the results count
-            searchSummary.textContent = baseText + filterNote;
+            let baseText;
+            if (query.trim()) {
+                baseText = `Found ${data.search_results.total_results} results for "${query}"`;
+            } else if (filters.length > 0) {
+                const filterLabels = {
+                    'experts': 'Experts',
+                    'labs': 'Labs', 
+                    'library': 'Library',
+                    'funding': 'Funding',
+                    'papers': 'Papers'
+                };
+                const filterName = filterLabels[filters[0]] || filters[0];
+                baseText = `Found ${data.search_results.total_results} ${filterName.toLowerCase()} results`;
+            } else {
+                baseText = `Found ${data.search_results.total_results} results`;
+            }
+            searchSummary.textContent = baseText;
             
             // Store data
             allResults = data.search_results.results || [];
@@ -1686,6 +1708,9 @@
             
             // Initialize filters
             initializeFilters();
+            
+            // Update UI visibility based on display mode
+            updateUIVisibility();
             
             // Apply filters from home page if any
             if (filters.length > 0) {
@@ -1702,17 +1727,33 @@
                 filters.forEach(filter => {
                     const databaseName = filterToDatabase[filter];
                     if (databaseName) {
-                        // Find the database filter button and activate it
-                        const dbButton = document.querySelector(`[data-database="${databaseName}"]`);
-                        if (dbButton) {
-                            dbButton.classList.add('active');
-                            activeFilters.databases.add(databaseName);
-                        }
+                        activeFilters.databases.add(databaseName);
                     }
                 });
                 
                 // Apply the filters to show only relevant results
                 applyFilters();
+                
+                // Update filter buttons to show active state
+                setTimeout(() => {
+                    updateFilterButtonStates();
+                }, 100);
+                
+                // Show notification about applied filters if no query
+                if (!query.trim()) {
+                    const filterNames = filters.map(filter => {
+                        const labels = {
+                            'experts': 'Experts',
+                            'labs': 'Labs',
+                            'library': 'Library',
+                            'funding': 'Funding',
+                            'papers': 'Papers'
+                        };
+                        return labels[filter] || filter;
+                    });
+                    
+                    showTemporaryMessage(`Showing ${filterNames.join(', ')} results`, 'info');
+                }
             } else {
                 // Display results based on current mode
                 displayResults();
@@ -1907,6 +1948,38 @@
             if (score >= 0.7) return 'high';
             if (score >= 0.4) return 'medium';
             return 'low';
+        }
+        
+        function updateFilterButtonStates() {
+            // Update database filter buttons
+            document.querySelectorAll('[data-database]').forEach(button => {
+                const database = button.getAttribute('data-database');
+                if (activeFilters.databases.has(database)) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+            
+            // Update type filter buttons
+            document.querySelectorAll('[data-type]').forEach(button => {
+                const type = button.getAttribute('data-type');
+                if (activeFilters.types.has(type)) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+            
+            // Update relevance filter buttons
+            document.querySelectorAll('[data-relevance]').forEach(button => {
+                const relevance = button.getAttribute('data-relevance');
+                if (activeFilters.relevance.has(relevance)) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
         }
         
         function clearAllFilters() {
@@ -3626,7 +3699,9 @@
             if (!userId) return;
 
             try {
-                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                // Add cache-busting parameter to ensure fresh image
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/user/profile-picture/${userId}?t=${timestamp}`);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -3641,12 +3716,26 @@
                         initials.classList.add('hidden');
                     }
                 } else {
-                    // No profile picture, keep showing initials
+                    // No profile picture, show initials
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.classList.add('hidden');
+                        initials.classList.remove('hidden');
+                    }
                     console.log('No profile picture found for user');
                 }
             } catch (error) {
                 console.error('Error loading user menu profile picture:', error);
-                // Keep showing initials on error
+                // Show initials on error
+                const profilePicture = document.getElementById('userMenuProfilePicture');
+                const initials = document.getElementById('userMenuInitials');
+                
+                if (profilePicture && initials) {
+                    profilePicture.classList.add('hidden');
+                    initials.classList.remove('hidden');
+                }
             }
         }
         

@@ -1721,7 +1721,9 @@
             if (!userId) return;
 
             try {
-                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                // Add cache-busting parameter to ensure fresh image
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/user/profile-picture/${userId}?t=${timestamp}`);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -1736,12 +1738,26 @@
                         initials.classList.add('hidden');
                     }
                 } else {
-                    // No profile picture, keep showing initials
+                    // No profile picture, show initials
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.classList.add('hidden');
+                        initials.classList.remove('hidden');
+                    }
                     console.log('No profile picture found for user');
                 }
             } catch (error) {
                 console.error('Error loading user menu profile picture:', error);
-                // Keep showing initials on error
+                // Show initials on error
+                const profilePicture = document.getElementById('userMenuProfilePicture');
+                const initials = document.getElementById('userMenuInitials');
+                
+                if (profilePicture && initials) {
+                    profilePicture.classList.add('hidden');
+                    initials.classList.remove('hidden');
+                }
             }
         }
 
@@ -1876,7 +1892,13 @@
                         if (data.success) {
                             showTemporaryMessage('Profile picture updated successfully!', 'success');
                             // Update the display
-                            loadProfilePicture();
+                            await loadProfilePicture();
+                            // Also update user menu profile picture
+                            if (currentUser && currentUser.user_id) {
+                                await loadUserMenuProfilePicture(currentUser.user_id);
+                            }
+                            // Refresh user data to ensure consistency
+                            await refreshUserData();
                         } else {
                             throw new Error(data.error || 'Failed to upload profile picture');
                         }
@@ -1901,7 +1923,9 @@
             if (!currentUser) return;
 
             try {
-                const response = await fetch(`/api/user/profile-picture/${currentUser.user_id}`);
+                // Add cache-busting parameter to ensure fresh image
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/user/profile-picture/${currentUser.user_id}?t=${timestamp}`);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -1910,19 +1934,31 @@
                     const profilePicture = document.getElementById('profilePicture');
                     const profileAvatar = document.getElementById('profileAvatar');
                     
-                    profilePicture.src = imageUrl;
-                    profilePicture.style.display = 'block';
-                    profileAvatar.style.display = 'none';
+                    if (profilePicture && profileAvatar) {
+                        profilePicture.src = imageUrl;
+                        profilePicture.style.display = 'block';
+                        profileAvatar.style.display = 'none';
+                    }
                 } else {
                     // No profile picture, show initials
                     const profilePicture = document.getElementById('profilePicture');
                     const profileAvatar = document.getElementById('profileAvatar');
                     
-                    profilePicture.style.display = 'none';
-                    profileAvatar.style.display = 'flex';
+                    if (profilePicture && profileAvatar) {
+                        profilePicture.style.display = 'none';
+                        profileAvatar.style.display = 'flex';
+                    }
                 }
             } catch (error) {
                 console.error('Error loading profile picture:', error);
+                // Show initials on error
+                const profilePicture = document.getElementById('profilePicture');
+                const profileAvatar = document.getElementById('profileAvatar');
+                
+                if (profilePicture && profileAvatar) {
+                    profilePicture.style.display = 'none';
+                    profileAvatar.style.display = 'flex';
+                }
             }
         }
 
@@ -1951,12 +1987,46 @@
                     
                     profilePicture.style.display = 'none';
                     profileAvatar.style.display = 'flex';
+                    
+                    // Also update user menu profile picture
+                    if (currentUser && currentUser.user_id) {
+                        await loadUserMenuProfilePicture(currentUser.user_id);
+                    }
+                    // Refresh user data to ensure consistency
+                    await refreshUserData();
                 } else {
                     throw new Error(data.error || 'Failed to remove profile picture');
                 }
             } catch (error) {
                 console.error('Error removing profile picture:', error);
                 showTemporaryMessage('Error removing profile picture: ' + error.message, 'error');
+            }
+        }
+
+        // Refresh user data from server
+        async function refreshUserData() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) return;
+
+                const response = await fetch('/api/user/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    if (userData.success && userData.user) {
+                        // Update current user data
+                        currentUser = userData.user;
+                        // Update localStorage
+                        localStorage.setItem('userData', JSON.stringify(userData.user));
+                    }
+                }
+            } catch (error) {
+                console.error('Error refreshing user data:', error);
             }
         }
 

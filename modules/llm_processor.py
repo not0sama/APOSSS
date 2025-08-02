@@ -3,10 +3,14 @@ import json
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
+from dotenv import load_dotenv
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv()
 
 class LLMProcessor:
     """Handles LLM processing using Gemini-2.0-flash for query understanding"""
@@ -16,12 +20,6 @@ class LLMProcessor:
         self.api_key = os.getenv('GEMINI_API_KEY')
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required")
-        
-        # Debug: Log environment variable usage
-        logger.info(f"🔧 LLM Processor - GEMINI_API_KEY: {'✅ Set' if self.api_key else '❌ Missing'}")
-        if self.api_key:
-            logger.info(f"  API Key length: {len(self.api_key)} characters")
-            logger.info(f"  API Key preview: {self.api_key[:10]}...")
         
         # Configure Gemini
         genai.configure(api_key=self.api_key)

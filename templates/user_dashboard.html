@@ -1228,7 +1228,9 @@
             if (!userId) return;
 
             try {
-                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                // Add cache-busting parameter to ensure fresh image
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/user/profile-picture/${userId}?t=${timestamp}`);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -1243,12 +1245,26 @@
                         initials.classList.add('hidden');
                     }
                 } else {
-                    // No profile picture, keep showing initials
+                    // No profile picture, show initials
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.classList.add('hidden');
+                        initials.classList.remove('hidden');
+                    }
                     console.log('No profile picture found for user');
                 }
             } catch (error) {
                 console.error('Error loading user menu profile picture:', error);
-                // Keep showing initials on error
+                // Show initials on error
+                const profilePicture = document.getElementById('userMenuProfilePicture');
+                const initials = document.getElementById('userMenuInitials');
+                
+                if (profilePicture && initials) {
+                    profilePicture.classList.add('hidden');
+                    initials.classList.remove('hidden');
+                }
             }
         }
 

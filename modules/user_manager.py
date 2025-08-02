@@ -41,14 +41,6 @@ class UserManager:
         self.jwt_algorithm = os.getenv('JWT_ALGORITHM', 'HS256')
         self.token_expiry_hours = int(os.getenv('JWT_EXPIRY_HOURS', '24'))
         
-        # Debug: Log environment variable usage
-        logger.info("🔧 User Manager - Environment Variables Check:")
-        logger.info(f"  JWT_SECRET_KEY: {'✅ Set' if self.jwt_secret else '❌ Missing'}")
-        logger.info(f"  JWT_ALGORITHM: {self.jwt_algorithm}")
-        logger.info(f"  JWT_EXPIRY_HOURS: {self.token_expiry_hours}")
-        if self.jwt_secret:
-            logger.info(f"  JWT Secret length: {len(self.jwt_secret)} characters")
-        
         # Initialize collections
         self._initialize_collections()
         logger.info("User Manager initialized successfully")
@@ -1138,7 +1130,8 @@ class UserManager:
                 }
             )
             
-            if result.modified_count > 0:
+            # Check if update was successful (either modified or matched)
+            if result.modified_count > 0 or result.matched_count > 0:
                 logger.info(f"Profile picture updated successfully for user: {user_id}")
                 return {
                     'success': True,
@@ -1178,6 +1171,14 @@ class UserManager:
             if self.users_collection is None:
                 return {'success': False, 'error': 'User management not available'}
             
+            # Check if user exists and has a profile picture
+            user = self.users_collection.find_one({'user_id': user_id})
+            if not user:
+                return {'success': False, 'error': 'User not found'}
+            
+            # Check if user has a profile picture
+            has_profile_picture = user.get('profile', {}).get('profile_picture') is not None
+            
             # Remove profile picture from user document
             result = self.users_collection.update_one(
                 {'user_id': user_id},
@@ -1187,11 +1188,11 @@ class UserManager:
                 }
             )
             
-            if result.modified_count > 0:
+            if result.modified_count > 0 or has_profile_picture:
                 logger.info(f"Profile picture deleted successfully for user: {user_id}")
                 return {'success': True, 'message': 'Profile picture deleted successfully'}
             else:
-                return {'success': False, 'error': 'No profile picture to delete or user not found'}
+                return {'success': False, 'error': 'No profile picture to delete'}
             
         except Exception as e:
             logger.error(f"Error deleting profile picture for user {user_id}: {str(e)}")

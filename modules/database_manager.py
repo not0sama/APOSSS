@@ -42,15 +42,6 @@ class DatabaseManager:
             }
         }
         
-        # Debug: Log environment variable usage
-        logger.info("🔧 Database Manager - Environment Variables Check:")
-        for db_name, config in self.db_configs.items():
-            uri = config['uri']
-            if uri:
-                logger.info(f"  ✅ {db_name}: {uri[:30]}...")
-            else:
-                logger.info(f"  ⚠️  {db_name}: Using default (localhost)")
-        
         self._initialize_connections()
     
     def _initialize_connections(self):

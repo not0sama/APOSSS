@@ -1242,6 +1242,9 @@
                 </div>
 
                 <!-- Filter Buttons -->
+                <div class="text-center mb-4">
+                    <p class="text-sm text-themed-secondary" data-translate="click-category">Click a category to browse all results</p>
+                </div>
                 <div class="flex flex-wrap justify-center gap-4 filter-buttons">
                     <button 
                         class="filter-btn px-6 py-3 rounded-xl border font-medium flex items-center space-x-2 shadow-lg"
@@ -1368,6 +1371,7 @@
                 
                 // Quick search
                 'try-searching': 'Try searching for:',
+                'click-category': 'Click a category to browse all results',
                 'Carbon-emissions': 'Carbon emissions in cars',
                 'renewable-energy': 'renewable energy storage',
                 'medical-diagnosis': 'ML for medical diagnosis',
@@ -1414,6 +1418,7 @@
                 
                 // Quick search
                 'try-searching': 'جرب البحث عن:',
+                'click-category': 'انقر على فئة لتصفح جميع النتائج',
                 'Carbon-emissions': 'إنبعاثات الكربون في السيارات',
                 'renewable-energy': 'تخزين الطاقة المتجددة',
                 'medical-diagnosis': 'تعلم الآلة للتشخيص الطبي',
@@ -1678,9 +1683,9 @@
             // Remove visual feedback
             button.style.transform = '';
             
-            // If it was a quick click (not a hold), toggle the filter
+            // If it was a quick click (not a hold), perform filter search
             if (isFilterHolding && filterHoldTarget === button) {
-                toggleFilter(button);
+                performFilterSearch(button.dataset.filter);
             }
             
             isFilterHolding = false;
@@ -1709,6 +1714,80 @@
             } else {
                 selectedFilters.add(filter);
                 button.classList.add('active');
+            }
+        }
+        
+        async function performFilterSearch(filter) {
+            // Clear any existing search query
+            document.getElementById('searchInput').value = '';
+            
+            // Set the selected filter
+            selectedFilters.clear();
+            selectedFilters.add(filter);
+            
+            // Show loading message
+            const filterLabels = {
+                'experts': 'Experts',
+                'labs': 'Labs',
+                'library': 'Library',
+                'funding': 'Funding',
+                'papers': 'Papers'
+            };
+            const filterName = filterLabels[filter] || filter;
+            showTemporaryMessage(`Loading ${filterName} results...`, 'info');
+            
+            // Show loading state
+            showLoading(true);
+            
+            try {
+                // Perform search with empty query but with filter
+                const searchData = {
+                    query: '',  // Empty query to get all results for the filter
+                    ranking_mode: 'hybrid'
+                };
+                
+                // Add auth headers if available
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(searchData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store search results and redirect to results page in "all" mode
+                    sessionStorage.setItem('searchResults', JSON.stringify(data));
+                    sessionStorage.setItem('searchQuery', '');
+                    sessionStorage.setItem('selectedFilters', JSON.stringify([filter]));
+                    sessionStorage.setItem('displayMode', 'all');  // Force "all" mode to show filters
+                    
+                    // Save search to history
+                    try {
+                        await saveSearchToHistory('', [filter]);
+                    } catch (historyError) {
+                        console.error('Error saving history, but continuing with search:', historyError);
+                    }
+                    
+                    // Redirect to results page
+                    window.location.href = '/results';
+                } else {
+                    throw new Error(data.error || 'Search failed');
+                }
+            } catch (error) {
+                console.error('Filter search error:', error);
+                showTemporaryMessage('Search failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         }
         
@@ -2114,7 +2193,9 @@
             if (!userId) return;
 
             try {
-                const response = await fetch(`/api/user/profile-picture/${userId}`);
+                // Add cache-busting parameter to ensure fresh image
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/api/user/profile-picture/${userId}?t=${timestamp}`);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -2129,12 +2210,26 @@
                         initials.classList.add('hidden');
                     }
                 } else {
-                    // No profile picture, keep showing initials
+                    // No profile picture, show initials
+                    const profilePicture = document.getElementById('userMenuProfilePicture');
+                    const initials = document.getElementById('userMenuInitials');
+                    
+                    if (profilePicture && initials) {
+                        profilePicture.classList.add('hidden');
+                        initials.classList.remove('hidden');
+                    }
                     console.log('No profile picture found for user');
                 }
             } catch (error) {
                 console.error('Error loading user menu profile picture:', error);
-                // Keep showing initials on error
+                // Show initials on error
+                const profilePicture = document.getElementById('userMenuProfilePicture');
+                const initials = document.getElementById('userMenuInitials');
+                
+                if (profilePicture && initials) {
+                    profilePicture.classList.add('hidden');
+                    initials.classList.remove('hidden');
+                }
             }
         }
         
