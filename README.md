@@ -1,222 +1,337 @@
 # APOSSS - AI-Powered Open-Science Semantic Search System
 
-## Phase 3: AI Ranking & User Feedback System ✅
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-2.3.2-green.svg)](https://flask.palletsprojects.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4.4+-green.svg)](https://mongodb.com)
+[![License](https://img.shields.io/badge/License-Academic%20Research-blue.svg)](LICENSE)
 
-This repository contains the implementation of **Phase 3** of the APOSSS project, featuring **intelligent result ranking** and **user feedback collection** that builds upon the multi-database search from Phase 2.
+## 🎯 Project Overview
 
-## 🚀 New Phase 3 Features
+**APOSSS** is a comprehensive AI-powered semantic search system designed for open science research discovery. The system intelligently searches across multiple academic databases and provides ranked, relevant results using advanced machine learning algorithms.
 
-- **🧠 AI-Powered Ranking**: Hybrid ranking algorithm combining heuristic, TF-IDF, embedding, and intent-based scoring
-- **🎯 Semantic Similarity**: Deep learning embeddings for understanding meaning beyond keywords
-- **📊 Score Visualization**: Visual ranking score bars with component breakdowns
-- **🎯 Relevance Categories**: Results organized into High, Medium, and Low relevance tiers
-- **👍 User Feedback System**: Thumbs up/down feedback collection for each result
-- **📈 Feedback Analytics**: Real-time feedback statistics and storage
-- **🔄 Learning Foundation**: Infrastructure for future ranking model improvements
-- **🎨 Enhanced UI**: Modernized interface with ranking displays and interactive feedback
+### ✨ Key Features
 
-## 🏗️ System Architecture (Phase 3)
+- **🧠 AI-Powered Query Understanding**: Advanced LLM processing with Gemini-2.0-flash for natural language query interpretation
+- **🔍 Multi-Database Search**: Seamless search across 6 MongoDB databases (Academic Library, Experts, Research Papers, Laboratories, Funding, and APOSSS)
+- **📊 Intelligent Ranking**: Hybrid ranking algorithm combining heuristic, TF-IDF, embedding similarity, and intent-based scoring
+- **🎯 Semantic Understanding**: Deep learning embeddings for meaning-based search beyond keyword matching
+- **👍 User Feedback System**: Complete feedback collection and analytics for continuous improvement
+- **🔐 User Authentication**: Secure user management with OAuth integration (Google, ORCID)
+- **📈 Learning-to-Rank**: Advanced LTR models for personalized result ranking
+- **🎨 Modern UI**: Responsive web interface with real-time feedback and analytics
+
+## 🏗️ System Architecture
 
 ### Core Components
-1. **LLM Query Processing** (Phase 1) - Gemini-2.0-flash powered query understanding
-2. **Multi-Database Search** (Phase 2) - Search across 4 MongoDB databases (Academic, Experts, Research, Labs)
-3. **🆕 AI Ranking Engine** (Phase 3) - Intelligent result ranking with multiple algorithms
-4. **🆕 Feedback System** (Phase 3) - User feedback collection and storage in dedicated APOSSS database
 
-### Ranking Algorithm
-- **Heuristic Scoring (30%)**: Keyword matching in titles, descriptions, and metadata
-- **TF-IDF Similarity (30%)**: Semantic similarity using scikit-learn TF-IDF vectorization
-- **🆕 Embedding Similarity (20%)**: Deep semantic understanding using sentence transformers
-- **Intent Alignment (20%)**: Resource type preference based on detected query intent
+1. **LLM Query Processing** - Natural language understanding and query enrichment
+2. **Multi-Database Search Engine** - Unified search across 6 specialized databases
+3. **AI Ranking Engine** - Hybrid ranking with multiple ML algorithms
+4. **User Feedback System** - Feedback collection and analytics
+5. **User Management** - Authentication and user profiles
+6. **OAuth Integration** - Social login with Google and ORCID
 
-### Feedback Storage
-- **Primary**: MongoDB APOSSS database (`APOSSS/user_feedback` collection)
-- **Fallback**: JSON Lines file (`feedback_data.jsonl`) for reliability
+### Database Integration
 
-## 📋 Requirements
-
-### Dependencies
-```
-Flask==3.0.0
-PyMongo==4.6.1
-google-generativeai==0.8.3
-python-dotenv==1.0.0
-requests==2.31.0
-flask-cors==4.0.0
-scikit-learn==1.3.2
-numpy==1.24.3
-sentence-transformers==2.7.0
-faiss-cpu==1.8.0
-torch==2.1.0
-```
-
-### Environment Setup
-Create a `config.env` file with:
-```env
-# Gemini API Configuration
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# MongoDB Connection Strings
-ACADEMIC_LIBRARY_URI=mongodb://localhost:27017/academic_library
-EXPERTS_SYSTEM_URI=mongodb://localhost:27017/experts_system
-RESEARCH_PAPERS_URI=mongodb://localhost:27017/research_papers
-LABORATORIES_URI=mongodb://localhost:27017/laboratories
-APOSSS_URI=mongodb://localhost:27017/APOSSS
-
-# Flask Configuration
-FLASK_ENV=development
-FLASK_DEBUG=True
-PORT=5000
-```
+- **Academic Library**: Books, journals, and academic projects
+- **Experts System**: Research experts and certifications
+- **Research Papers**: Articles, conferences, and theses
+- **Laboratories**: Equipment and materials
+- **Funding**: Research funding opportunities
+- **APOSSS**: User data, feedback, and system analytics
 
 ## 🚀 Quick Start
 
-1. **Clone and Setup**
+### Prerequisites
+
+- Python 3.8+
+- MongoDB 4.4+
+- Google Gemini API key
+- Email configuration (for user registration)
+
+### Installation
+
+1. **Clone the repository**
    ```bash
    git clone <repository-url>
    cd APOSSS
+   ```
+
+2. **Create virtual environment**
+   ```bash
+   python -m venv APOSSSenv
+   source APOSSSenv/bin/activate  # On Windows: APOSSSenv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure Environment**
+4. **Configure environment**
    ```bash
-   cp config.env.example config.env
-   # Edit config.env with your API keys and database URIs
+   cp config.env.example .env
+   # Edit .env with your configuration
    ```
 
-3. **Run Application**
+5. **Start the application**
    ```bash
    python app.py
    ```
 
-4. **Access Interface**
+6. **Access the system**
    - Open http://localhost:5000 in your browser
-   - Test with sample queries or enter your own research questions
+   - Register a new account or use OAuth login
 
-## 🎯 API Endpoints
+## ⚙️ Configuration
+
+### Required Environment Variables
+
+```env
+# Security (Required)
+JWT_SECRET_KEY=your_super_secure_jwt_secret_key_here_minimum_32_characters
+SECRET_KEY=your_flask_secret_key_for_sessions_here
+
+# AI/LLM (Required)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Email (Required for registration)
+SMTP_USERNAME=your_email@domain.com
+SMTP_PASSWORD=your_email_app_password
+```
+
+### Optional Configuration
+
+```env
+# Database URLs (defaults to localhost if not set)
+MONGODB_URI_ACADEMIC_LIBRARY=mongodb://localhost:27017/Academic_Library
+MONGODB_URI_EXPERTS_SYSTEM=mongodb://localhost:27017/Experts_System
+MONGODB_URI_RESEARCH_PAPERS=mongodb://localhost:27017/Research_Papers
+MONGODB_URI_LABORATORIES=mongodb://localhost:27017/Laboratories
+MONGODB_URI_FUNDING=mongodb://localhost:27017/Funding
+MONGODB_URI_APOSSS=mongodb://localhost:27017/APOSSS
+
+# OAuth (Optional)
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+ORCID_CLIENT_ID=your_orcid_client_id
+ORCID_CLIENT_SECRET=your_orcid_client_secret
+```
+
+## 🔧 API Endpoints
 
 ### Core Search
-- `POST /api/search` - Full search with ranking and categorization
-- `POST /api/test-llm` - LLM query analysis testing
-- `GET /api/test-db` - Database connectivity testing
+- `POST /api/search` - Intelligent search with AI ranking
 - `GET /api/health` - System health check
+- `GET /api/test-db` - Database connectivity test
+
+### User Management
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/profile` - User profile
 
 ### Feedback System
-- `POST /api/feedback` - Submit user feedback for results
-- `GET /api/feedback/stats` - Get feedback statistics
-- `GET /api/feedback/recent` - Get recent feedback entries
+- `POST /api/feedback` - Submit user feedback
+- `GET /api/feedback/stats` - Feedback analytics
+- `GET /api/feedback/recent` - Recent feedback
 
-### 🆕 Embedding System
-- `GET /api/embedding/stats` - Get embedding system statistics and cache info
-- `POST /api/embedding/clear-cache` - Clear embedding cache for reprocessing
+### Advanced Features
+- `GET /api/embedding/stats` - Embedding system statistics
+- `POST /api/embedding/clear-cache` - Clear embedding cache
+- `GET /api/ranking/stats` - Ranking system analytics
 
-## 🔍 Usage Examples
+## 🧠 AI & Machine Learning Features
 
-### 1. Intelligent Search
-```bash
-curl -X POST http://localhost:5000/api/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "machine learning for medical diagnosis"}'
-```
+### Ranking Algorithms
 
-### 2. Submit Feedback
-```bash
-curl -X POST http://localhost:5000/api/feedback \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query_id": "uuid-here",
-    "result_id": "result-id-here", 
-    "rating": 5,
-    "feedback_type": "thumbs_up"
-  }'
-```
+1. **Heuristic Scoring (30%)**: Keyword matching and metadata analysis
+2. **TF-IDF Similarity (30%)**: Text similarity using scikit-learn
+3. **Embedding Similarity (20%)**: Semantic understanding with sentence transformers
+4. **Intent Alignment (20%)**: Query intent-based resource prioritization
 
-### 3. Get Feedback Stats
-```bash
-curl http://localhost:5000/api/feedback/stats
-```
+### Learning-to-Rank Models
 
-## 📊 Phase 3 Key Features
+- **XGBoost Ranking**: Gradient boosting for personalized ranking
+- **Feature Engineering**: 20+ features including text similarity, metadata, and user behavior
+- **Continuous Learning**: Model updates based on user feedback
 
-### Ranking Engine
-- **Multi-Algorithm Scoring**: Combines heuristic, TF-IDF, and intent-based scoring
-- **Relevance Categorization**: Automatically groups results into relevance tiers
-- **Score Transparency**: Provides breakdown of scoring components
-- **Intent-Aware Ranking**: Prioritizes results based on detected user intent
+### Embedding Technology
 
-### User Feedback System
-- **Simple Interface**: Thumbs up/down for each result
-- **Persistent Storage**: MongoDB with file fallback
-- **Real-time Stats**: Live feedback analytics
-- **Learning Ready**: Infrastructure for future ML model training
+- **Model**: all-MiniLM-L6-v2 sentence transformer (384-dimensional)
+- **Vector Storage**: FAISS for efficient similarity search
+- **Caching**: Intelligent caching for performance optimization
 
-### Enhanced UI
-- **Visual Score Bars**: Color-coded relevance scoring display
-- **Relevance Sections**: Results organized by relevance level
-- **Interactive Feedback**: One-click rating system
-- **Ranking Transparency**: Score component visualization
+## 📊 User Interface
+
+### Search Interface
+- **Natural Language Input**: Type research questions in plain English
+- **Real-time Results**: Instant search with AI-powered ranking
+- **Relevance Categories**: Results organized by High/Medium/Low relevance
+- **Score Visualization**: Transparent ranking with component breakdowns
+
+### User Dashboard
+- **Profile Management**: Update user information and preferences
+- **Search History**: Track previous searches and results
+- **Feedback Analytics**: View personal feedback statistics
+- **OAuth Integration**: Login with Google or ORCID
+
+### Feedback System
+- **One-click Rating**: Thumbs up/down for each result
+- **Real-time Analytics**: Live feedback statistics
+- **Learning Integration**: Feedback used for model improvement
+
+## 🚀 Production Deployment
+
+### Environment Setup
+
+1. **Production Configuration**
+   ```env
+   FLASK_ENV=production
+   FLASK_DEBUG=false
+   DEVELOPMENT_MODE=false
+   ```
+
+2. **Security Hardening**
+   ```env
+   FORCE_HTTPS=true
+   RATE_LIMIT_PER_MINUTE=60
+   MAX_FAILED_LOGIN_ATTEMPTS=5
+   ```
+
+3. **Performance Optimization**
+   ```env
+   EMBEDDING_CACHE_SIZE_MB=1024
+   FAISS_INDEX_REBUILD_HOURS=24
+   WORKERS=4
+   ```
+
+### Deployment Checklist
+
+- [ ] Configure production environment variables
+- [ ] Set up SSL/HTTPS certificates
+- [ ] Configure email server (SMTP)
+- [ ] Set up MongoDB with proper authentication
+- [ ] Configure OAuth applications (Google, ORCID)
+- [ ] Set up monitoring and logging
+- [ ] Configure backup strategies
 
 ## 🧪 Testing
 
-### Test Search & Ranking
-1. Visit http://localhost:5000
-2. Try sample queries or enter custom research questions
-3. Observe ranking scores and relevance categories
-4. Provide feedback on results to test the feedback system
+### Manual Testing
+1. **Search Functionality**: Test various query types and observe ranking
+2. **User Registration**: Test email verification and OAuth login
+3. **Feedback System**: Submit feedback and verify storage
+4. **Performance**: Test with large result sets
 
-### Monitor Feedback
-1. Click "View Feedback Stats" to see collected feedback
-2. Submit various ratings to test the feedback storage
-3. Check the `feedback_data.jsonl` file for stored feedback
+### Automated Testing
+```bash
+# Run unit tests
+python -m pytest tests/
 
-## 📈 Future Development (Phase 4 & 5)
+# Run integration tests
+python -m pytest tests/integration/
 
-### Planned Enhancements
-- **Learning Algorithm**: Train ranking models using collected feedback
-- **Advanced Filtering**: Date, type, and field-based result filtering
-- **A/B Testing**: Compare different ranking algorithms
-- **User Personalization**: Adapt rankings to user preferences
-- **Performance Optimization**: Caching and query optimization
+# Run performance tests
+python -m pytest tests/performance/
+```
 
-### Integration Ready
-- **Feedback Loop**: Ready for ML model retraining
-- **Analytics Dashboard**: Foundation for detailed usage analytics
-- **API Extensibility**: Designed for easy feature additions
+## 📈 Performance & Monitoring
 
-## 🏆 Technical Achievements
+### System Metrics
+- **Search Latency**: Average response time for queries
+- **Ranking Accuracy**: Feedback-based ranking quality metrics
+- **User Engagement**: Search frequency and feedback rates
+- **System Health**: Database connectivity and API availability
 
-### Phase 3 Implementations
-✅ **Hybrid Ranking Algorithm** - Multi-component scoring system  
-✅ **TF-IDF Integration** - Semantic similarity scoring  
-✅ **Intent-Based Ranking** - Query intent alignment  
-✅ **User Feedback Collection** - Complete feedback system  
-✅ **Relevance Categorization** - Automatic result grouping  
-✅ **Score Visualization** - Transparent ranking display  
-✅ **Feedback Analytics** - Real-time statistics  
-✅ **Robust Storage** - MongoDB with file backup  
+### Logging
+- **Application Logs**: `logs/aposss.log`
+- **Error Tracking**: Comprehensive error logging and monitoring
+- **Performance Metrics**: Query performance and ranking statistics
 
-## 🔧 Troubleshooting
+## 🔒 Security Features
+
+### Authentication & Authorization
+- **JWT Tokens**: Secure session management
+- **Password Hashing**: bcrypt for password security
+- **OAuth Integration**: Secure social login
+- **Rate Limiting**: Protection against abuse
+
+### Data Protection
+- **Input Validation**: Comprehensive input sanitization
+- **SQL Injection Protection**: Parameterized queries
+- **XSS Protection**: Content Security Policy headers
+- **HTTPS Enforcement**: Secure data transmission
+
+## 📚 Documentation
+
+### Additional Resources
+- [Deployment Guide](DEPLOYMENT_SETUP.md) - Production deployment instructions
+- [Developer Documentation](Developer_Documentation.md) - Technical implementation details
+- [OAuth Setup Guide](MDfiles/OAUTH_SETUP_GUIDE.md) - OAuth configuration
+- [Email Setup Guide](MDfiles/EMAIL_SETUP_GUIDE.md) - Email configuration
+
+### API Documentation
+- Complete API reference available at `/api/docs` (when running)
+- Interactive API testing with Swagger UI
+- Example requests and responses for all endpoints
+
+## 🤝 Contributing
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+### Code Standards
+- Follow PEP 8 Python style guidelines
+- Add docstrings for all functions and classes
+- Include unit tests for new features
+- Update documentation as needed
+
+## 📄 License
+
+This project is developed for academic research purposes. See the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+### Getting Help
+- Check the [troubleshooting section](#troubleshooting) for common issues
+- Review the logs: `tail -f logs/aposss.log`
+- Verify your `.env` configuration
+- Ensure all required services are running
 
 ### Common Issues
-1. **Ranking Errors**: Ensure scikit-learn and numpy are installed
-2. **Feedback Storage**: Check MongoDB connection or file permissions
-3. **Score Display**: Verify all ranking components are functioning
-4. **Memory Usage**: TF-IDF can be memory-intensive for large result sets
 
-### Debug Mode
-- Set `FLASK_DEBUG=True` for detailed error messages
-- Check application logs for ranking and feedback system status
-- Use `/api/health` endpoint to verify all components
+**Issue**: JWT_SECRET_KEY not set
+- **Solution**: Set a strong JWT secret key in your `.env` file
 
-## 📝 License
+**Issue**: Email sending failed
+- **Solution**: Use Gmail App Password (not regular password) and enable 2FA
 
-This project is developed for academic research purposes.
+**Issue**: Database connection failed
+- **Solution**: Ensure MongoDB is running and check connection strings
+
+## 🏆 Project Status
+
+✅ **COMPLETED** - The APOSSS system is fully functional and ready for production deployment.
+
+### Completed Features
+- ✅ Multi-database search integration
+- ✅ AI-powered ranking system
+- ✅ User authentication and management
+- ✅ Feedback collection and analytics
+- ✅ OAuth integration
+- ✅ Learning-to-rank models
+- ✅ Production-ready deployment configuration
+- ✅ Comprehensive testing suite
+- ✅ Security hardening
+- ✅ Performance optimization
 
 ---
 
-**APOSSS Phase 3** - Intelligent ranking and user feedback system for open science research discovery.
+**APOSSS** - Empowering open science research through intelligent semantic search and AI-driven discovery.
 
-### 🧠 Embedding Technology
-- **Model**: all-MiniLM-L6-v2 sentence transformer (384-dimensional embeddings)
-- **Vector Storage**: FAISS for efficient similarity search and caching
-- **Semantic Understanding**: Captures meaning beyond keyword matching for better relevance 
+*Built with ❤️ for the academic research community* 
